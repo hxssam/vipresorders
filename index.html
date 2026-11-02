@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Заказ кухни">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Заказ кухни — ВИАЙПИ РЕСТОБАР</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="w">
+<div class="top"><h1>ВИАЙПИ <b>РЕСТОБАР</b></h1><span id="saved">● сохранено</span><button class="g" id="inst" hidden>Установить</button><button class="g" data-a="hist">История</button><button class="g" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+
+<div class="card">
+<div class="lbl"><span>1 · Кто заказывает</span></div>
+<div class="chips" id="cooks"></div>
+<div class="lbl f">Дата поставки</div><input type="date" id="date">
+<div class="lbl f">Заметка</div><input id="note" maxlength="140" placeholder="Необязательно">
+</div>
+
+<div class="sticky">
+<div class="sr"><input id="q" type="search" placeholder="Найти товар…" autocomplete="off"><button class="p" data-a="newp">＋ Товар</button></div>
+<div class="chips" id="cats" style="margin-top:8px"></div>
+</div>
+<div id="list"></div>
+</div>
+
+<div class="bar"><button class="p" id="rv" data-a="review"><span>Проверить заказ</span><span id="cnt">0</span></button></div>
+
+<dialog id="dr"><h2>Проверка заказа</h2><div id="rb"></div><div class="lbl" style="margin-top:12px">Повар</div><div id="rc" style="font-weight:700"></div>
+<div class="acts"><button class="p" data-a="copy">Копировать заказ</button><button data-a="save">Сохранить</button><button class="g" data-a="close">Закрыть</button><button class="d" data-a="clear">Очистить</button></div></dialog>
+
+<dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
+
+<dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
+
+<dialog id="dt"><h2>Админ-панель</h2>
+<div class="lbl">Команда</div><div id="tl"></div>
+<div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
+<div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div>
+<div class="lbl f">Каталог</div>
+<div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим удаления товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
+<div class="lbl f">Пароль и публикация</div>
+<input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
+<div class="acts"><button data-a="setpw">Задать пароль</button><button class="p" data-a="cfg">Скопировать config.js</button></div>
+<p class="small">Изменения команды и пароля видны на других телефонах только после того, как вы вставите скопированный текст в файл config.js на GitHub.</p>
+<div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
+<dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
+
+<dialog id="dp"><h2>Новый товар</h2>
+<div class="lbl">Название</div><input id="pn" maxlength="90" placeholder="Например, соус гранатовый">
+<div class="row2"><div><div class="lbl">Группа</div><select id="pc"></select></div><div><div class="lbl">Единица</div><select id="pu"></select></div></div>
+<div class="acts"><button class="p" data-a="addprod">Добавить в каталог</button><button class="g" data-a="close">Отмена</button></div></dialog>
+
+<dialog id="dg"><h2>Новая группа</h2><input id="gn" maxlength="40" placeholder="Например, напитки"><div class="acts"><button class="p" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<div class="tg" id="tg" role="status"></div>
+
+<script src="config.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
