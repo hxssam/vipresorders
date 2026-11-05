@@ -17,9 +17,9 @@
 </head>
 <body>
 <div class="w">
-<div class="top"><h1>ВИАЙПИ <b>РЕСТОБАР</b></h1><span id="saved">● …</span><button class="g" id="inst" hidden>Установить</button><button class="g" data-a="hist">История</button><button class="g" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+<div class="top"><h1>ВИАЙПИ <b>РЕСТОБАР</b></h1><span id="saved" data-a="diag" title="Связь">● …</span><button class="g" id="inst" hidden>Установить</button><button class="g" data-a="hist">История</button><button class="g" data-a="admin" aria-label="Админ-панель">⚙</button></div>
 
-<nav class="tabs"><button class="tab on" data-a="tab" data-id="order">🧾 Заказ</button><button class="tab" data-a="tab" data-id="prep">✅ Заготовки</button></nav>
+<nav class="tabs"><button class="tab on" data-a="tab" data-id="order"><span>🧾</span>Заказ</button><button class="tab" data-a="tab" data-id="prep"><span>✅</span>Заготовки</button><button class="tab" data-a="tab" data-id="sched"><span>📅</span>График</button><button class="tab" id="tabPlan" data-a="tab" data-id="plan"><span>🔒</span>План</button></nav>
 <section id="vOrder">
 <div class="card">
 <div class="lbl"><span>Кто заказывает</span></div>
@@ -37,9 +37,22 @@
 <section id="vPrep" hidden>
 <div class="card"><div class="lbl">Я работаю</div><div class="chips" id="pcooks"></div></div>
 <div class="card"><div class="lbl">Заготовки на</div><div class="chips"><button class="chip" id="pd0" data-a="pday" data-id="0">Сегодня</button><button class="chip on" id="pd1" data-a="pday" data-id="1">Завтра</button></div><input type="date" id="pdate" class="f"><div class="small" id="pinfo"></div><div class="pbar"><i id="pfill"></i></div></div>
-<div class="card"><div class="pa"><input id="pt" maxlength="80" placeholder="Что приготовить?"><input id="pq" maxlength="20" placeholder="Кол-во"></div><div class="acts"><button class="p" data-a="padd">＋ Добавить</button><button class="g" id="pcp" data-a="pcopy">Скопировать со вчера</button></div></div>
-<details class="card" id="plibc"><summary id="plsum">Сохранённый список</summary><div class="acts" style="margin-top:10px"><button class="p" id="pall" data-a="paddall">＋ Добавить все на этот день</button></div><div id="plib" style="margin-top:10px"></div></details>
 <div id="plist"></div>
+</section>
+<section id="vSched" hidden>
+<div class="card"><div class="lbl">Кто смотрит график</div><div class="chips" id="sfilter"></div></div>
+<div class="card"><div class="mh"><button class="g" data-a="smon" data-id="-1" aria-label="Назад">‹</button><b id="smt"></b><button class="g" data-a="smon" data-id="1" aria-label="Вперёд">›</button></div><div class="dw"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="cal" id="sgrid"></div></div>
+<div class="acts" style="margin:0 0 8px"><button class="g" id="sbtn" data-a="sedit">✎ Править график</button></div>
+<div class="card" id="sedit" hidden><div class="lbl">Назначить смену</div><div class="small" id="sedinfo" style="margin:0 0 8px"></div><div class="row2" style="margin-top:0"><div><div class="lbl">Начало</div><input type="time" id="sfrom"></div><div><div class="lbl">Конец</div><input type="time" id="sto"></div></div><div class="acts"><button class="p" data-a="sapply">Назначить выбранным дням</button><button class="d" data-a="sclear">Убрать смены</button></div></div>
+<div class="lbl" style="margin:12px 2px 6px">Ближайшие смены</div><div id="slist"></div>
+</section>
+<section id="vPlan" hidden>
+<div class="card"><div class="lbl">План заготовок на</div><div class="chips"><button class="chip" id="qd0" data-a="pday" data-id="0">Сегодня</button><button class="chip on" id="qd1" data-a="pday" data-id="1">Завтра</button></div><input type="date" id="qdate" class="f"><div class="small" id="qinfo"></div></div>
+<div class="chips" id="qgroups" style="margin-bottom:8px"></div>
+<div class="card"><div class="pa"><input id="qt" maxlength="80" placeholder="Новая заготовка"><input id="qq" maxlength="20" placeholder="Кол-во"></div><div class="acts"><button class="p" data-a="qadd">＋ В список группы</button><button class="g" data-a="qone">Только на этот день</button></div></div>
+<div class="acts" style="margin:0 0 8px"><button data-a="qall">Выбрать все</button><button class="g" data-a="qnone">Снять все</button><button class="g" id="qcp" data-a="pcopy">Скопировать со вчера</button></div>
+<div class="small" style="margin:0 2px 8px">Отметьте ✓ то, что увидят повара на выбранный день.</div>
+<div id="qlist"></div>
 </section>
 </div>
 
@@ -64,6 +77,8 @@
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 
 <dialog id="dp"><h2>Новый товар</h2>

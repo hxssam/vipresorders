@@ -23,7 +23,9 @@
       }
     },
     "orders": {
-      ".indexOn": ["created"],
+      ".indexOn": [
+        "created"
+      ],
       "$id": {
         ".write": "!data.exists() || newData.exists() || (auth != null && auth.token.email == 'admin@vip.local')"
       }
@@ -34,6 +36,12 @@
           ".write": true
         }
       }
+    },
+    "plan": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "sched": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     }
   }
 }
