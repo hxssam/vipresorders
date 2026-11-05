@@ -1,12 +1,34 @@
-const CACHE = 'vip-restobar-order-v12';
+const CACHE = 'vip-restobar-order-v13';
 const FILES = ['./', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
-self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, {cache: 'reload'})))).then(() => self.skipWaiting())));
-self.addEventListener('activate', e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x)))).then(() => self.clients.claim())));
-// Всегда свежая версия при наличии сети (без HTTP-кэша), офлайн — из кэша
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(fetch(e.request, {cache: 'no-store'}).then(r => {
-    if (r.ok) { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); }
-    return r;
-  }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html'))));
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE)
+    .then(cache => cache.addAll(FILES.map(file => new Request(file, {cache: 'reload'}))))
+    .then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys()
+    .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+    .then(() => self.clients.claim()));
+});
+
+// Serve the app shell immediately from cache, then refresh it quietly when the network is available.
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timeout = setTimeout(() => controller && controller.abort(), 8000);
+  const update = fetch(request, controller ? {signal: controller.signal} : {}).then(response => {
+    if (!response.ok) return response;
+    const copy = response.clone();
+    return caches.open(CACHE).then(cache => cache.put(request, copy).catch(() => {})).then(() => response);
+  }).catch(() => null).then(response => {clearTimeout(timeout); return response});
+  event.waitUntil(update.then(() => {}));
+  event.respondWith(caches.match(request).then(cached => {
+    if (cached) return cached;
+    if (request.mode === 'navigate') return caches.match('./index.html').then(shell => shell || update.then(response => response || new Response('Offline', {status: 503})));
+    return update.then(response => response || caches.match('./index.html').then(shell => shell || new Response('Offline', {status: 503})));
+  }));
 });

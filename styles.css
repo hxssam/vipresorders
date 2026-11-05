@@ -77,14 +77,28 @@ details.card>summary{font-weight:700;cursor:pointer;min-height:32px;display:flex
 .tab{font-size:14px;padding:8px 4px}
 .it.on .ck{background:var(--ac);border-color:var(--ac)}
 .pn em{display:inline-block;font-style:normal;font-size:11px;font-weight:800;color:var(--wa);border:1px solid var(--ln);border-radius:6px;padding:0 6px;margin:2px 6px 0 0}
-.tabs{grid-template-columns:repeat(4,1fr)}
+.tabs{grid-template-columns:repeat(3,1fr)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;line-height:1.1;padding:6px 2px;min-height:52px}.tab span{font-size:18px}
 #saved{cursor:pointer;padding:10px 4px}
 .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.mh b{text-transform:capitalize}.mh button{width:48px}
 .dw,.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.dw span{text-align:center;font-size:11px;color:var(--mu);font-weight:700}
-.cal i{min-height:54px}
+.cal>i{min-height:54px}
 .dc{min-height:54px;padding:4px 1px;border-radius:10px;background:var(--bg);border:1px solid var(--ln);color:var(--tx);display:flex;flex-direction:column;align-items:center;gap:1px;font-weight:400}
 .dc b{font-size:14px}.dc small{font-size:10px;line-height:1.05;color:var(--mu)}
 .dc.wk{background:var(--ac2);border-color:var(--ac)}.dc.wk small{color:var(--ac);font-weight:700}
 .dc.td{outline:2px solid var(--wa)}.dc.sl{background:var(--ac);color:var(--bg)}.dc.sl small{color:var(--bg)}
 .sh{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;margin-bottom:6px}.sh b{display:block;margin-bottom:2px}.sh span{color:var(--ac);font-weight:700}
+.cook-chip{border-color:var(--cook,var(--ln))}.cook-chip.on{background:var(--cook,var(--ac));border-color:var(--cook,var(--ac));color:#fff}
+.cook-chip small{color:inherit}
+.cook-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cook,var(--ac));margin-right:5px;vertical-align:1px}
+.dots{display:flex;justify-content:center;gap:2px;margin-top:3px}.dots i{display:block;width:7px;height:7px;border-radius:50%;background:var(--cook,var(--ac))}
+.dc.wk{border-color:var(--cook,var(--ac))}.dc.wk small{color:var(--cook,var(--ac));font-weight:800}
+.dc.sl{border-color:var(--ac)}
+.sh-person{display:flex;align-items:center;gap:6px;margin-top:3px}.sh-person b{display:inline;font-size:14px;margin:0}.sh-person span{margin-left:auto;color:var(--cook,var(--ac))}
+details.card>summary small{margin-left:auto;color:var(--ac);font-size:12px}
+dialog[open]{z-index:20}
+dialog.modal-fallback{position:fixed;inset:auto 0 0;z-index:30;max-height:90vh;overflow:auto}
+body.modal-fallback-open:after{content:"";position:fixed;inset:0;background:#000a;z-index:19}
+@supports not (height:100dvh){dialog{max-height:90vh}.msg{max-height:42vh}#hl{max-height:60vh!important}}
+@media(max-width:360px){.w{padding:0 9px}.tabs{gap:3px}.tab{font-size:11px}.tab span{font-size:16px}.card{padding:11px}.chip{padding:8px 11px}.top h1{font-size:17px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

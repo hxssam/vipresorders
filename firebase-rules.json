@@ -37,8 +37,11 @@
         }
       }
     },
+    "prepLibrary": {
+      ".write": true
+    },
     "plan": {
-      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+      ".write": true
     },
     "sched": {
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
