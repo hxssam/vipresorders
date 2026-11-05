@@ -72,7 +72,7 @@ function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;if(ES[key
 const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);
 const on=(t,m)=>es.addEventListener(t,e=>{try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);dirty(prefix.split('/')[0])}catch{}});
 on('put',0);on('patch',1);es.onopen=()=>{setSt(1);flush()};es.onerror=()=>setSt(0)}
-const streams=()=>{listen('team','team');listen('catalog','catalog');listen('orders','orders','orderBy=%22created%22&limitToLast=80');listen('prep','prep/'+pd)};
+const streams=()=>{listen('team','team');listen('catalog','catalog');listen('orders','orders','orderBy=%22created%22&limitToLast=80');listen('prep','prep/'+pd);listen('tpl','prep/_tpl')};
 // ---------- каталог ----------
 const cat0=()=>DATA.catalog||{};
 const prods=()=>PC||(PC=[...base.filter(p=>!(cat0().hidden||{})[ek(p.id)]).map(p=>{const e=(cat0().edits||{})[ek(p.id)];return e?{...p,n:e.n||p.n,u:e.u||p.u}:p}),...Object.entries(cat0().custom||{}).map(([k,v])=>({id:'c:'+k,k,n:v.n,c:v.c,u:v.u}))].sort((a,b)=>a.n.localeCompare(b.n,'ru')));
@@ -98,12 +98,21 @@ const rRev=()=>{const it=dI(),c=L.draft.cook;$('#rc').innerHTML=c?esc(c.n)+' —
 $('#rb').innerHTML=it.length?it.sort((a,b)=>a.n.localeCompare(b.n,'ru')).map(i=>`<div class="it on"><div class="n">${esc(i.n)}</div>${stepper(i)}<button class="x" data-a="rm" data-id="${esc(i.id)}">✕</button></div>`).join(''):'<div class="em">Список пуст</div>'};
 const rTeam=()=>{$('#tl').innerHTML=team().length?team().map(k=>`<div class="it"><div class="n">${esc(k.n)}<i>${esc(k.r)}</i></div><button class="x" data-a="delc" data-id="${k.id}">✕</button></div>`).join(''):'<div class="em">Добавьте поваров с должностями</div>'};
 const rAdm=()=>{const b=$('#edb');b.textContent='Режим правки товаров: '+(ed()?'ВКЛ':'выкл');b.className=ed()?'d':'';const h=Object.keys(cat0().hidden||{}).length,u=$('#unh');u.textContent='Вернуть скрытые ('+h+')';u.disabled=!h};
+const hs=s=>{let h=5381;for(const c of s)h=((h<<5)+h+c.codePointAt(0))>>>0;return 't'+h.toString(36)};
+const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const tpls=()=>Object.entries((DATA.prep||{})._tpl||{}).map(([id,v])=>({id,...v})).filter(x=>x.t).sort((a,b)=>a.t.localeCompare(b.t,'ru'));
+const dayTasks=()=>Object.values((DATA.prep||{})[pd]||{});
+let lastPd='';
 const rPrep=()=>{const ts=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v}));
 const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),td=ts.filter(t=>!t.done).sort((a,b)=>(a.c||0)-(b.c||0)),k=team();
 const sel=t=>`<select class="who" data-by="${t.id}"><option value="">Кто?</option>${k.map(c=>`<option value="${c.id}"${t.by&&t.by.id===c.id?' selected':''}>${esc(c.n)}</option>`).join('')}${t.by&&!k.some(c=>c.id===t.by.id)?`<option value="${esc(t.by.id)}" selected>${esc(t.by.n)}</option>`:''}</select>`;
 const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}${t.done&&t.by?`<small>✓ ${esc(t.by.n)} · ${tm(t.at)}</small>`:''}</div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
 $('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):'<div class="em">На этот день заготовок нет.<br>Добавьте первую выше.</div>';
 $('#pfill').style.width=ts.length?Math.round(dn.length/ts.length*100)+'%':'0%';$('#pinfo').textContent=`${day(pd)} · выполнено ${dn.length} из ${ts.length}`;
+const have=new Set(ts.map(t=>nt(t.t))),tp=tpls();
+$('#plib').innerHTML=tp.length?tp.map(x=>{const h=have.has(nt(x.t));return `<div class="it${h?' on':''}"><div class="n">${esc(x.t)}${x.q?`<i>${esc(x.q)}</i>`:''}</div><button data-a="padd1" data-id="${x.id}"${h?' disabled':''} aria-label="Добавить">${h?'✓':'＋'}</button><button class="x" data-a="ptdel" data-id="${x.id}" aria-label="Убрать из списка">✕</button></div>`}).join(''):'<div class="em">Список пуст. Всё, что вы добавляете, сохраняется сюда автоматически.</div>';
+$('#plsum').textContent='Сохранённый список · '+tp.length;$('#pall').hidden=!tp.some(x=>!have.has(nt(x.t)));
+if(pd!==lastPd){lastPd=pd;$('#plibc').open=!ts.length&&tp.length>0}
 $('#pdate').value=pd;$('#pd0').className='chip'+(pd===dAdd(0)?' on':'');$('#pd1').className='chip'+(pd===dAdd(1)?' on':'');$('#pcp').hidden=!!ts.length};
 const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filter(o=>!q||(o.cook.n+' '+o.date+' '+day(o.date)+' '+o.items.map(i=>i.n).join(' ')).toLowerCase().includes(q));
 $('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc(o.items.slice(0,5).map(i=>i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em">История пока пуста</div>'};
@@ -176,7 +185,12 @@ async hcopy(id){const o=ords().find(x=>x.id===id);if(o&&await clip(msg(o))){mut(
 async hdel(id){if(!isAdmin())return need();if(!await ask('Удалить заказ?','<p>Заказ будет удалён из истории у всех.</p>','Да, удалить','Нет'))return;mut('DELETE','orders/'+id);if(L.draft.editId===id)L.draft.editId=null;saveL();rHist();snd.warn()},
 // заготовки
 pday(n){pd=dAdd(+n);streams();rPrep();snd.tap()},
-padd(){const t=$('#pt').value.trim();if(!t){snd.warn();toast('Напишите, что приготовить');$('#pt').focus();return}mut('PUT',`prep/${pd}/${uid()}`,{t,q:$('#pq').value.trim(),c:Date.now()});$('#pt').value=$('#pq').value='';snd.add();$('#pt').focus()},
+padd(){const t=$('#pt').value.trim().replace(/\s+/g,' '),q=$('#pq').value.trim();if(!t){snd.warn();toast('Напишите, что приготовить');$('#pt').focus();return}
+if(dayTasks().some(x=>nt(x.t)===nt(t))){snd.warn();toast('Эта заготовка уже в списке на этот день');return}
+mut('PUT',`prep/${pd}/${uid()}`,{t,q,c:Date.now()});const k=hs(nt(t));if(!tpls().some(x=>x.id===k))mut('PUT','prep/_tpl/'+k,{t,q});$('#pt').value=$('#pq').value='';snd.add();$('#pt').focus()},
+padd1(id){const x=tpls().find(y=>y.id===id);if(!x||dayTasks().some(t=>nt(t.t)===nt(x.t)))return;mut('PUT',`prep/${pd}/${uid()}`,{t:x.t,q:x.q||'',c:Date.now()});snd.add()},
+paddall(){const have=new Set(dayTasks().map(t=>nt(t.t)));let n=0;tpls().forEach((x,i)=>{if(!have.has(nt(x.t))){mut('PUT',`prep/${pd}/${uid()}`,{t:x.t,q:x.q||'',c:Date.now()+i});n++}});if(n){snd.ok();toast('✓ Добавлено заготовок: '+n)}},
+async ptdel(id){const x=tpls().find(y=>y.id===id);if(!x||!await ask('Убрать из сохранённого списка?',`<p>${esc(x.t)}</p><p style="color:var(--mu)">Из уже созданных дней она не удаляется.</p>`,'Да, убрать','Нет'))return;mut('DELETE','prep/_tpl/'+id);snd.warn()},
 ptog(id){const t=((DATA.prep||{})[pd]||{})[id];if(!t)return;const p=`prep/${pd}/${id}`;
 if(t.done){mut('PATCH',p,{done:null,at:null});snd.tap();return}
 const w=t.by||L.me;if(!w){snd.warn();vib(80);toast('Выберите повара справа или вверху «Я работаю»');const s=document.querySelector(`[data-by="${id}"]`);if(s){s.classList.add('bad');setTimeout(()=>s.classList.remove('bad'),1500)}return}

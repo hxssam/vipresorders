@@ -72,3 +72,4 @@ input[type=date]{display:block;min-height:48px;-webkit-appearance:none;appearanc
 .us{width:58px;flex:none;min-height:40px;padding:6px 2px;font-size:13px;text-align:center;text-align-last:center;color:var(--mu)}
 .st input{width:54px}
 @media(max-width:380px){.who{width:82px}.st button{width:38px}}
+details.card>summary{font-weight:700;cursor:pointer;min-height:32px;display:flex;align-items:center}
