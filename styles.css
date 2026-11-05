@@ -101,6 +101,10 @@ details.card>summary{font-weight:700;cursor:pointer;min-height:32px;display:flex
 .wo-entry{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px;margin-bottom:8px;min-width:0}
 .wo-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.wo-entry-head b{min-width:0;overflow-wrap:anywhere}.wo-entry-head strong{flex:none;white-space:nowrap;color:var(--rd)}
 #wocount{white-space:nowrap;flex:none}
+.wo-share-actions button{flex:1 1 125px;min-width:0}
+.wo-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:10px}
+.wo-form-grid .lbl{margin:0 0 6px}
+.wo-full{grid-column:1/-1}
 .wo-product-name{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:10px 12px;font-weight:700;overflow-wrap:anywhere}
 #rb .it{min-width:0}
 @media(max-width:480px){#rb .it{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;row-gap:4px;padding:8px}#rb .it>.n{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere;word-break:normal}#rb .it>.st{grid-column:1;grid-row:2;min-width:0;max-width:100%;gap:3px}#rb .it>.st button{flex:none;width:36px}#rb .it>.st input{flex:none;width:48px}#rb .it>.st select{flex:none;width:54px;padding:7px 2px}#rb .it>.x{grid-column:2;grid-row:1 / span 2;justify-self:end}}
