@@ -1,26 +1,6 @@
+// Настройки облака (заполняются один раз — см. SETUP-AR.md)
 window.CONFIG = {
-  "adminHash": "4a58617395250ec161e66338b707a22935a112feec706b990f1b2008461780f8",
-  "v": 2,
-  "team": [
-    {
-      "id": "k1793586032346",
-      "n": "Хоссам",
-      "r": "Шеф-повар"
-    },
-    {
-      "id": "k1793586043281",
-      "n": "Дима",
-      "r": "Су-шеф"
-    },
-    {
-      "id": "k1793586054930",
-      "n": "Наталья",
-      "r": "Повар"
-    },
-    {
-      "id": "k1793586064650",
-      "n": "Женя",
-      "r": "Повар"
-    }
-  ]
+  dbUrl: "",                       // например: https://vip-restobar-default-rtdb.europe-west1.firebasedatabase.app
+  apiKey: "AIzaSyCxQD7xmm63Dv13eSsZSN7tYFAMj9l6Rsk",                      // Web API Key из Project settings
+  adminEmail: "admin@vip.local"    // email администратора (создаётся в Firebase Authentication)
 };
