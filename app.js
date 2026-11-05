@@ -1,6 +1,6 @@
 (()=>{'use strict';
-const CFG=Object.assign({dbUrl:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
-const DEMO=!CFG.dbUrl||!CFG.apiKey,DB=String(CFG.dbUrl).replace(/\/+$/,'');
+const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
+const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
@@ -60,13 +60,15 @@ async function tok(){if(!AU.rt)return'';if(AU.t&&Date.now()<AU.exp-6e4)return AU
 const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(AU.rt)});
 const j=await r.json();if(!r.ok){if(r.status===400){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','')}throw new Error('auth')}
 AU={t:j.id_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000,ok:true};LS.set('vip3-rt',AU.rt);return AU.t}
-async function api(m,p,b){const t=await tok().catch(()=>'');const r=await fetch(`${DB}/${p}.json${t?'?auth='+t:''}`,{method:m,headers:b!==undefined?{'Content-Type':'application/json'}:undefined,body:b!==undefined?JSON.stringify(b):undefined});if(!r.ok){const e=new Error('http');e.status=r.status;throw e}return r}
+async function detect(){if(DEMO||DB)return;const p=CFG.projectId;const list=[LS.get('vip3-db',''),`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,`https://${p}-default-rtdb.firebaseio.com`,`https://${p}-default-rtdb.asia-southeast1.firebasedatabase.app`].filter(Boolean);
+for(const u of list){try{const r=await fetch(u+'/.json?shallow=true');if(r.status!==404){DB=u;LS.set('vip3-db',u);return}}catch{}}}
+async function api(m,p,b){if(!DB)throw new Error('nodb');const t=await tok().catch(()=>'');const r=await fetch(`${DB}/${p}.json${t?'?auth='+t:''}`,{method:m,headers:b!==undefined?{'Content-Type':'application/json'}:undefined,body:b!==undefined?JSON.stringify(b):undefined});if(!r.ok){const e=new Error('http');e.status=r.status;throw e}return r}
 let fl=0;
 async function flush(){if(fl||DEMO||!L.out.length)return;fl=1;
 try{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){if(e.status===400||e.status===401||e.status===403){L.out.shift();saveL();snd.warn();toast('Нет прав на это действие');continue}throw e}L.out.shift();saveL()}setSt(1)}catch{setSt(0)}fl=0}
 function mut(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v});saveL();flush()}
 const ES={};
-function listen(key,prefix,q){if(DEMO||!window.EventSource)return;if(ES[key])ES[key].close();
+function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;if(ES[key])ES[key].close();
 const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);
 const on=(t,m)=>es.addEventListener(t,e=>{try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);dirty(prefix.split('/')[0])}catch{}});
 on('put',0);on('patch',1);es.onopen=()=>{setSt(1);flush()};es.onerror=()=>setSt(0)}
@@ -201,8 +203,8 @@ $('#ap').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.login()});
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#q').focus()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){streams();flush()}});
 addEventListener('online',()=>{streams();flush()});addEventListener('offline',()=>setSt(0));
-setInterval(flush,15000);
-syncDraft();rAll();setSt(navigator.onLine!==false);streams();flush();
+setInterval(()=>{if(!DB&&!DEMO)detect().then(streams);flush()},15000);
+syncDraft();rAll();setSt(navigator.onLine!==false);detect().then(()=>{streams();flush()});
 if(AU.rt&&!DEMO)tok().then(()=>{ui()}).catch(()=>{});
 })();
 
