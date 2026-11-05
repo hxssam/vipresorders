@@ -40,6 +40,16 @@
     "prepLibrary": {
       ".write": true
     },
+    "prepPins": {
+      ".write": true
+    },
+    "writeoffs": {
+      "$date": {
+        "$id": {
+          ".write": true
+        }
+      }
+    },
     "plan": {
       ".write": true
     },

@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='5.1';
+const VER='5.5';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 const UNITS=['кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
@@ -32,7 +32,8 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const blank=cook=>({cook:cook||null,date:dAdd(1),note:'',items:{},editId:null});
 const L=Object.assign({draft:blank(),me:null,lu:{},out:[]},LS.get('vip3-local',{}));
 if(!L.draft||!L.draft.items)L.draft=blank();
-let DATA=LS.get('vip3-cache',{}),PC=null,cat='all',qs='',edit=0,pd=dAdd(1),tab='order',qg='main',want='',sm=iso(new Date()).slice(0,7),sf=L.sf||(L.me?L.me.id:'all'),se=0;const ssel=new Set();
+const savedPrepDate=LS.get('vip3-prep-date','');
+let DATA=LS.get('vip3-cache',{}),PC=null,cat='all',qs='',edit=0,pd=/^\d{4}-\d{2}-\d{2}$/.test(savedPrepDate)?savedPrepDate:dAdd(1),tab='order',qg='main',want='',sm=iso(new Date()).slice(0,7),sf=L.sf||(L.me?L.me.id:'all'),se=0,wd=dAdd(0),wcat='all',wq='',woDraft=null;const ssel=new Set();
 const saveL=()=>LS.set('vip3-local',L);
 const base=[];BASE.forEach(([id])=>CAT[id].split(';').forEach(e=>{const[n,u]=e.split('|');base.push({id:'b:'+id+':'+n,n,c:id,u})}));
 const ek=s=>String(s).replace(/[.#$\[\]\/]/g,'_');
@@ -81,7 +82,7 @@ const on=(t,m)=>es.addEventListener(t,e=>{ST.seen[key]=Date.now();try{const d=JS
 on('put',0);on('patch',1);es.addEventListener('keep-alive',()=>{ST.seen[key]=Date.now()});
 es.onopen=()=>{ST.open[key]=true;ST.seen[key]=Date.now();setSt();flush()};
 es.onerror=()=>{ST.open[key]=false;setSt();if(es.readyState===2&&ES[key]===es)setTimeout(()=>{if(ES[key]===es)listen(key,prefix,q)},4000)}}
-const streams=()=>{const keys=new Set(['team']);if(tab==='order')keys.add('catalog');if(tab==='prep'){keys.add('prep');keys.add('plan');keys.add('prepLibrary')}if(tab==='sched')keys.add('sched');if(dialogOpen('#dh'))keys.add('orders');Object.keys(ES).forEach(k=>{if(!keys.has(k)){ES[k].close();delete ES[k];ST.open[k]=false}});const routes={team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],plan:['plan'],prepLibrary:['prepLibrary'],sched:['sched']};keys.forEach(k=>{const r=routes[k];if(r)listen(k,r[0],r[1])})};
+const streams=()=>{const keys=new Set(['team']);if(tab==='order'){keys.add('catalog');keys.add('writeoffs')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs')}if(tab==='prep'){keys.add('prep');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins')}if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(dialogOpen('#dh'))keys.add('orders');Object.keys(ES).forEach(k=>{if(!keys.has(k)){ES[k].close();delete ES[k];ST.open[k]=false}});const routes={team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],plan:['plan'],prepLibrary:['prepLibrary'],prepPins:['prepPins'],writeoffs:['writeoffs/'+(tab==='writeoff'?wd:dAdd(0))],sched:['sched']};keys.forEach(k=>{const r=routes[k];if(r)listen(k,r[0],r[1])})};
 // ---------- каталог ----------
 const cat0=()=>DATA.catalog||{};
 const prods=()=>PC||(PC=[...base.filter(p=>!(cat0().hidden||{})[ek(p.id)]).map(p=>{const e=(cat0().edits||{})[ek(p.id)];return e?{...p,n:e.n||p.n,u:e.u||p.u}:p}),...Object.entries(cat0().custom||{}).map(([k,v])=>({id:'c:'+k,k,n:v.n,c:v.c,u:v.u}))].sort((a,b)=>a.n.localeCompare(b.n,'ru')));
@@ -116,19 +117,23 @@ const rAdm=()=>{const b=$('#edb');b.textContent='Режим правки тов�
 const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const hashText=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return 'l'+h.toString(36)};
 const libItems=()=>Object.entries(DATA.prepLibrary||{}).map(([id,v])=>({id,...v})).filter(v=>v&&v.t);
-const rememberPrep=(t,w)=>{if(!t||!t.t||!w)return;const id=hashText(nt(t.t));mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',by:{id:w.id,n:w.n},usedAt:Date.now()})};
-const rLibrary=()=>{const q=nt($('#libq').value),items=libItems().filter(i=>!q||nt(i.t).includes(q)).sort((a,b)=>(b.usedAt||0)-(a.usedAt||0));$('#libcount').textContent=`${items.length} сохранено`;$('#liblist').innerHTML=items.length?items.map(i=>`<div class="it"><div class="n">${esc(i.t)}${i.q?`<i>${esc(i.q)}</i>`:''}<i>${i.by?`Готовил: ${esc(i.by.n)} · `:''}${i.usedAt?new Date(i.usedAt).toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}):'Ранее'}</i></div><button class="p" data-a="libadd" data-id="${esc(i.id)}">＋ В день</button></div>`).join(''):'<div class="em">История пока пуста. Отмеченные заготовки появятся здесь.</div>'};
+const rememberPrep=(t,w)=>{if(!t||!t.t||!w)return;const old=libItems().find(i=>nt(i.t)===nt(t.t)),id=old?old.id:hashText(nt(t.t));mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',by:{id:w.id,n:w.n},usedAt:Date.now()})};
+const rLibrary=()=>{const q=nt($('#libq').value),items=libItems().filter(i=>!q||nt(i.t).includes(q)).sort((a,b)=>(b.usedAt||0)-(a.usedAt||0));$('#libcount').textContent=`${items.length} сохранено`;$('#liblist').innerHTML=items.length?items.map(i=>`<article class="libitem"><div class="libname">${esc(i.t)}</div><div class="libmeta">${i.q?`${esc(i.q)} · `:''}${i.g&&i.g!=='main'?`${esc(gname(i.g))} · `:''}${i.by?`Готовил: ${esc(i.by.n)} · `:'Запись в архиве · '}${i.usedAt?new Date(i.usedAt).toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}):'Ранее'}</div><div class="lib-actions"><button class="p" data-a="libadd" data-id="${esc(i.id)}">＋ В день</button><button data-a="libedit" data-id="${esc(i.id)}">✎ Изменить</button><button class="d" data-a="libdelete" data-id="${esc(i.id)}">Удалить</button></div></article>`).join(''):'<div class="em">История пока пуста. Добавьте заготовку или отметьте её выполненной.</div>'};
+const libraryDialog=item=>{const groups=pgroups();$('#lltitle').textContent=item?'Изменить заготовку в архиве':'Добавить заготовку в архив';$('#dl').dataset.id=item?item.id:'';$('#llt').value=item?item.t:'';$('#llq').value=item?item.q||'':'';$('#llg').innerHTML=groups.map(g=>`<option value="${esc(g.id)}"${(item?item.g||'main':qg)===g.id?' selected':''}>${esc(g.n)}</option>`).join('');$('#dl').showModal();$('#llt').focus()};
 const dm=()=>(DATA.prep||{})[pd]||{},dayTasks=()=>Object.values(dm());
 const pgroups=()=>[{id:'main',n:'Основные'},{id:'banq',n:'Банкет'},...Object.entries((DATA.plan||{}).groups||{}).map(([id,v])=>({id,n:v.n}))];
 const gname=g=>(pgroups().find(x=>x.id===g)||{n:'Другое'}).n;
+const WO_REASONS=[['spoiled','Испортился или повреждён'],['expired','Истёк срок годности'],['storage','Нарушены условия хранения'],['other','Другая причина']];
+const woReason=id=>(WO_REASONS.find(x=>x[0]===id)||WO_REASONS[3])[1];
+const ruCount=(n,one,two,five)=>{const a=n%100,b=n%10;return a>=11&&a<=14?five:b===1?one:b>=2&&b<=4?two:five};
 const planItems=()=>Object.entries((DATA.plan||{}).items||{}).map(([id,v])=>({id,...v})).filter(i=>i.t);
-const rPrep=()=>{const ts=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),library=DATA.prepLibrary||{};ts.filter(t=>t.done&&t.by&&!library[hashText(nt(t.t))]).forEach(t=>rememberPrep(t,t.by));
+const rPrep=()=>{const ts=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),remembered=new Set(libItems().map(i=>nt(i.t)));ts.filter(t=>t.done&&t.by&&!remembered.has(nt(t.t))).forEach(t=>{rememberPrep(t,t.by);remembered.add(nt(t.t))});
 const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),gi=g=>Math.max(0,pgroups().findIndex(x=>x.id===(g||'main'))),td=ts.filter(t=>!t.done).sort((a,b)=>gi(a.g)-gi(b.g)||(a.c||0)-(b.c||0)),k=team();
 const sel=t=>`<select class="who" data-by="${t.id}"><option value="">Кто?</option>${k.map(c=>`<option value="${c.id}"${t.by&&t.by.id===c.id?' selected':''}>${esc(c.n)}</option>`).join('')}${t.by&&!k.some(c=>c.id===t.by.id)?`<option value="${esc(t.by.id)}" selected>${esc(t.by.n)}</option>`:''}</select>`;
 const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn"><b>${esc(t.t)}</b>${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.q?`<i>${esc(t.q)}</i>`:''}${t.done&&t.by?`<small>✓ ${esc(t.by.n)} · ${tm(t.at)}</small>`:''}</div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
 $('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):'<div class="em">На этот день заготовок нет.<br>Добавьте её в общий список ниже или выберите из истории.</div>';
 $('#pfill').style.width=ts.length?Math.round(dn.length/ts.length*100)+'%':'0%';$('#pinfo').textContent=`${day(pd)} · выполнено ${dn.length} из ${ts.length}`;
-$('#pdate').value=pd;$('#pd0').className='chip'+(pd===dAdd(0)?' on':'');$('#pd1').className='chip'+(pd===dAdd(1)?' on':'')};
+$('#pdate').value=pd;$('#pd0').className='chip'+(pd===dAdd(0)?' on':'');$('#pd1').className='chip'+(pd===dAdd(1)?' on':'');const pinned=!!(DATA.prepPins||{})[pd],pinButton=$('#ppin'),dates=Object.keys(DATA.prepPins||{}).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&(DATA.prepPins||{})[dt]).sort();pinButton.textContent=pinned?'📌 День закреплён':'📌 Закрепить день';pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}" aria-current="${dt===pd?'date':'false'}">📌 ${esc(new Date(dt+'T12:00:00').toLocaleDateString('ru',{weekday:'short',day:'2-digit',month:'2-digit'}))}</button>`).join('')};
 const rPlan=()=>{const gs=pgroups(),its=planItems(),m=dm();
 $('#qcount').textContent=`${its.length} в списке · ${Object.keys(m).length} на день`;
 $('#qgroups').innerHTML=gs.map(g=>`<button class="chip${qg===g.id?' on':''}" data-a="qgrp" data-id="${g.id}">${esc(g.n)}<small>${its.filter(i=>(i.g||'main')===g.id).length} в списке · ${Object.values(m).filter(t=>(t.g||'main')===g.id).length} на день</small></button>`).join('')+`<button class="chip" data-a="qnewg">＋ Группа</button>`+(!['main','banq'].includes(qg)?`<button class="chip" style="color:var(--rd)" data-a="qdelg">🗑 Удалить группу</button>`:'');
@@ -138,13 +143,14 @@ $('#qcp').hidden=Object.keys(m).length>0};
 const P2=n=>String(n).padStart(2,'0'),SC=()=>DATA.sched||{};
 const rSched=()=>{const k=team(),S=SC(),ed2=se&&isAdmin(),color=id=>{const c=k.find(x=>x.id===id);return c&&PALETTE.includes(c.color)?c.color:hashColor(id)};if(sf!=='all'&&!k.some(c=>c.id===sf))sf='all';
 $('#sfilter').innerHTML=`<button class="chip${sf==='all'?' on':''}" data-a="sfil" data-id="all">Все</button>`+k.map(c=>`<button class="chip cook-chip${sf===c.id?' on':''}" style="--cook:${color(c.id)}" data-a="sfil" data-id="${c.id}"><i class="cook-dot"></i>${esc(c.n)}<small>${esc(c.r)}</small></button>`).join('');
-const[y,m]=sm.split('-').map(Number),off=(new Date(y,m-1,1,12).getDay()+6)%7,dim=new Date(y,m,0).getDate(),today=dAdd(0),filterColor=sf==='all'?'':'--cook:'+color(sf);
+const[y,m]=sm.split('-').map(Number),off=(new Date(y,m-1,1,12).getDay()+6)%7,dim=new Date(y,m,0).getDate(),today=dAdd(0),pins=DATA.prepPins||{},filterColor=sf==='all'?'':'--cook:'+color(sf);
 $('#smt').textContent=new Date(y,m-1,1,12).toLocaleDateString('ru',{month:'long',year:'numeric'});
 let c='';for(let i=0;i<off;i++)c+='<i></i>';
 for(let d=1;d<=dim;d++){const dt=`${y}-${P2(m)}-${P2(d)}`;let inner='',has=0;
-if(sf==='all'){const rows=k.filter(x=>isWork(S[x.id]&&S[x.id][dt]));has=rows.length;inner=has?`<small class="dots">${rows.slice(0,7).map(x=>`<i style="--cook:${color(x.id)}"></i>`).join('')}</small><small>${has} чел.</small>`:''}
+if(sf==='all'){const rows=k.filter(x=>isWork(S[x.id]&&S[x.id][dt]));has=rows.length;inner=has?`<small class="marks" aria-label="Работают: ${esc(rows.map(x=>x.n).join(', '))}">${rows.slice(0,3).map(x=>`<b style="--cook:${color(x.id)};color:${color(x.id)}">Р</b>`).join('')}${has>3?`<em>+${has-3}</em>`:''}</small>`:''}
 else{const s=(S[sf]||{})[dt];has=isWork(s);inner=has?`<small>${esc(workLabel(s))}</small>`:''}
-c+=`<button class="dc${has?' wk':''}${dt===today?' td':''}${ssel.has(dt)?' sl':''}"${filterColor?` style="${filterColor}"`:''} data-a="sday" data-id="${dt}"><b>${d}</b>${inner}</button>`}
+const pin=pins[dt]?'<small class="day-pin" aria-label="Закреплённый день подготовки">📌</small>':'';
+c+=`<button class="dc${has?' wk':''}${ssel.has(dt)?' sl':''}"${filterColor?` style="${filterColor}"`:''} data-a="sday" data-id="${dt}"><b>${d}</b>${pin}${inner}</button>`}
 $('#sgrid').innerHTML=c;
 let l='',shown=0;const lim=sf==='all'?10:16;
 for(let i=0;i<90&&shown<lim;i++){const dt=dAdd(i),t=dt===today?' · сегодня':'';
@@ -153,37 +159,44 @@ else{const s=(S[sf]||{})[dt];if(isWork(s)){shown++;l+=`<div class="sh"><b>${esc(
 $('#slist').innerHTML=l||'<div class="em">Ближайших смен нет.</div>';
 $('#sedit').hidden=!ed2;$('#sbtn').textContent=ed2?'✓ Готово':'✎ Править график';
 const cc=k.find(x=>x.id===sf);$('#sedinfo').textContent=sf==='all'?'Выберите повара выше, чтобы отметить ему рабочие дни. В календаре появится цветная отметка Р.':`${cc?cc.n:''}: выбрано дней — ${ssel.size}. Нажимайте на дни в календаре.`};
+const rWoCats=()=>{$('#wocats').innerHTML=`<button class="chip${wcat==='all'?' on':''}" data-a="wocat" data-id="all">Все</button>`+cats().map(c=>`<button class="chip${wcat===c.id?' on':''}" data-a="wocat" data-id="${esc(c.id)}">${c.e} ${esc(c.n.split(' и ')[0].split(',')[0])}</button>`).join('')};
+const rWoProducts=()=>{const q=wq.trim().toLocaleLowerCase('ru'),ps=prods().filter(p=>(wcat==='all'||p.c===wcat)&&(!q||p.n.toLocaleLowerCase('ru').includes(q))),cs=cats();let h='';for(const c of cs){const rows=ps.filter(p=>p.c===c.id);if(rows.length)h+=(wcat==='all'||q?`<div class="gh">${c.e} ${esc(c.n)}</div>`:'')+rows.map(p=>`<div class="it"><div class="n">${esc(p.n)}<i>${esc(p.u)}</i></div><button class="p" data-a="woopen" data-id="${esc(p.id)}">＋ Списать</button></div>`).join('')}$('#wocatalogcount').textContent=`${ps.length} товаров`;$('#woproducts').innerHTML=h||'<div class="em">Товары не найдены. Добавьте их во вкладке «Заказ».</div>'};
+const rWoLog=()=>{const rows=Object.entries(((DATA.writeoffs||{})[wd])||{}).map(([id,v])=>({id,...v})).filter(v=>v&&v.name).sort((a,b)=>(b.updated||b.created||0)-(a.updated||a.created||0));$('#wocount').textContent=`${rows.length} ${ruCount(rows.length,'запись','записи','записей')}`;$('#wolog').innerHTML=rows.length?rows.map(v=>`<article class="wo-entry"><div class="wo-entry-head"><b>${esc(v.name)}</b><strong>${esc(fmtQ(v.qty))} ${esc(v.unit||'')}</strong></div><div class="libmeta">${esc(woReason(v.reason))}${v.note?` · ${esc(v.note)}`:''}${v.by&&v.by.n?` · Списал: ${esc(v.by.n)}`:''}</div><div class="lib-actions"><button data-a="woedit" data-id="${esc(v.id)}">✎ Изменить</button><button class="d" data-a="wodel" data-id="${esc(v.id)}">Удалить</button></div></article>`).join(''):'<div class="em">За выбранный день списаний нет.</div>'};
+const rWriteoff=()=>{$('#woDate').value=wd;rWoCats();rWoProducts();rWoLog()};
+const woDialog=(p,entry)=>{woDraft={product:p,id:entry?entry.id:'',created:entry?entry.created:0};$('#woTitle').textContent=entry?'Изменить списание':'Новое списание';$('#woProduct').textContent=p.n;$('#woUnit').textContent=p.u;$('#woQty').value=entry?entry.qty:'';$('#woReason').value=entry?entry.reason:'spoiled';$('#woNote').value=entry?entry.note||'':'';$('#woBy').innerHTML='<option value="">Не указан</option>'+team().map(k=>`<option value="${esc(k.id)}">${esc(k.n)}</option>`).join('');$('#woBy').value=entry&&entry.by?entry.by.id:L.me&&team().some(k=>k.id===L.me.id)?L.me.id:'';$('#woModal').showModal();$('#woQty').focus()};
 const rDiag=()=>{const o=Object.keys(ES).map(k=>k+':'+(ST.open[k]?'✓':'✗')).join('  ');
 $('#dinfo').textContent=[`Версия: ${VER}`,`Режим: ${DEMO?'ДЕМО (config.js не заполнен)':'облако'}`,`База: ${DB||'не найдена'}`,`Потоки: ${o||'—'}`,`В очереди на отправку: ${L.out.length}`,`Последняя ошибка: ${ST.lastErr||'нет'}`,`Телефон в сети: ${navigator.onLine?'да':'нет'}`,`Повара: ${team().length} · заказы: ${ords().length} · заготовок на день: ${Object.keys(dm()).length}`,`Устройство: ${DEV}`].join('\n');$('#dlog').textContent=''};
 const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filter(o=>!q||(o.cook.n+' '+o.date+' '+day(o.date)+' '+o.items.map(i=>i.n).join(' ')).toLowerCase().includes(q));
 $('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc(o.items.slice(0,5).map(i=>i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em">История пока пуста</div>'};
 function render(){raf=0;const d={...D};for(const k in D)delete D[k];
 if(d.team){if(isAdmin())ensureTeamColors();rCooks();rPCooks();rPrep();rSched();if(dialogOpen('#dt'))rTeam()}
-if(d.sched)rSched();
-if(d.catalog){syncDraft();rCats();rList();rBar();if(dialogOpen('#dt'))rAdm()}
+if(d.sched||d.prepPins)rSched();
+if(d.catalog){syncDraft();rCats();rList();rBar();if(tab==='writeoff'){rWoCats();rWoProducts()}if(dialogOpen('#dt'))rAdm()}
+if(d.writeoffs&&tab==='writeoff')rWoLog();
 if(d.orders&&dialogOpen('#dh'))rHist();
-if(d.prep||d.plan){rPrep();rPlan()}
+if(d.prep||d.plan||d.prepPins||d.prepLibrary)rPrep();
+if(d.prep||d.plan)rPlan();
 if(d.prepLibrary)rLibrary();
 clearTimeout(ct);ct=setTimeout(()=>LS.set('vip3-cache',DATA),800)}
 // ---------- заказ ----------
-const msg=o=>{const L2=[`🧾 Заказ на ${day(o.date)}`,`👨‍🍳 ${o.cook.n}, ${o.cook.r}`,`🕒 оформлен в ${tm(o.created)}`,''];
+const msg=(o,includeTodayWriteoffs=false)=>{const L2=[`🧾 Заказ на ${day(o.date)}`,`👨‍🍳 ${o.cook.n}, ${o.cook.r}`,`🕒 оформлен в ${tm(o.created)}`,''];
 const cs=[...BASE,...Object.entries(cat0().groups||{}).map(([k,v])=>[k,v.n,'📦'])],seen=new Set(),ln=i=>`• ${i.n} — ${fmtQ(i.qty)} ${i.u}`;
 for(const[id,n,e]of cs){const g=o.items.filter(i=>i.c===id);if(!g.length)continue;g.forEach(i=>seen.add(i.id));L2.push(`${e} ${n}`,g.sort((a,b)=>a.n.localeCompare(b.n,'ru')).map(ln).join('\n'),'')}
 const r=o.items.filter(i=>!seen.has(i.id));if(r.length)L2.push('📦 Другое',r.map(ln).join('\n'),'');
-if(o.note)L2.push('💬 '+o.note,'');L2.push(`Всего: ${o.items.length} поз.`);return L2.join('\n')};
+if(o.note)L2.push('💬 '+o.note,'');L2.push(`Всего: ${o.items.length} поз.`);if(includeTodayWriteoffs){const date=dAdd(0),rows=Object.values(((DATA.writeoffs||{})[date])||{}).filter(v=>v&&v.name);if(rows.length)L2.push('',`🗑 Списание за ${day(date)}`,rows.map(v=>`• ${v.name} — ${fmtQ(v.qty)} ${v.unit||''} — ${woReason(v.reason)}${v.note?` (${v.note})`:''}`).join('\n'))}return L2.join('\n')};
 const snap=()=>{const d=L.draft,old=d.editId&&ords().find(o=>o.id===d.editId);return{id:d.editId||'o'+uid(),created:old?old.created:Date.now(),updated:Date.now(),date:d.date,cook:d.cook,note:d.note.trim(),items:dI().map(i=>({...i})),copied:old?!!old.copied:false}};
 const valid=()=>{if(!cnt()){snd.warn();vib(80);toast('Добавьте хотя бы один товар');return 0}if(!L.draft.cook){snd.warn();vib(80);toast('Выберите повара');$('#dr').close();$('#cooks').classList.add('bad');setTimeout(()=>$('#cooks').classList.remove('bad'),1500);window.scrollTo({top:0,behavior:'smooth'});return 0}return 1};
 const upsert=o=>mut('PUT','orders/'+o.id,o);
 const ask=(t,h,y='Да',n='Нет, вернуться')=>new Promise(res=>{const d=$('#dc');$('#ct').textContent=t;$('#cb').innerHTML=h;$('#cy').textContent=y;$('#cn').textContent=n;snd.ask();vib(40);const f=v=>()=>{d.close();res(v)};$('#cy').onclick=f(true);$('#cn').onclick=f(false);d.oncancel=()=>res(false);d.showModal()});
 const clip=async t=>{try{await navigator.clipboard.writeText(t);return 1}catch{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch{return 0}}};
-const copyOrder=async()=>{if(!valid())return;const o=snap();const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(msg(o))}</pre>`,'Да, копировать','Нет, вернуться');if(!yes)return;
-if(!await clip(msg(o))){snd.warn();toast('Не удалось скопировать. Разрешите доступ к буферу');return}
+const copyOrder=async()=>{if(!valid())return;const o=snap(),message=msg(o,o.date===dAdd(1));const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(message)}</pre>`,'Да, копировать','Нет, вернуться');if(!yes)return;
+if(!await clip(message)){snd.warn();toast('Не удалось скопировать. Разрешите доступ к буферу');return}
 o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();$('#dr').close();rAll();snd.ok();vib([60,40,60]);toast('✓ Скопировано и сохранено в истории')};
 const saveOrder=()=>{if(!valid())return;const o=snap();upsert(o);L.draft.editId=o.id;saveL();snd.ok();toast('✓ Сохранено для всех. Можно редактировать')};
 const open=id=>{rRev();$(id).showModal()};
 const need=()=>{snd.warn();toast('Нужен вход в админ-панель');ACT.admin()};
 const rep=id=>{const p=prods().find(x=>x.id===id),r=document.querySelector(`[data-r="${cssEsc(id)}"]`);if(p&&r)r.outerHTML=row(p);rBar();if(dialogOpen('#dr'))rRev()};
-const ui=()=>{rCats();rList();rAdm();rSched()};
+const ui=()=>{rCats();rList();rAdm();rSched();if(tab==='writeoff')rWriteoff()};
 const afterLogin=()=>{ensureTeamColors();ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();$('#dt').showModal()}};
 const authErr=m=>/TOO_MANY/.test(m)?'Google временно ограничил вход. Подождите и повторите':/CREDENTIAL_TOO_OLD/.test(m)?'Войдите заново и повторите':'Неверный пароль';
 const ACT={
@@ -199,7 +212,7 @@ logout(){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');edit=0;$('#dt').clo
 admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();$('#dt').showModal()}else{$('#ap').value='';$('#da').showModal();$('#ap').focus()}},
 toggled(){edit=!edit;ui();snd.tap()},
 unhide(){if(!isAdmin())return need();mut('DELETE','catalog/hidden');snd.ok()},
-tab(id){if(id==='plan')id='prep';tab=id;snd.tap();$('#vOrder').hidden=id!=='order';$('#vPrep').hidden=id!=='prep';$('#vSched').hidden=id!=='sched';$('#bar').hidden=id!=='order';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.id===id));if(id==='prep'){rPrep();rPlan();rLibrary()}if(id==='sched')rSched();streams()},
+tab(id){if(id==='plan')id='prep';tab=id;snd.tap();$('#vOrder').hidden=id!=='order';$('#vPrep').hidden=id!=='prep';$('#vSched').hidden=id!=='sched';$('#vWriteoff').hidden=id!=='writeoff';$('#bar').hidden=id!=='order';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.id===id));if(id==='prep'){rPrep();rPlan();rLibrary()}if(id==='sched')rSched();if(id==='writeoff')rWriteoff();streams()},
 add(id){const p=prods().find(x=>x.id===id);if(!p)return;L.draft.items[id]={id,n:p.n,c:p.c,u:L.lu[id]||p.u,qty:1};saveL();snd.add();vib(20);rep(id)},
 inc(id){const i=L.draft.items[id];if(i){i.qty=Math.round((i.qty+1)*100)/100;saveL();snd.tap();rep(id)}},
 dec(id){const i=L.draft.items[id];if(!i)return;i.qty=Math.round((i.qty-1)*100)/100;if(i.qty<=0){delete L.draft.items[id];snd.warn()}else snd.tap();saveL();rep(id)},
@@ -207,6 +220,11 @@ rm(id){delete L.draft.items[id];saveL();snd.warn();rep(id)},
 pick(id){const k=team().find(x=>x.id===id);L.draft.cook=k;L.me=k;saveL();snd.add();rCooks();rPCooks()},
 me(id){L.me=team().find(x=>x.id===id);saveL();snd.add();rPCooks()},
 cat(id){cat=id;snd.tap();rCats();rList()},
+wocat(id){wcat=id;snd.tap();rWoCats();rWoProducts()},
+woopen(id){const p=prods().find(x=>x.id===id);if(p)woDialog(p,null)},
+woedit(id){const e=(((DATA.writeoffs||{})[wd])||{})[id];if(!e)return;const current=prods().find(x=>x.id===e.pid),p={...(current||{id:e.pid||id,n:e.name||'Товар из старого каталога',u:e.unit||''}),n:e.name||current&&current.n||'Товар из старого каталога',u:e.unit||current&&current.u||''};woDialog(p,{...e,id})},
+wosave(){if(!woDraft||!woDraft.product)return;const qty=fq($('#woQty').value),reason=$('#woReason').value,note=$('#woNote').value.trim();if(!qty){snd.warn();toast('Укажите количество больше нуля');$('#woQty').focus();return}if(!WO_REASONS.some(x=>x[0]===reason)){snd.warn();toast('Выберите причину списания');return}if(reason==='other'&&!note){snd.warn();toast('Опишите причину списания в комментарии');$('#woNote').focus();return}const p=woDraft.product,k=team().find(x=>x.id===$('#woBy').value),id=woDraft.id||uid(),now=Date.now();mut('PUT',`writeoffs/${wd}/${id}`,{pid:p.id,name:p.n,qty,unit:p.u,reason,note,by:k?{id:k.id,n:k.n}:null,created:woDraft.created||now,updated:now});$('#woModal').close();woDraft=null;snd.ok();toast('✓ Списание сохранено');rWoLog()},
+async wodel(id){const e=(((DATA.writeoffs||{})[wd])||{})[id];if(!e||!await ask('Удалить запись о списании?',`<p>${esc(e.name)} — ${esc(fmtQ(e.qty))} ${esc(e.unit||'')}</p>`,'Да, удалить','Нет'))return;mut('DELETE',`writeoffs/${wd}/${id}`);snd.warn();toast('Запись удалена');rWoLog()},
 review(){snd.tap();open('#dr')},close(){snd.tap();document.querySelectorAll('dialog[open]').forEach(d=>d.close())},
 copy:copyOrder,save:saveOrder,
 async clear(){if(!cnt())return;if(await ask('Очистить список?','<p>Все выбранные товары будут убраны из текущего заказа.</p>','Да, очистить','Нет, оставить')){L.draft=blank(L.draft.cook);saveL();rAll();rRev();snd.warn()}},
@@ -225,10 +243,12 @@ addgrp(){const n=$('#gn').value.trim();if(!n){snd.warn();toast('Введите �
 async delg(){if(!isAdmin())return need();const g=cats().find(x=>x.id===cat&&x.g);if(!g)return;const ps=prods().filter(p=>p.c===g.id);if(!await ask('Удалить группу?',`<p>«${esc(g.n)}»${ps.length?` и товаров в ней: ${ps.length}`:''} будут удалены у всех.</p>`,'Да, удалить','Нет'))return;ps.forEach(p=>{mut('DELETE','catalog/custom/'+p.k);delete L.draft.items[p.id]});mut('DELETE','catalog/groups/'+g.id);cat='all';saveL();rAll();snd.warn()},
 async open(id){const o=ords().find(x=>x.id===id);if(!o)return;if(cnt()&&L.draft.editId!==id&&!await ask('Заменить текущий заказ?','<p>Несохранённый черновик будет заменён выбранным заказом из истории.</p>','Да, открыть','Нет, вернуться'))return;
 L.draft={cook:o.cook,date:o.date,note:o.note||'',items:Object.fromEntries(o.items.map(i=>[i.id,{...i}])),editId:o.id};saveL();$('#dh').close();rAll();snd.ok();toast('Заказ открыт. Правьте и копируйте снова')},
-async hcopy(id){const o=ords().find(x=>x.id===id);if(o&&await clip(msg(o))){mut('PATCH','orders/'+id,{copied:true});rHist();snd.ok();toast('✓ Скопировано')}else{snd.warn();toast('Не удалось скопировать')}},
+async hcopy(id){const o=ords().find(x=>x.id===id);if(o&&await clip(msg(o,o.date===dAdd(1)))){mut('PATCH','orders/'+id,{copied:true});rHist();snd.ok();toast('✓ Скопировано')}else{snd.warn();toast('Не удалось скопировать')}},
 async hdel(id){if(!isAdmin())return need();if(!await ask('Удалить заказ?','<p>Заказ будет удалён из истории у всех.</p>','Да, удалить','Нет'))return;mut('DELETE','orders/'+id);if(L.draft.editId===id)L.draft.editId=null;saveL();rHist();snd.warn()},
 // заготовки
-pday(n){pd=dAdd(+n);streams();rPrep();rPlan();snd.tap()},
+pday(n){pd=dAdd(+n);LS.set('vip3-prep-date',pd);streams();rPrep();rPlan();snd.tap()},
+ptpin(){const pinned=!!(DATA.prepPins||{})[pd];mut(pinned?'DELETE':'PUT','prepPins/'+pd,pinned?undefined:true);snd.tap();toast(pinned?'День откреплён':'День подготовки закреплён');rPrep();rSched()},
+ppick(dt){if(!(DATA.prepPins||{})[dt])return;pd=dt;LS.set('vip3-prep-date',pd);streams();rPrep();rPlan();snd.tap()},
 ptog(id){const t=((DATA.prep||{})[pd]||{})[id];if(!t)return;const p=`prep/${pd}/${id}`;
 if(t.done){mut('PATCH',p,{done:null,at:null});snd.tap();return}
 const w=t.by||L.me;if(!w){snd.warn();vib(80);toast('Выберите повара справа или вверху «Я работаю»');const s=document.querySelector(`[data-by="${id}"]`);if(s){s.classList.add('bad');setTimeout(()=>s.classList.remove('bad'),1500)}return}
@@ -267,9 +287,13 @@ mut('PUT',`prep/${pd}/${id}`,{t:i.t,q:i.q||'',g:i.g||'main',lid:id,c:Date.now()}
 qall(){const m=dm();let n=0;planItems().filter(i=>(i.g||'main')===qg&&!m[i.id]).forEach((i,k)=>{mut('PUT',`prep/${pd}/${i.id}`,{t:i.t,q:i.q||'',g:i.g||'main',lid:i.id,c:Date.now()+k});n++});if(n){snd.ok();toast('✓ Добавлено в день: '+n)}},
 qnone(){const m=dm();let n=0;planItems().filter(i=>(i.g||'main')===qg&&m[i.id]&&!m[i.id].done).forEach(i=>{mut('DELETE',`prep/${pd}/${i.id}`);n++});if(n){snd.tap();toast('Убрано из дня: '+n+' (выполненные остаются)')}},
 async qdel(id){const i=planItems().find(x=>x.id===id);if(!i||!await ask('Удалить из списка?',`<p>${esc(i.t)}</p><p style="color:var(--mu)">Из уже созданных дней она не удаляется.</p>`,'Да, удалить','Нет'))return;mut('DELETE','plan/items/'+id);snd.warn()},
+libnew(){libraryDialog(null)},
+libedit(id){const i=libItems().find(x=>x.id===id);if(i)libraryDialog(i)},
+libsave(){const raw=$('#llt').value.trim().replace(/\s+/g,' '),q=$('#llq').value.trim().replace(/\s+/g,' '),g=$('#llg').value||'main',oldId=$('#dl').dataset.id||'';if(!raw){snd.warn();toast('Введите название заготовки');$('#llt').focus();return}const duplicate=libItems().find(i=>i.id!==oldId&&nt(i.t)===nt(raw));if(duplicate){snd.warn();toast('Такая заготовка уже есть в истории');return}const old=oldId?libItems().find(i=>i.id===oldId):null,id=oldId||hashText(nt(raw));mut('PUT','prepLibrary/'+id,{t:raw,q,g,by:old&&old.by?old.by:null,usedAt:old&&old.usedAt||Date.now()});$('#dl').close();snd.ok();toast(old?'Изменения сохранены':'Заготовка добавлена в историю');rLibrary()},
+async libdelete(id){const i=libItems().find(x=>x.id===id);if(!i||!await ask('Удалить заготовку из истории?',`<p>${esc(i.t)}</p><p style="color:var(--mu)">Записи в днях подготовки останутся без изменений.</p>`,'Да, удалить','Нет'))return;mut('DELETE','prepLibrary/'+id);snd.warn();toast('Удалено из истории')},
 libadd(id){const i=libItems().find(x=>x.id===id);if(!i)return;if(Object.values(dm()).some(t=>nt(t.t)===nt(i.t))){snd.warn();toast('Эта заготовка уже есть на выбранный день');return}mut('PUT',`prep/${pd}/${uid()}`,{t:i.t,q:i.q||'',g:i.g||'main',lid:i.id,c:Date.now()});snd.add();toast('✓ Добавлено из истории')}
 };
-const rAll=()=>{rCooks();rPCooks();rCats();rList();rBar();rPrep();rPlan();rLibrary();rSched()};
+const rAll=()=>{rCooks();rPCooks();rCats();rList();rBar();rPrep();rPlan();rLibrary();rSched();if(tab==='writeoff')rWriteoff()};
 $('#dh').addEventListener('close',streams);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.id);else if(e.target.tagName==='DIALOG'&&!e.target.id.startsWith('dc'))e.target.close()});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
@@ -277,10 +301,12 @@ if(d.q){const i=L.draft.items[d.q],v=fq(t.value);if(!i)return;if(v){i.qty=v;snd.
 else if(d.un){const i=L.draft.items[d.un];if(i){i.u=t.value;L.lu[d.un]=t.value;saveL();snd.tap();rep(d.un)}}
 else if(d.by){const k=team().find(x=>x.id===t.value);mut('PATCH',`prep/${pd}/${d.by}`,{by:k?{id:k.id,n:k.n}:null});snd.add()}});
 let rf;$('#q').addEventListener('input',e=>{qs=e.target.value;cancelAnimationFrame(rf);rf=requestAnimationFrame(rList)});
+let wrf;$('#woq').addEventListener('input',e=>{wq=e.target.value;cancelAnimationFrame(wrf);wrf=requestAnimationFrame(rWoProducts)});
+$('#woDate').addEventListener('change',e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)){wd=e.target.value;streams();rWriteoff()}});
 $('#date').addEventListener('change',e=>{L.draft.date=e.target.value||dAdd(1);saveL()});
 $('#note').addEventListener('input',e=>{L.draft.note=e.target.value;saveL()});
 $('#hq').addEventListener('input',rHist);$('#libq').addEventListener('input',rLibrary);
-const setPd=e=>{if(e.target.value){pd=e.target.value;streams();rPrep();rPlan()}};$('#pdate').addEventListener('change',setPd);
+const setPd=e=>{if(e.target.value){pd=e.target.value;LS.set('vip3-prep-date',pd);streams();rPrep();rPlan()}};$('#pdate').addEventListener('change',setPd);
 $('#qt').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.qadd()});
 $('#qq').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.qadd()});
 $('#qgn').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.qaddg()});
