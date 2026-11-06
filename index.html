@@ -36,8 +36,7 @@
 </section>
 <section id="vPrep" hidden>
 <div class="card"><div class="lbl">Я работаю</div><div class="chips" id="pcooks"></div></div>
-<div class="card"><div class="lbl">Заготовки на <small id="pselected"></small></div><button class="chip p-today" id="ptoday" data-a="pday" data-id="today">📌 Сегодня</button><button class="chip" data-a="pday" data-id="-1">📅 Вчера</button><div class="pdate-strip" id="pdates" aria-label="Дни подготовки"></div><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false">📌 Закрепить день</button><input type="date" id="pdate" class="f"><div class="small" id="pinfo"></div><div class="pbar"><i id="pfill"></i></div><div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div></div>
-<div class="acts" style="margin: 8px 0"><button class="p" data-a="staffing">👨‍🍳 Персонал на завтра</button></div>
+<div class="card"><div class="lbl">Заготовки на <small id="pselected"></small></div><button class="chip p-today" id="ptoday" data-a="pday" data-id="today">📌 Сегодня</button><div class="pdate-strip" id="pdates" aria-label="Дни подготовки"></div><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false">📌 Закрепить день</button><input type="date" id="pdate" class="f"><div class="small" id="pinfo"></div><div class="pbar"><i id="pfill"></i></div><div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div></div>
 <div id="plist"></div>
 <section class="card" aria-label="Общий план заготовок">
 <div class="lbl"><span>Общий план и список заготовок</span><small id="qcount"></small></div>
@@ -91,16 +90,17 @@
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
-<dialog id="ds"><h2>Персонал на завтра</h2><div id="sl"></div><div class="acts"><button class="p" data-a="sapply">Сохранить</button><button class="g" data-a="close">Закрыть</button></div></dialog>
-<dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
-<dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
+
 <dialog id="dp"><h2>Новый товар</h2>
 <div class="lbl">Название</div><input id="pn" maxlength="90" placeholder="Например, соус гранатовый">
 <div class="row2"><div><div class="lbl">Группа</div><select id="pc"></select></div><div><div class="lbl">Единица</div><select id="pu"></select></div></div>
-<div class="acts"><button class="p" data-a="addprod">Добавить в каталог</button></div></dialog>
-<dialog id="dg"><h2>Новая группа</h2><input id="gn" maxlength="40" placeholder="Например, группа напитки"></div><div class="acts"><button class="p" data-a="addgrp">Создать</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<div class="acts"><button class="p" data-a="addprod">Добавить в каталог</button><button class="g" data-a="close">Отмена</button></div></dialog>
+
+<dialog id="dg"><h2>Новая группа</h2><input id="gn" maxlength="40" placeholder="Например, напитки"><div class="acts"><button class="p" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <div class="tg" id="tg" role="status"></div>
 
 <script src="config.js" defer></script>
