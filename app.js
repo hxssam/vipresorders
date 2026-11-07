@@ -75,7 +75,6 @@ async function api(m,p,b){if(!DB)throw new Error('nodb');const t=await tok();con
 let fl=0,retryAt=0,failures=0;
 async function flush(){if(fl||DEMO||!L.out.length||Date.now()<retryAt)return;fl=1;
 try{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){if([400,404].includes(e.status)){ST.err=ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;L.out.shift();saveL();snd.warn();toast('Не сохранено (код '+e.status+'). Проверьте соединение и правила Firebase');setSt();continue}if([401,403].includes(e.status)){ST.err=ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;snd.warn();toast('Нет прав. Проверьте правила Firebase или войдите как руководитель');setSt()}throw e}ST.err='';failures=0;retryAt=0;L.out.shift();saveL()}await bumpMeta()}catch{failures++;retryAt=Date.now()+Math.min(60000,1000*Math.pow(2,Math.min(failures-1,6)))}fl=0;setSt()}
-function mut(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v});if(!metaBroken){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
 const ES={};
 function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
 const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);es.__route=route;ST.open[key]=false;
@@ -432,8 +431,7 @@ if(!sa&&!window.Capacitor&&/iphone|ipad|ipod/i.test(navigator.userAgent))i.hidde
 i.onclick=async()=>{if(dp){dp.prompt();try{await dp.userChoice}catch{}dp=null;i.hidden=true}else alert('iPhone: нажмите «Поделиться» → «На экран Домой»')};
 addEventListener('appinstalled',()=>{i.hidden=true})})();
 
-
-/* Additional Shift Checklist & Safety Notice Integration */
+/* Safety & Dough Verification Checklist */
 window.KITCHEN_SAFETY_CHECKLIST = {
   doughClean: true,
   fridgeSocketRemoved: true,
