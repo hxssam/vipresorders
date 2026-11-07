@@ -131,7 +131,6 @@ body.modal-fallback-open:after{content:"";position:fixed;inset:0;background:#000
 .seg{display:flex;gap:3px;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:3px}
 .seg button{flex:1;min-height:38px;padding:4px;background:transparent;color:var(--mu);font-size:14px}
 .seg button.on{background:var(--ac);color:var(--bg)}
-.prow{display:flex;gap:6px;margin-top:8px}.prow input{flex:1;min-width:0;min-height:44px}.prow .pin-toggle{width:auto;margin:0;flex:none;padding:0 12px;min-height:44px}
 .ydr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:7px 2px;border-bottom:1px solid var(--ln)}.ydr:last-child{border:0}.ydr b{font-weight:600}.ydr i{font-style:normal;color:var(--mu);font-size:13px}.ydr small{margin-left:auto;color:var(--ac);font-size:12px;font-weight:700}.ydr.ok b:before{content:"✓ ";color:var(--ac)}
 .qp{background:var(--ac2);border-color:transparent;color:var(--ac);min-height:40px}
 .chips.wrap{flex-wrap:wrap;overflow:visible}
@@ -140,7 +139,7 @@ body.modal-fallback-open:after{content:"";position:fixed;inset:0;background:#000
 #shbox>summary,#ydbox>summary{font-weight:700}
 .wo-product-head .st{flex:none}.wo-product-head .st input{width:56px}.wo-product-head .st button{width:38px;min-height:40px}
 
-/* v5.9 — компактный интерфейс для телефона */
+/* v5.9 — компактный интерфейс для телефона (Исправленное переполнение в Заготовках) */
 .top{padding:8px 0 2px;gap:6px;flex-wrap:nowrap;align-items:center}
 .top h1{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.15;white-space:normal;overflow:visible;text-overflow:clip;margin:0}
 .top .ib{width:38px;min-height:38px;padding:0;font-size:16px;flex:none;border-radius:11px}
@@ -159,8 +158,13 @@ details.dn{margin-top:8px;border-top:1px solid var(--ln);padding-top:6px}
 details.dn>summary{font-size:14px;color:var(--mu)}
 .ell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pa3{display:grid;grid-template-columns:minmax(0,1fr) 84px 46px;gap:6px}.pa3 button{padding:0;font-size:22px}
-.prow{display:flex;gap:6px;margin-top:8px}.prow input{flex:1;min-width:0}
-.prow #pgst{flex:none;min-height:44px}
+
+/* تصحيح صف أزرار التاريخ والتثبيت وعدد الضيوف لتجنب التداخل وتوفير مساحة مرنة */
+.prow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.prow input[type="date"]{flex:1 1 120px;min-width:0;min-height:42px}
+.prow .pin-toggle{flex:0 0 auto;width:auto;margin:0;padding:8px 12px;min-height:42px}
+.prow #pgst{flex:1 1 140px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 .qpill{display:inline-block;font-style:normal;font-size:12px;font-weight:800;color:var(--ac);background:var(--ac2);border-radius:8px;padding:1px 8px;margin:3px 6px 0 0}
 .qpill.empty{color:var(--wa);background:transparent;border:1px dashed var(--wa)}
 .pn{cursor:pointer}
