@@ -431,3 +431,13 @@ const sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 if(!sa&&!window.Capacitor&&/iphone|ipad|ipod/i.test(navigator.userAgent))i.hidden=false;
 i.onclick=async()=>{if(dp){dp.prompt();try{await dp.userChoice}catch{}dp=null;i.hidden=true}else alert('iPhone: нажмите «Поделиться» → «На экран Домой»')};
 addEventListener('appinstalled',()=>{i.hidden=true})})();
+
+
+/* Additional Shift Checklist & Safety Notice Integration */
+window.KITCHEN_SAFETY_CHECKLIST = {
+  doughClean: true,
+  fridgeSocketRemoved: true,
+  getNotificationSummary: function() {
+    return "\n✨ جهاز العجين نظيف ✅\n🔌 تم إزالة قابس البوتجاز في قسم التبريد ✅";
+  }
+};
