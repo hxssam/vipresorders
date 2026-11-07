@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viip-kitchen-v10';
+const CACHE_NAME = 'viip-kitchen-v11-force';
 const ASSETS = [
   './',
   './index.html',
@@ -11,10 +11,10 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -25,23 +25,21 @@ self.addEventListener('activate', (e) => {
           if (k !== CACHE_NAME) return caches.delete(k);
         })
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const networked = fetch(e.request)
-        .then((res) => {
-          const cacheCopy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, cacheCopy));
-          return res;
-        })
-        .catch(() => cached);
-      return cached || networked;
-    })
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
