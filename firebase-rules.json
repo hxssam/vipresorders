@@ -1,0 +1,71 @@
+{
+  "rules": {
+    ".read": true,
+    "team": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "catalog": {
+      "edits": {
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+      },
+      "hidden": {
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+      },
+      "custom": {
+        "$id": {
+          ".write": "!data.exists() || (auth != null && auth.token.email == 'admin@vip.local')"
+        }
+      },
+      "groups": {
+        "$id": {
+          ".write": "!data.exists() || (auth != null && auth.token.email == 'admin@vip.local')"
+        }
+      }
+    },
+    "orders": {
+      ".indexOn": [
+        "created"
+      ],
+      "$id": {
+        ".write": "!data.exists() || newData.exists() || (auth != null && auth.token.email == 'admin@vip.local')"
+      }
+    },
+    "prep": {
+      "$date": {
+        "$id": {
+          ".write": true
+        }
+      }
+    },
+    "prepLibrary": {
+      ".write": true
+    },
+    "prepPins": {
+      ".write": true
+    },
+    "writeoffs": {
+      "$date": {
+        "$id": {
+          ".write": true
+        }
+      }
+    },
+    "plan": {
+      ".write": true
+    },
+    "sched": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "meta": {
+      ".write": true
+    },
+    "shifts": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "prepMeta": {
+      "$date": {
+        ".write": true
+      }
+    }
+  }
+}
