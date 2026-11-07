@@ -177,12 +177,12 @@ details.dn>summary{font-size:14px;color:var(--mu)}
 .tkrow{display:flex;gap:8px;align-items:center;margin-top:10px}.tkrow .st{flex:1;min-width:0}.tkrow .st input{flex:1;width:auto;min-width:0;font-size:20px;font-weight:700}.tkrow .st button{width:46px;min-height:46px}.tkrow select{width:92px;flex:none}
 #qfil,#libfil{padding-bottom:2px}
 
-/* Performance & Touch Optimizations */
+/* Mobile Touch & Hardware Acceleration Optimizations */
 * {
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent !important;
 }
-body, .task-card, .btn, button {
-    touch-action: manipulation;
+body, button, .chip, .it, .card {
+    touch-action: manipulation !important;
     transform: translateZ(0);
     backface-visibility: hidden;
 }
