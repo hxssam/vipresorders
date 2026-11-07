@@ -61,6 +61,11 @@
     },
     "shifts": {
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "prepMeta": {
+      "$date": {
+        ".write": true
+      }
     }
   }
 }
