@@ -55,6 +55,12 @@
     },
     "sched": {
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "meta": {
+      ".write": true
+    },
+    "shifts": {
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     }
   }
 }
