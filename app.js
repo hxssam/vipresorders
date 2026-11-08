@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='6.0';
+const VER='6.1';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 const UNITS=['кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
@@ -89,15 +89,17 @@ async function jget(p,q){const r=await fetchFast(`${DB}/${p}.json${q?'?'+q:''}`,
 const MV={};let metaBroken=0,pollBusy=0,tickN=0;
 const pendingFor=mk=>L.out.some(o=>mkey(o.p)===mk);
 const routeMap=()=>({team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],prepPrev:['prep/'+dAdd(-1,pd)],prepTom:['prep/'+dAdd(1)],prepToday:['prep/'+dAdd(0)],plan:['plan'],prepLibrary:['prepLibrary'],prepPins:['prepPins'],writeoffs:['writeoffs/'+(tab==='writeoff'?wd:dAdd(0))],sched:['sched'],shifts:['shifts/'+dAdd(1)],prepMeta:['prepMeta/'+pd],prepMetaTom:['prepMeta/'+dAdd(1)],prepMetaToday:['prepMeta/'+dAdd(0)],woPrev:['writeoffs/'+dAdd(-1)]});
-const activeKeys=()=>{const keys=new Set(['team','shifts']);if(tab==='order'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev');keys.add('prepTom');keys.add('prepToday');keys.add('prepMetaTom');keys.add('prepMetaToday')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins')}if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(dialogOpen('#dh')){keys.add('orders');keys.add('prepTom');keys.add('prepToday');keys.add('prepMetaTom');keys.add('prepMetaToday');keys.add('writeoffs');keys.add('woPrev')}return keys};
+const activeKeys=()=>{const keys=new Set(['team']);if(tab==='order'){keys.add('catalog');keys.add('shifts')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins')}if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
+const atPath=p=>{let o=DATA;for(const k of String(p).split('/')){if(o==null||typeof o!=='object')return null;o=o[k]}return o===undefined?null:o};
+const sig=v=>JSON.stringify(v===undefined?null:v);
 function onMeta(force){if(DEMO||!DB)return Promise.resolve();const routes=routeMap(),meta=DATA.meta||{},jobs=[];
 activeKeys().forEach(k=>{const r=routes[k];if(!r)return;const mk=mkey(r[0]),want=r[0]+'|'+(r[1]||'')+'#'+(meta[mk]||0);if(!force&&MV[k]===want)return;if(pendingFor(mk))return;
-jobs.push(jget(r[0],r[1]).then(d=>{if(pendingFor(mk))return;put('/'+r[0],d);MV[k]=want;dirty(r[0].split('/')[0])}))});
+jobs.push(jget(r[0],r[1]).then(d=>{if(pendingFor(mk))return;MV[k]=want;if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}))});
 return Promise.all(jobs)}
 async function pollMeta(force){if(pollBusy||DEMO||!DB||document.hidden)return;pollBusy=1;
 try{const sse=ST.open.meta&&!metaBroken;if(!sse&&!metaBroken)DATA.meta=(await jget('meta'))||{};const noMeta=!Object.keys(DATA.meta||{}).length;await onMeta(force||metaBroken||noMeta);ST.poll=Date.now()}catch{}
 pollBusy=0;setSt()}
-const streams=()=>{Object.keys(ES).forEach(k=>{if(k!=='meta'){ES[k].close();delete ES[k];ST.open[k]=false}});listen('meta','meta');pollMeta(true)};
+const streams=()=>{Object.keys(ES).forEach(k=>{if(k!=='meta'){ES[k].close();delete ES[k];ST.open[k]=false}});listen('meta','meta');pollMeta(false)};
 const restartStreams=()=>{Object.keys(ES).forEach(k=>{try{ES[k].close()}catch{}delete ES[k];ST.open[k]=false});streams()};
 async function bumpMeta(){while(L.mt&&L.mt.length&&!metaBroken){const k=L.mt[0];try{await api('PUT','meta/'+k,Date.now())}catch(e){if([400,401,403,404].includes(e.status)){metaBroken=1;L.mt.length=0;saveL();break}throw e}L.mt.shift();saveL()}}
 // ---------- каталог ----------
@@ -140,7 +142,7 @@ const pk=i=>(i&&i.k)||'other',pcIcon=k=>(PCATS.find(c=>c[0]===k)||PCATS[7])[1];
 const matchF=i=>lf==='all'||(lf==='banq'?i.g==='banq':pk(i)===lf);
 const curK=()=>(lf!=='all'&&lf!=='banq')?lf:'other';
 const rFil=()=>{const h=`<button class="chip${lf==='all'?' on':''}" data-a="lfil" data-id="all">Все</button><button class="chip${lf==='banq'?' on':''}" data-a="lfil" data-id="banq">🎉 Банкет</button>`+PCATS.map(c=>`<button class="chip${lf===c[0]?' on':''}" data-a="lfil" data-id="${c[0]}">${c[1]} ${c[2]}</button>`).join('');['#qfil','#libfil'].forEach(s=>{const e=$(s);if(e)e.innerHTML=h})};
-const CLOSE_ITEMS=['Всё в порядке на кухне','Все розетки отключены','Фритюр выключен кнопкой','Печь пекаря на кухне выключена кнопкой','Главные кнопки 4, 6, 7 и 9 выключены','На кухне чисто','Мусорные пакеты вынесены с кухни'];
+const CLOSE_ITEMS=['Всё в порядке на кухне','Все розетки отключены','Фритюр выключен кнопкой','Печь пекаря на кухне выключена кнопкой','Вилка плиты в холодном цеху вынута из розетки','Главные кнопки 4, 6, 7 и 9 выключены','Тестомес чистый','На кухне чисто','Мусорные пакеты вынесены с кухни'];
 const closingCheck=()=>new Promise(res=>{const d=$('#dcl'),st=CLOSE_ITEMS.map(()=>0);const draw=()=>{const n=st.reduce((a,b)=>a+b,0);$('#clist').innerHTML=CLOSE_ITEMS.map((x,i)=>`<button class="cl${st[i]?' on':''}" data-a="clchk" data-id="${i}"><span class="ck">${st[i]?'✓':''}</span><span>${esc(x)}</span></button>`).join('');$('#cprog').textContent=`${n} из ${CLOSE_ITEMS.length}`;$('#cgo').disabled=n<CLOSE_ITEMS.length};CL={st,draw,res};draw();snd.ask();vib(40);d.onclose=()=>res(false);d.oncancel=()=>res(false);d.showModal()});
 const guestsOf=d=>{const g=Number(((DATA.prepMeta||{})[d]||{}).guests);return g>0?g:0};
 const qtyText=(t,d)=>{if(t&&t.pg){const g=guestsOf(d);return g?`${fmtQ(Math.round(t.pg*g*100)/100)} ${t.pu||''}`.trim():`👥 ${fmtQ(t.pg)} ${t.pu||''}/гость`}return t&&t.q||''};
@@ -163,12 +165,12 @@ const carryPendingPrep=()=>{const today=dAdd(0);if(pd!==today)return;const prev=
 const rPrep=()=>{carryPendingPrep();const ts=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),remembered=new Set(libItems().map(i=>nt(i.t)));ts.filter(t=>t.done&&t.by&&!remembered.has(nt(t.t))).forEach(t=>{rememberPrep(t,t.by);remembered.add(nt(t.t))});
 const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),gi=g=>Math.max(0,pgroups().findIndex(x=>x.id===(g||'main'))),td=ts.filter(t=>!t.done).sort((a,b)=>gi(a.g)-gi(b.g)||(a.c||0)-(b.c||0)),k=team();
 const sel=t=>`<select class="who" data-by="${t.id}"><option value="">Кто?</option>${k.map(c=>`<option value="${c.id}"${t.by&&t.by.id===c.id?' selected':''}>${esc(c.n)}</option>`).join('')}${t.by&&!k.some(c=>c.id===t.by.id)?`<option value="${esc(t.by.id)}" selected>${esc(t.by.n)}</option>`:''}</select>`;
-const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b>${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${qpill(t,pd)}${t.carryFrom?`<small>Перенесено с ${esc(day(t.carryFrom))}</small>`:''}${t.done&&t.by?`<small>✓ ${esc(t.by.n)} · ${tm(t.at)}</small>`:''}</div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
+const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b><div class="pm">${qpill(t,pd)}${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.carryFrom?`<span class="cf">↩ ${esc(day(t.carryFrom))}</span>`:''}${t.done&&t.by?`<span class="by">✓ ${esc(t.by.n)} · ${tm(t.at)}</span>`:''}</div></div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
 $('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):'<div class="em">На этот день заготовок нет.<br>Добавьте ниже или выберите из истории.</div>';
 $('#pfill').style.width=ts.length?Math.round(dn.length/ts.length*100)+'%':'0%';$('#pinfo').textContent=`${day(pd)} · выполнено ${dn.length} из ${ts.length}`;
 $('#pdate').value=pd;[['-1',dAdd(-1)],['today',dAdd(0)],['1',dAdd(1)]].forEach(([id,dt])=>{const b=document.querySelector(`#pseg [data-id="${id}"]`);if(b){b.classList.toggle('on',pd===dt);b.setAttribute('aria-pressed',String(pd===dt))}});
-const pins=DATA.prepPins||{},pinned=!!pins[pd],pinButton=$('#ppin'),dates=Object.keys(pins).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&pins[dt]).sort();pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));pinButton.textContent=pinned?'📌 Закреплён':'📌 Закрепить';$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}">📌 ${esc(day(dt))}</button>`).join('');rGst();rYday()};
-const rGst=()=>{const gst=guestsOf(pd),need=Object.values(dm()).some(t=>t&&(t.g==='banq'||t.pg))||gst>0||!!qb,b=$('#pgst');b.hidden=!need;b.textContent=gst?`👥 Гостей: ${gst}`:'👥 Сколько гостей?'};
+const pins=DATA.prepPins||{},pinned=!!pins[pd],pinButton=$('#ppin'),dates=Object.keys(pins).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&pins[dt]).sort();pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));pinButton.textContent='📌';pinButton.title=pinned?'День закреплён':'Закрепить день';$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}">📌 ${esc(day(dt))}</button>`).join('');rGst();rYday()};
+const rGst=()=>{const gst=guestsOf(pd),need=Object.values(dm()).some(t=>t&&(t.g==='banq'||t.pg))||gst>0||!!qb,b=$('#pgst');b.hidden=!need;b.textContent=gst?`👥 ${gst}`:'👥 ?';b.title='Число гостей на этот день'};
 const rYday=()=>{const prev=dAdd(-1,pd),ts=Object.values((DATA.prep||{})[prev]||{}).filter(t=>t&&t.t),dn=ts.filter(t=>t.done).sort((a,b)=>(a.at||0)-(b.at||0)),nd=ts.filter(t=>!t.done);
 $('#ydcount').textContent=ts.length?`${day(prev)} · сделано ${dn.length} из ${ts.length}`:day(prev);
 $('#ydlist').innerHTML=ts.length?(dn.length?`<div class="gh">Приготовлено · ${dn.length}</div>`+dn.map(t=>`<div class="ydr ok"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}<small>${t.by?esc(t.by.n):''}${t.at?' · '+tm(t.at):''}</small></div>`).join(''):'')+(nd.length?`<div class="gh">Не сделано · ${nd.length}</div>`+nd.map(t=>`<div class="ydr"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}</div>`).join(''):'')+`<div class="acts"><button class="p" data-a="pcopy">Скопировать на ${esc(day(pd))}</button></div>`:'<div class="em">За предыдущий день записей нет.</div>'};
@@ -226,7 +228,7 @@ if(d.orders&&dialogOpen('#dh'))rHist();
 if(tab==='prep'&&(d.prep||d.plan||d.prepPins||d.prepLibrary||d.prepMeta))rPrep();
 if(tab==='prep'&&(d.prep||d.plan||d.prepLibrary))rPlan();
 if(tab==='prep'&&d.prepLibrary)rLibrary();
-clearTimeout(ct);ct=setTimeout(()=>LS.set('vip3-cache',DATA),800)}
+clearTimeout(ct);ct=setTimeout(()=>LS.set('vip3-cache',DATA),4000)}
 const tkRes=()=>{const g=Math.round(Number(String($('#tkgst').value).replace(',','.')))||0,k=fq($('#tkk').value)||0;$('#tkres').textContent=g&&k?`= ${fmtQ(Math.round(g*k*100)/100)} ${$('#tkgu').value}`:'Введите число гостей';};
 const tkMode=m=>{tk.mode=m;$('#tkNum').hidden=m!=='n';$('#tkG').hidden=m!=='g';document.querySelectorAll('#tkm button').forEach(b=>b.classList.toggle('on',b.dataset.id===m));if(m==='g')tkRes()};
 const libTouch=p=>{const old=libItems().find(i=>nt(i.t)===nt(p.t)),id=old?old.id:hashText(nt(p.t));mut('PUT','prepLibrary/'+id,{t:p.t,q:p.q||'',g:p.g||'main',k:p.k||'other',...(p.pg?{pg:p.pg,pu:p.pu}:{}),by:old&&old.by?old.by:null,usedAt:Date.now()})};
@@ -247,7 +249,7 @@ const valid=()=>{if(!cnt()){snd.warn();vib(80);toast('Добавьте хотя 
 const upsert=o=>mut('PUT','orders/'+o.id,o);
 const ask=(t,h,y='Да',n='Нет, вернуться')=>new Promise(res=>{const d=$('#dc');$('#ct').textContent=t;$('#cb').innerHTML=h;$('#cy').textContent=y;$('#cn').textContent=n;snd.ask();vib(40);const f=v=>()=>{d.close();res(v)};$('#cy').onclick=f(true);$('#cn').onclick=f(false);d.oncancel=()=>res(false);d.showModal()});
 const clip=async t=>{try{await navigator.clipboard.writeText(t);return 1}catch{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch{return 0}}};
-const copyOrder=async()=>{if(!valid())return;if(!await closingCheck())return;const o=snap();o.closed=true;const message=msg(o,o.date===dAdd(1));const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(message)}</pre>`,'Да, копировать','Нет, вернуться');if(!yes)return;
+const copyOrder=async()=>{if(!valid())return;if(!await closingCheck())return;try{await onMeta(true)}catch{}const o=snap();o.closed=true;const message=msg(o,o.date===dAdd(1));const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(message)}</pre>`,'Да, копировать','Нет, вернуться');if(!yes)return;
 if(!await clip(message)){snd.warn();toast('Не удалось скопировать. Разрешите доступ к буферу');return}
 o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();$('#dr').close();rAll();snd.ok();vib([60,40,60]);toast('✓ Скопировано и сохранено в истории')};
 const saveOrder=()=>{if(!valid())return;const o=snap();upsert(o);L.draft.editId=o.id;saveL();snd.ok();toast('✓ Сохранено для всех. Можно редактировать')};
@@ -286,7 +288,7 @@ wosave(){if(!woDraft||!woDraft.product)return;const qty=fq($('#woQty').value),re
 async wocopy(){const rows=woRows(wd);if(!rows.length){snd.warn();toast('За этот день нет списаний для копирования');return}if(await clip(writeoffMessage(wd,rows))){snd.ok();toast('✓ Списание скопировано')}else{snd.warn();toast('Не удалось скопировать списание')}},
 async woshare(){const rows=woRows(wd);if(!rows.length){snd.warn();toast('За этот день нет списаний для отправки');return}const text=writeoffMessage(wd,rows);if(typeof navigator.share!=='function')return ACT.wocopy();try{await navigator.share({title:`Списание за ${day(wd)}`,text});snd.ok();toast('✓ Списание отправлено')}catch(e){if(e&&e.name==='AbortError')return;if(await clip(text)){snd.ok();toast('Не удалось отправить — списание скопировано')}else{snd.warn();toast('Не удалось отправить или скопировать списание')}}},
 async wodel(id){const e=(((DATA.writeoffs||{})[wd])||{})[id];if(!e||!await ask('Удалить запись о списании?',`<p>${esc(e.name)} — ${esc(fmtQ(e.qty))} ${esc(e.unit||'')}</p>`,'Да, удалить','Нет'))return;mut('DELETE',`writeoffs/${wd}/${id}`);snd.warn();toast('Запись удалена');rWoLog()},
-review(){snd.tap();open('#dr')},close(){snd.tap();document.querySelectorAll('dialog[open]').forEach(d=>d.close())},
+review(){snd.tap();open('#dr');streams()},close(){snd.tap();document.querySelectorAll('dialog[open]').forEach(d=>d.close())},
 copy:copyOrder,save:saveOrder,
 async clear(){if(!cnt())return;if(await ask('Очистить список?','<p>Все выбранные товары будут убраны из текущего заказа.</p>','Да, очистить','Нет, оставить')){L.draft=blank(L.draft.cook);saveL();rAll();rRev();snd.warn()}},
 hist(){snd.tap();rHist();$('#dh').showModal();streams()},
@@ -431,13 +433,3 @@ const sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 if(!sa&&!window.Capacitor&&/iphone|ipad|ipod/i.test(navigator.userAgent))i.hidden=false;
 i.onclick=async()=>{if(dp){dp.prompt();try{await dp.userChoice}catch{}dp=null;i.hidden=true}else alert('iPhone: нажмите «Поделиться» → «На экран Домой»')};
 addEventListener('appinstalled',()=>{i.hidden=true})})();
-
-
-/* Additional Shift Checklist & Safety Notice Integration */
-window.KITCHEN_SAFETY_CHECKLIST = {
-  doughClean: true,
-  fridgeSocketRemoved: true,
-  getNotificationSummary: function() {
-    return "\n✨ جهاز العجين نظيف ✅\n🔌 تم إزالة قابس البوتجاز في قسم التبريد ✅";
-  }
-};

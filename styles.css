@@ -177,12 +177,22 @@ details.dn>summary{font-size:14px;color:var(--mu)}
 .tkrow{display:flex;gap:8px;align-items:center;margin-top:10px}.tkrow .st{flex:1;min-width:0}.tkrow .st input{flex:1;width:auto;min-width:0;font-size:20px;font-weight:700}.tkrow .st button{width:46px;min-height:46px}.tkrow select{width:92px;flex:none}
 #qfil,#libfil{padding-bottom:2px}
 
-/* Performance & Touch Optimizations */
-* {
-    -webkit-tap-highlight-color: transparent;
-}
-body, .task-card, .btn, button {
-    touch-action: manipulation;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-}
+/* v6.1 — исправление карточки дня, компактные строки заготовок, меньше нагрузки на телефон */
+.prow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.prow input[type=date]{flex:1 1 140px;width:auto;min-width:130px;min-height:44px;padding:8px 10px;font-size:15px}
+.prow .chip,.prow .pin-toggle{flex:none;width:auto;min-height:44px;padding:0 14px;margin:0;text-align:center}
+.pr{gap:8px;padding:8px}
+.ck{width:40px;height:40px;border-radius:11px}
+.pn{flex:1 1 0;min-width:0}
+.pn b{font-size:15px;line-height:1.25;overflow-wrap:break-word;word-break:normal}
+.who{width:84px;min-height:40px;padding:6px 4px;font-size:13px;flex:none}
+.x{width:30px;flex:none}
+.pm{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:3px}
+.pm .qpill,.pm em{margin:0}
+.cf{font-size:11px;color:var(--mu)}.by{font-size:12px;font-weight:700;color:var(--ac)}
+@media(max-width:400px){.who{width:76px}}
+.tab,.tab.on{transition:none}
+details.card>summary:after,details.dn>summary:after{transition:none}
+.bar button{box-shadow:0 2px 8px #0003}
+.it,.libitem{content-visibility:auto;contain-intrinsic-size:auto 56px}
+.cl{min-height:46px;padding:7px 12px;margin-bottom:5px}
