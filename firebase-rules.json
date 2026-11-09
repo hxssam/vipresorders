@@ -1,10 +1,11 @@
 {
   "rules": {
-    ".read": true,
     "team": {
+      ".read": true,
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
     "catalog": {
+      ".read": true,
       "edits": {
         ".write": "auth != null && auth.token.email == 'admin@vip.local'"
       },
@@ -23,6 +24,7 @@
       }
     },
     "orders": {
+      ".read": true,
       ".indexOn": [
         "created"
       ],
@@ -31,19 +33,29 @@
       }
     },
     "prep": {
+      ".read": true,
       "$date": {
         "$id": {
           ".write": true
         }
       }
     },
+    "prepMeta": {
+      ".read": true,
+      "$date": {
+        ".write": true
+      }
+    },
     "prepLibrary": {
+      ".read": true,
       ".write": true
     },
     "prepPins": {
+      ".read": true,
       ".write": true
     },
     "writeoffs": {
+      ".read": true,
       "$date": {
         "$id": {
           ".write": true
@@ -51,20 +63,29 @@
       }
     },
     "plan": {
+      ".read": true,
       ".write": true
     },
     "sched": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+    },
+    "shifts": {
+      ".read": true,
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
     "meta": {
+      ".read": true,
       ".write": true
     },
-    "shifts": {
+    "payroll": {
+      ".read": "auth != null && auth.token.email == 'admin@vip.local'",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
-    "prepMeta": {
-      "$date": {
-        ".write": true
+    "acct": {
+      "$key": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'"
       }
     }
   }

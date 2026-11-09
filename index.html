@@ -23,7 +23,7 @@
 <section id="vOrder">
 <div class="card">
 <div class="chips" id="cooks" aria-label="Кто заказывает"></div>
-<details class="dn" id="dnbox"><summary id="dnsum">📅 Поставка</summary><div class="lbl f">Дата поставки</div><input type="date" id="date"><div class="lbl f">Заметка</div><input id="note" maxlength="140" placeholder="Необязательно"></details>
+<details class="dn" id="dnbox"><summary id="dnsum">📅 Поставка</summary><div class="lbl f">Дата поставки</div><input type="date" id="date"><div class="lbl f">Заметка</div><textarea id="note" rows="1" placeholder="Необязательно" style="resize:none;overflow-y:auto"></textarea></details>
 </div>
 <details class="card" id="shbox"><summary><span id="shtitle" class="ell">⏰ Завтра на смену</span></summary><div id="shlist" style="margin-top:8px"></div><div class="small" id="shhint"></div></details>
 
@@ -37,14 +37,15 @@
 <div class="card">
 <div class="chips" id="pcooks" aria-label="Я работаю"></div>
 <div class="seg" id="pseg" style="margin-top:8px"><button data-a="pday" data-id="-1">Вчера</button><button data-a="pday" data-id="today">Сегодня</button><button data-a="pday" data-id="1">Завтра</button></div>
-<div class="prow"><input type="date" id="pdate" aria-label="Другой день"><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false" title="Закрепить день">📌</button><button class="chip" id="pgst" data-a="gstedit" hidden title="Число гостей на этот день">👥 ?</button></div>
+<div class="prow"><input type="date" id="pdate" aria-label="Другой день"><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false" title="Закрепить день">📌</button></div>
 <div class="pbar"><i id="pfill"></i></div><div class="small" id="pinfo"></div>
 <div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div>
 </div>
+<div class="seg" id="psecs"><button data-a="psec" data-id="main">🍽 Основные<b id="pcm"></b></button><button data-a="psec" data-id="banq">🎉 Банкет<b id="pcb"></b></button></div>
+<div class="card bqh" id="bqh" hidden><input id="bqt" placeholder="Название банкета (необязательно)" autocomplete="off"><div class="bqg"><span>👥 Гостей</span><input id="bqg" inputmode="numeric" placeholder="0" autocomplete="off"></div></div>
 <div id="plist"></div>
 <section class="card" aria-label="Добавить заготовку">
 <div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off"><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
-<div class="chips" style="margin-top:8px"><button class="chip" id="qban" data-a="qban" aria-pressed="false">🎉 Банкет</button></div>
 <div class="lbl" style="margin:10px 0 6px"><span>Из истории</span></div>
 <div class="chips" id="qfil"></div>
 <div class="chips wrap" id="qlist" style="margin-top:8px"></div>
@@ -64,6 +65,8 @@
 <div class="acts" style="margin:0 0 8px"><button class="g" id="sbtn" data-a="sedit">✎ Править график</button></div>
 <div class="card" id="sedit" hidden><div class="lbl">Рабочие дни</div><div class="small" id="sedinfo" style="margin:0 0 8px"></div><div class="acts"><button class="p" data-a="sapply">Отметить выбранные дни буквой Р</button><button class="d" data-a="sclear">Убрать отметки</button></div></div>
 <div class="lbl" style="margin:12px 2px 6px">Ближайшие смены</div><div id="slist"></div>
+<div class="card" id="mebox"></div>
+<details class="card" id="payadm" hidden><summary>💼 Зарплаты и часы · только руководитель</summary><div id="payov" style="margin-top:8px"></div><div id="payed"></div></details>
 </section>
 <section id="vWriteoff" hidden>
 <div class="card"><div class="lbl">Дата списания</div><input type="date" id="woDate"><div class="small">✓ — оформлено. Записи без ✓ переносятся на следующий день.</div></div>
@@ -106,10 +109,14 @@
 <div id="tkNum"><div class="tkrow"><div class="st"><button data-a="tkdec" aria-label="Меньше">−</button><input id="tkq" inputmode="decimal" placeholder="Сколько" autocomplete="off"><button data-a="tkinc" aria-label="Больше">+</button></div><select id="tku"></select></div><div class="chips wrap" style="margin-top:8px"><button class="chip" data-a="tkset" data-id="10">10</button><button class="chip" data-a="tkset" data-id="20">20</button><button class="chip" data-a="tkset" data-id="30">30</button><button class="chip" data-a="tkset" data-id="50">50</button><button class="chip" data-a="tkset" data-id="80">80</button><button class="chip" data-a="tkset" data-id="100">100</button></div></div>
 <div id="tkG" hidden><div class="row2"><label><div class="lbl">Гостей в этот день</div><input id="tkgst" inputmode="numeric" placeholder="например, 80" autocomplete="off"></label><label><div class="lbl">На 1 гостя</div><input id="tkk" inputmode="decimal" value="1" autocomplete="off"></label></div><div class="row2"><select id="tkgu"></select><div class="small" id="tkres" style="margin:0;align-self:center"></div></div><div class="small">Число гостей меняется в одном месте — все количества пересчитаются сами.</div></div>
 <div class="chips wrap" id="tkhint" style="margin-top:8px"></div>
-<div class="lbl" style="margin:12px 0 4px">Категория</div><select id="tkc"></select>
+<div class="lbl" style="margin:12px 0 4px">Категория</div><select id="tkc"></select><div class="small" id="tkcs" style="margin-top:6px"></div>
 <label class="chk"><input type="checkbox" id="tkb"> 🎉 Банкет</label>
 <div class="acts"><button class="p" data-a="tksave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="tkdel">Удалить</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dme"><h2 id="meh">Мой кабинет</h2>
+<div id="melog"><div class="small" style="margin:0 0 8px">Вход для: <b id="menm"></b></div><input type="password" id="mepw" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="melogin">Войти</button><button class="g" data-a="close">Закрыть</button></div></div>
+<div id="meacc" hidden><div id="mebody"></div><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="melogout">Выйти</button></div></div></dialog>
+<dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Повар вводит его, чтобы увидеть только свои часы и зарплату. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
 <dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 

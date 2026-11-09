@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='6.1';
+const VER='7.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 const UNITS=['кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
@@ -27,7 +27,8 @@ oils:'Масло кунжутное|бут;Масло оливковое|бут;
 preserves:'Каперсы|бан;Перец халапеньо|бан;Оливки|бан;Маслины|бан;Корнишоны|бан;Томаты черри маринованные|бан;Капуста квашеная|кг'};
 
 const iso=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
-const dAdd=(n,b)=>{const d=b?new Date(b+'T12:00'):new Date();d.setDate(d.getDate()+n);return iso(d)};
+const BDAY_H=6;
+const dAdd=(n,b)=>{const d=b?new Date(b+'T12:00'):new Date(Date.now()-BDAY_H*36e5);d.setDate(d.getDate()+n);return iso(d)};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const blank=cook=>({cook:cook||null,date:dAdd(1),note:'',items:{},editId:null});
 const L=Object.assign({draft:blank(),me:null,lu:{},out:[],mt:[]},LS.get('vip3-local',{}));
@@ -85,16 +86,16 @@ es.onopen=()=>{ST.open[key]=true;es.__seen=ST.seen[key]=Date.now();setSt();flush
 es.onerror=()=>{ST.open[key]=false;setSt();if(es.readyState===2&&ES[key]===es)setTimeout(()=>{if(ES[key]===es)listen(key,prefix,q)},4000)}}
 // ---- «живая» связь: ОДИН поток по лёгкому узлу meta (мгновенно) + короткие запросы данных; если поток недоступен — быстрый опрос ----
 const mkey=p=>{const a=String(p).split('/');return(a[0]==='prep'||a[0]==='writeoffs'||a[0]==='shifts'||a[0]==='prepMeta')&&a[1]?a[0]+'_'+a[1]:a[0]};
-async function jget(p,q){const r=await fetchFast(`${DB}/${p}.json${q?'?'+q:''}`,{},9000);if(!r.ok){const e=new Error('http');e.status=r.status;throw e}return r.json()}
+async function jget(p,q,auth){let t='';if(auth){t=await tok();if(!t)throw new Error('auth')}const qs=[q,t?'auth='+t:''].filter(Boolean).join('&');const r=await fetchFast(`${DB}/${p}.json${qs?'?'+qs:''}`,{},9000);if(!r.ok){const e=new Error('http');e.status=r.status;throw e}return r.json()}
 const MV={};let metaBroken=0,pollBusy=0,tickN=0;
 const pendingFor=mk=>L.out.some(o=>mkey(o.p)===mk);
-const routeMap=()=>({team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],prepPrev:['prep/'+dAdd(-1,pd)],prepTom:['prep/'+dAdd(1)],prepToday:['prep/'+dAdd(0)],plan:['plan'],prepLibrary:['prepLibrary'],prepPins:['prepPins'],writeoffs:['writeoffs/'+(tab==='writeoff'?wd:dAdd(0))],sched:['sched'],shifts:['shifts/'+dAdd(1)],prepMeta:['prepMeta/'+pd],prepMetaTom:['prepMeta/'+dAdd(1)],prepMetaToday:['prepMeta/'+dAdd(0)],woPrev:['writeoffs/'+dAdd(-1)]});
-const activeKeys=()=>{const keys=new Set(['team']);if(tab==='order'){keys.add('catalog');keys.add('shifts')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins')}if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
+const routeMap=()=>({team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],prepPrev:['prep/'+dAdd(-1,pd)],prepTom:['prep/'+dAdd(1)],prepToday:['prep/'+dAdd(0)],plan:['plan'],prepLibrary:['prepLibrary'],prepPins:['prepPins'],writeoffs:['writeoffs/'+(tab==='writeoff'?wd:dAdd(0))],sched:['sched'],shifts:['shifts/'+dAdd(1)],shiftsLast:['shifts/_last'],prepMeta:['prepMeta/'+pd],prepMetaTom:['prepMeta/'+dAdd(1)],prepMetaToday:['prepMeta/'+dAdd(0)],woPrev:['writeoffs/'+dAdd(-1)],payroll:['payroll','',true]});
+const activeKeys=()=>{const keys=new Set(['team']);if(tab==='order'){keys.add('catalog');keys.add('shifts');keys.add('shiftsLast')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins')}if(tab==='sched'){keys.add('sched');keys.add('prepPins');if(isAdmin())keys.add('payroll')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','shiftsLast','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
 const atPath=p=>{let o=DATA;for(const k of String(p).split('/')){if(o==null||typeof o!=='object')return null;o=o[k]}return o===undefined?null:o};
 const sig=v=>JSON.stringify(v===undefined?null:v);
 function onMeta(force){if(DEMO||!DB)return Promise.resolve();const routes=routeMap(),meta=DATA.meta||{},jobs=[];
 activeKeys().forEach(k=>{const r=routes[k];if(!r)return;const mk=mkey(r[0]),want=r[0]+'|'+(r[1]||'')+'#'+(meta[mk]||0);if(!force&&MV[k]===want)return;if(pendingFor(mk))return;
-jobs.push(jget(r[0],r[1]).then(d=>{if(pendingFor(mk))return;MV[k]=want;if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}))});
+jobs.push(jget(r[0],r[1],r[2]).then(d=>{if(pendingFor(mk))return;MV[k]=want;if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}).catch(e=>{if(r[2])return;throw e}))});
 return Promise.all(jobs)}
 async function pollMeta(force){if(pollBusy||DEMO||!DB||document.hidden)return;pollBusy=1;
 try{const sse=ST.open.meta&&!metaBroken;if(!sse&&!metaBroken)DATA.meta=(await jget('meta'))||{};const noMeta=!Object.keys(DATA.meta||{}).length;await onMeta(force||metaBroken||noMeta);ST.poll=Date.now()}catch{}
@@ -129,27 +130,53 @@ const rList=()=>{const q=qs.trim().toLowerCase(),cs=cats();let h='';const ps=pro
 for(const c of cs){const g=ps.filter(p=>p.c===c.id);if(g.length)h+=(cat==='all'||q?`<div class="gh">${c.e} ${esc(c.n)}</div>`:'')+g.map(row).join('')}
 $('#list').innerHTML=h||`<div class="em">Ничего не найдено.<br>Нажмите «＋ Товар», чтобы добавить.</div>`};
 const sumDn=()=>{$('#dnsum').textContent='📅 Поставка '+day(L.draft.date)+(L.draft.note?' · 💬 '+L.draft.note.slice(0,22):'')};
-const rBar=()=>{$('#cnt').textContent=cnt()?cnt()+' поз.':'пусто';$('#date').value=L.draft.date;$('#note').value=L.draft.note;sumDn()};
+const rBar=()=>{$('#cnt').textContent=cnt()?cnt()+' поз.':'пусто';$('#date').value=L.draft.date;$('#note').value=L.draft.note;fitNote();sumDn()};
+function fitNote(){const n=$('#note');if(!n||!n.scrollHeight)return;n.style.height='auto';n.style.height=Math.min(n.scrollHeight+2,260)+'px'}
 const rRev=()=>{const it=dI(),c=L.draft.cook;$('#rc').innerHTML=c?esc(c.n)+' — '+esc(c.r):'<span style="color:var(--rd)">не выбран</span>';
 $('#rb').innerHTML=it.length?it.sort((a,b)=>a.n.localeCompare(b.n,'ru')).map(i=>`<div class="it on"><div class="n">${esc(i.n)}</div>${stepper(i)}<button class="x" data-a="rm" data-id="${esc(i.id)}">✕</button></div>`).join(''):'<div class="em">Список пуст</div>'};
 const rTeam=()=>{$('#tl').innerHTML=team().length?team().map(k=>`<div class="it"><div class="n">${esc(k.n)}<i>${esc(k.r)}${k.u?' · @'+esc(k.u):''}</i></div><button class="x" data-a="cuser" data-id="${esc(k.id)}" aria-label="Username" title="Username">@</button>${k.virtual?'':`<button class="x" data-a="delc" data-id="${esc(k.id)}">✕</button>`}</div>`).join(''):'<div class="em">Добавьте поваров с должностями</div>'};
 const rAdm=()=>{const b=$('#edb');b.textContent='Режим правки товаров: '+(ed()?'ВКЛ':'выкл');b.className=ed()?'d':'';const h=Object.keys(cat0().hidden||{}).length,u=$('#unh');u.textContent='Вернуть скрытые ('+h+')';u.disabled=!h};
 const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();let qb=0,tk=null;
 const PU=['порц','кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
-const PCATS=[['cut','🔪','Нарезка'],['sauce','🥫','Соусы'],['hot','🍲','Горячее'],['cold','🥗','Холодное'],['meat','🥩','Мясо и рыба'],['side','🍚','Гарниры'],['dess','🍰','Десерты'],['other','📦','Другое']];
-let lf='all',CL=null;
-const pk=i=>(i&&i.k)||'other',pcIcon=k=>(PCATS.find(c=>c[0]===k)||PCATS[7])[1];
-const matchF=i=>lf==='all'||(lf==='banq'?i.g==='banq':pk(i)===lf);
-const curK=()=>(lf!=='all'&&lf!=='banq')?lf:'other';
-const rFil=()=>{const h=`<button class="chip${lf==='all'?' on':''}" data-a="lfil" data-id="all">Все</button><button class="chip${lf==='banq'?' on':''}" data-a="lfil" data-id="banq">🎉 Банкет</button>`+PCATS.map(c=>`<button class="chip${lf===c[0]?' on':''}" data-a="lfil" data-id="${c[0]}">${c[1]} ${c[2]}</button>`).join('');['#qfil','#libfil'].forEach(s=>{const e=$(s);if(e)e.innerHTML=h})};
+const PCATS=[['cut','🔪','Нарезка'],['sauce','🥫','Соусы'],['hot','🍲','Горячее'],['cold','🥗','Холодное'],['meat','🥩','Мясо и рыба'],['side','🍚','Гарниры'],['dess','🍰','Десерты'],['bake','🥖','Выпечка и тесто'],['other','📦','Другое']];
+let lf='all',CL=null,psec=LS.get('vip3-psec','main'),pc=null,meId=null,acctData=null;
+const pk=i=>(i&&i.k)||'other',pcIcon=k=>(PCATS.find(c=>c[0]===k)||PCATS[PCATS.length-1])[1];
+const inSec=g=>psec==='banq'?g==='banq':g!=='banq';
+const matchF=i=>inSec(i.g)&&(lf==='all'||(lf==='unk'?i.ks==='?':pk(i)===lf));
+const curK=()=>(lf!=='all'&&lf!=='banq'&&lf!=='unk')?lf:'other';
+const norm2=s=>String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+const STOP=new Set(['для','на','из','по','под','над','при','без','или','что','как','все','его','ее','их','это']);
+const toks=s=>norm2(s).split(' ').filter(w=>w.length>=3&&!STOP.has(w));
+const DICT={
+cut:[['нарез',2],['порез',2],['нашинк',2],['шинк',2],['почист',2],['очист',2],['чистк',2],['измельч',2],['кубик',2],['брусоч',2],['солом',1.5],['слайс',2],['кольц',1],['лук',1.5],['морков',1.5],['огур',1],['помидор',1],['томат',1],['болгар',1],['капуст',1],['зелен',1.5],['укроп',1.5],['петруш',1.5],['кинз',1.5],['базилик',1.5],['редис',1.5],['сельдер',1.5],['чеснок',1.5],['имбир',1.5],['кабач',1],['баклаж',1],['гриб',1],['шампин',1],['перец',1],['чили',1],['овощ',1],['картоф',1]],
+sauce:[['соус',3],['заправк',3],['майонез',3],['кетчуп',3],['горчиц',3],['песто',3],['маринад',2.5],['дрессинг',3],['аджик',3],['ткемали',3],['наршараб',3],['бальзам',1.5],['глазур',2],['сироп',2],['терияки',3],['барбекю',2],['чимичурри',3],['сальс',3],['гуакамол',3],['хумус',2],['томатн',2]],
+hot:[['суп',3],['бульон',3],['борщ',3],['солянк',3],['харчо',3],['щи',3],['рассольник',3],['уха',3],['том ям',3],['жарк',1.5],['жарить',1.5],['обжар',1.5],['запек',2],['запеч',2],['туш',2],['свар',1.5],['отвар',1.5],['рагу',3],['плов',3],['каш',2],['лазань',3],['ризотто',3],['жюльен',3],['гриль',1]],
+cold:[['салат',3],['окрошк',3],['закуск',3],['холодец',3],['заливн',3],['карпаччо',3],['тартар',2],['брускет',3],['канапе',3],['сэндвич',2],['бутерброд',2],['цезар',3],['греческ',3],['оливье',3],['винегрет',3],['шуб',2],['паштет',3],['рулет',2],['ассорти',2],['тарталет',3],['ролл',1],['суши',2],['сашими',2]],
+meat:[['мяс',3],['говяд',3],['говяж',3],['свинин',3],['баранин',3],['телятин',3],['кури',3],['куриц',3],['курин',3],['цыпл',3],['грудк',2.5],['бедр',2],['крыл',2],['филе',2],['фарш',3],['котлет',3],['колбас',2],['сосиск',2],['бекон',2],['ветчин',2],['стейк',3],['ребр',3],['шашлык',3],['утк',3],['индейк',3],['печень',3],['рыб',3],['лосос',3],['семг',3],['форел',3],['креветк',3],['кальмар',3],['мидии',3],['мидий',3],['осьминог',3],['краб',3],['треск',3],['судак',3],['дорад',3],['сибас',3],['тунец',3],['угор',3],['вакуум',1.5],['вакум',1.5],['замарин',1.5],['бургер',2],['люля',3],['кебаб',3],['тефтел',3]],
+side:[['гарнир',3],['рис',2.5],['гречк',3],['макарон',3],['спагетти',3],['паст',2.5],['булгур',3],['кускус',3],['пюре',3],['картофел',1.5],['фри',2],['лапш',3],['нут',2],['чечевиц',3],['полент',3],['ньокк',3],['перловк',3],['пшен',1.5],['киноа',3]],
+dess:[['десерт',3],['торт',3],['пирожн',3],['тирамису',3],['чизкейк',3],['мусс',3],['панакот',3],['мороженое',3],['сорбет',3],['крем',2],['бисквит',3],['эклер',3],['профитрол',3],['карамел',2],['шоколад',2],['варень',2],['джем',2],['конфитюр',2],['желе',3],['пудинг',3],['штрудел',3],['ягод',1.5],['клубник',1.5],['сладк',1.5],['печенье',3]],
+bake:[['тест',3],['выпечк',3],['хлеб',3],['булк',3],['пицц',3],['лепеш',3],['лаваш',3],['багет',3],['пирог',3],['пирожк',3],['круассан',3],['блин',3],['олад',3],['вареник',3],['пельмен',3],['мант',3],['хинкал',3],['чебурек',3],['самс',3],['фокач',3],['чиабатт',3],['сухар',2],['гренк',2],['мук',2],['дрожж',2],['замес',2]]};
+function classify(text){const n=norm2(text);if(!n)return{k:'other',ks:'?'};const lib=libItems();
+const ex=lib.find(i=>norm2(i.t)===n&&i.ks==='user'&&i.k&&i.k!=='other');if(ex)return{k:ex.k,ks:'auto'};
+const sc={},add=(k,v)=>{sc[k]=(sc[k]||0)+v},ws=toks(text);
+for(const k in DICT)for(const[st,w]of DICT[k]){if(st.indexOf(' ')>=0){if(n.indexOf(st)>=0)add(k,w)}else if(ws.some(x=>x.indexOf(st)===0))add(k,w)}
+const votes={};lib.forEach(i=>{if(i.ks!=='user'||!i.k||i.k==='other')return;toks(i.t).forEach(w=>{const v=votes[w]=votes[w]||{};v[i.k]=(v[i.k]||0)+1})});
+ws.forEach(w=>{const v=votes[w];if(!v)return;const tot=Object.values(v).reduce((a,b)=>a+b,0);for(const k in v)add(k,2.5*v[k]/tot)});
+const r=Object.entries(sc).sort((a,b)=>b[1]-a[1]);if(!r.length)return{k:'other',ks:'?'};const s1=r[0][1],s2=r[1]?r[1][1]:0;
+return(s1>=2&&s1-s2>=0.75)?{k:r[0][0],ks:'auto'}:{k:'other',ks:'?'}}
+let autoBusy=0;
+const autoLib=()=>{if(autoBusy)return;autoBusy=1;libItems().filter(i=>!i.ks).slice(0,40).forEach(i=>{if(i.k&&i.k!=='other'){mut('PATCH','prepLibrary/'+i.id,{ks:'user'});return}const cl=classify(i.t);mut('PATCH','prepLibrary/'+i.id,{k:cl.k,ks:cl.ks})});autoBusy=0};
+const rFil=()=>{const unk=libItems().filter(i=>i.ks==='?').length,h=`<button class="chip${lf==='all'?' on':''}" data-a="lfil" data-id="all">Все</button>`+PCATS.map(c=>`<button class="chip${lf===c[0]?' on':''}" data-a="lfil" data-id="${c[0]}">${c[1]} ${c[2]}</button>`).join('')+(unk?`<button class="chip${lf==='unk'?' on':''}" data-a="lfil" data-id="unk">❓ Без категории · ${unk}</button>`:'');['#qfil','#libfil'].forEach(s=>{const e=$(s);if(e)e.innerHTML=h})};
 const CLOSE_ITEMS=['Всё в порядке на кухне','Все розетки отключены','Фритюр выключен кнопкой','Печь пекаря на кухне выключена кнопкой','Вилка плиты в холодном цеху вынута из розетки','Главные кнопки 4, 6, 7 и 9 выключены','Тестомес чистый','На кухне чисто','Мусорные пакеты вынесены с кухни'];
 const closingCheck=()=>new Promise(res=>{const d=$('#dcl'),st=CLOSE_ITEMS.map(()=>0);const draw=()=>{const n=st.reduce((a,b)=>a+b,0);$('#clist').innerHTML=CLOSE_ITEMS.map((x,i)=>`<button class="cl${st[i]?' on':''}" data-a="clchk" data-id="${i}"><span class="ck">${st[i]?'✓':''}</span><span>${esc(x)}</span></button>`).join('');$('#cprog').textContent=`${n} из ${CLOSE_ITEMS.length}`;$('#cgo').disabled=n<CLOSE_ITEMS.length};CL={st,draw,res};draw();snd.ask();vib(40);d.onclose=()=>res(false);d.oncancel=()=>res(false);d.showModal()});
 const guestsOf=d=>{const g=Number(((DATA.prepMeta||{})[d]||{}).guests);return g>0?g:0};
 const qtyText=(t,d)=>{if(t&&t.pg){const g=guestsOf(d);return g?`${fmtQ(Math.round(t.pg*g*100)/100)} ${t.pu||''}`.trim():`👥 ${fmtQ(t.pg)} ${t.pu||''}/гость`}return t&&t.q||''};
 const qpill=(t,d)=>{const x=qtyText(t,d);return x?`<i class="qpill">${esc(x)}</i>`:'<i class="qpill empty">＋ кол-во</i>'};
+const libFind=(t,g)=>libItems().find(i=>nt(i.t)===nt(t)&&((i.g==='banq')===(g==='banq')));
+const libId=(t,g)=>hashText(nt(t)+(g==='banq'?'|b':''));
 const hashText=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return 'l'+h.toString(36)};
 const libItems=()=>Object.entries(DATA.prepLibrary||{}).map(([id,v])=>({id,...v})).filter(v=>v&&v.t);
-const rememberPrep=(t,w)=>{if(!t||!t.t||!w)return;const old=libItems().find(i=>nt(i.t)===nt(t.t)),id=old?old.id:hashText(nt(t.t));mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),by:{id:w.id,n:w.n},usedAt:Date.now()})};
+const rememberPrep=(t,w)=>{if(!t||!t.t||!w)return;const old=libFind(t.t,t.g),id=old?old.id:libId(t.t,t.g);mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),by:{id:w.id,n:w.n},usedAt:Date.now()})};
 const rLibrary=()=>{const q=nt($('#libq').value),items=libItems().filter(i=>matchF(i)&&(!q||nt(i.t).includes(q))).sort((a,b)=>(b.usedAt||0)-(a.usedAt||0));$('#libcount').textContent=`${items.length} сохранено`;$('#liblist').innerHTML=items.length?items.map(i=>`<article class="libitem"><div class="libname">${pcIcon(pk(i))} ${esc(i.t)}</div><div class="libmeta">${i.pg?`👥 ${esc(fmtQ(i.pg))} ${esc(i.pu||'')}/гость · `:i.q?`${esc(i.q)} · `:''}${i.g&&i.g!=='main'?`${esc(gname(i.g))} · `:''}${i.by?`Готовил: ${esc(i.by.n)} · `:'Запись в архиве · '}${i.usedAt?new Date(i.usedAt).toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}):'Ранее'}</div><div class="lib-actions"><button class="p" data-a="libadd" data-id="${esc(i.id)}">＋ В день</button><button data-a="libedit" data-id="${esc(i.id)}">✎ Изменить</button><button class="d" data-a="libdelete" data-id="${esc(i.id)}">Удалить</button></div></article>`).join(''):'<div class="em">История пока пуста. Добавьте заготовку или отметьте её выполненной.</div>'};
 const libraryDialog=item=>{const groups=pgroups();$('#lltitle').textContent=item?'Изменить заготовку в архиве':'Добавить заготовку в архив';$('#dl').dataset.id=item?item.id:'';$('#llt').value=item?item.t:'';$('#llq').value=item?item.q||'':'';$('#llg').innerHTML=groups.map(g=>`<option value="${esc(g.id)}"${(item?item.g||'main':qg)===g.id?' selected':''}>${esc(g.n)}</option>`).join('');$('#dl').showModal();$('#llt').focus()};
 const dm=()=>(DATA.prep||{})[pd]||{},dayTasks=()=>Object.values(dm());
@@ -162,31 +189,42 @@ const woRows=date=>Object.entries(((DATA.writeoffs||{})[date])||{}).map(([id,v])
 const writeoffMessage=(date,rows=woRows(date))=>{const cs=cats(),seen=new Set(),out=[`🗑 Списание за ${day(date)}`,''];for(const c of cs){const g=rows.filter(v=>v.c===c.id);if(!g.length)continue;g.forEach(v=>seen.add(v.id));out.push(`${c.e} ${c.n}`,g.sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(v=>`• ${v.name} — ${fmtQ(v.qty)} ${v.unit||''} — ${woReason(v.reason)}${v.note?` (${v.note})`:''}${v.by&&v.by.n?` · Списал: ${v.by.n}`:''}${v.carryFrom?` · перенос с ${day(v.carryFrom)}`:''}`).join('\n'),'')}const rest=rows.filter(v=>!seen.has(v.id));if(rest.length)out.push('📦 Другое',rest.sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(v=>`• ${v.name} — ${fmtQ(v.qty)} ${v.unit||''} — ${woReason(v.reason)}${v.note?` (${v.note})`:''}${v.by&&v.by.n?` · Списал: ${v.by.n}`:''}${v.carryFrom?` · перенос с ${day(v.carryFrom)}`:''}`).join('\n'),'');out.push(`Всего: ${rows.length} поз.`);return out.join('\n')};
 const planItems=()=>Object.entries((DATA.plan||{}).items||{}).map(([id,v])=>({id,...v})).filter(i=>i.t);
 const carryPendingPrep=()=>{const today=dAdd(0);if(pd!==today)return;const prev=dAdd(-1,today),loaded=DEMO?true:!!(MV.prepPrev&&MV.prepPrev.indexOf('prep/'+prev+'|')===0);if(!loaded)return;const src=(DATA.prep||{})[prev]||{},dst=(DATA.prep||{})[today]||{},names=new Set(Object.values(dst).map(t=>nt(t&&t.t)));let n=0;Object.entries(src).forEach(([id,t],i)=>{if(!t||!t.t||t.done||dst[id]||names.has(nt(t.t)))return;mut('PUT',`prep/${today}/${id}`,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),...(t.lid?{lid:t.lid}:{}),carryFrom:prev,c:Date.now()+i});names.add(nt(t.t));n++});if(n)toast(`Перенесено с ${day(prev)}: ${n}`)};
-const rPrep=()=>{carryPendingPrep();const ts=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),remembered=new Set(libItems().map(i=>nt(i.t)));ts.filter(t=>t.done&&t.by&&!remembered.has(nt(t.t))).forEach(t=>{rememberPrep(t,t.by);remembered.add(nt(t.t))});
+const rPrep=()=>{carryPendingPrep();const allT=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),ts=allT.filter(t=>inSec(t.g)),rk=t=>nt(t.t)+'|'+(t.g==='banq'),remembered=new Set(libItems().map(rk));allT.filter(t=>t.done&&t.by&&!remembered.has(rk(t))).forEach(t=>{rememberPrep(t,t.by);remembered.add(rk(t))});
 const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),gi=g=>Math.max(0,pgroups().findIndex(x=>x.id===(g||'main'))),td=ts.filter(t=>!t.done).sort((a,b)=>gi(a.g)-gi(b.g)||(a.c||0)-(b.c||0)),k=team();
 const sel=t=>`<select class="who" data-by="${t.id}"><option value="">Кто?</option>${k.map(c=>`<option value="${c.id}"${t.by&&t.by.id===c.id?' selected':''}>${esc(c.n)}</option>`).join('')}${t.by&&!k.some(c=>c.id===t.by.id)?`<option value="${esc(t.by.id)}" selected>${esc(t.by.n)}</option>`:''}</select>`;
-const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b><div class="pm">${qpill(t,pd)}${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.carryFrom?`<span class="cf">↩ ${esc(day(t.carryFrom))}</span>`:''}${t.done&&t.by?`<span class="by">✓ ${esc(t.by.n)} · ${tm(t.at)}</span>`:''}</div></div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
-$('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):'<div class="em">На этот день заготовок нет.<br>Добавьте ниже или выберите из истории.</div>';
+const r=t=>`<div class="pr${t.done?' ok':''}"><button class="ck" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b><div class="pm">${qpill(t,pd)}${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.ks==='?'?'<span class="qk">❓ категория</span>':''}${t.carryFrom?`<span class="cf">↩ ${esc(day(t.carryFrom))}</span>`:''}${t.done&&t.by?`<span class="by">✓ ${esc(t.by.n)} · ${tm(t.at)}</span>`:''}</div></div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
+$('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):(psec==='banq'?'<div class="em">Банкета на этот день нет.<br>Добавьте заготовки банкета ниже.</div>':'<div class="em">На этот день заготовок нет.<br>Добавьте ниже или выберите из истории.</div>');
 $('#pfill').style.width=ts.length?Math.round(dn.length/ts.length*100)+'%':'0%';$('#pinfo').textContent=`${day(pd)} · выполнено ${dn.length} из ${ts.length}`;
 $('#pdate').value=pd;[['-1',dAdd(-1)],['today',dAdd(0)],['1',dAdd(1)]].forEach(([id,dt])=>{const b=document.querySelector(`#pseg [data-id="${id}"]`);if(b){b.classList.toggle('on',pd===dt);b.setAttribute('aria-pressed',String(pd===dt))}});
-const pins=DATA.prepPins||{},pinned=!!pins[pd],pinButton=$('#ppin'),dates=Object.keys(pins).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&pins[dt]).sort();pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));pinButton.textContent='📌';pinButton.title=pinned?'День закреплён':'Закрепить день';$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}">📌 ${esc(day(dt))}</button>`).join('');rGst();rYday()};
-const rGst=()=>{const gst=guestsOf(pd),need=Object.values(dm()).some(t=>t&&(t.g==='banq'||t.pg))||gst>0||!!qb,b=$('#pgst');b.hidden=!need;b.textContent=gst?`👥 ${gst}`:'👥 ?';b.title='Число гостей на этот день'};
-const rYday=()=>{const prev=dAdd(-1,pd),ts=Object.values((DATA.prep||{})[prev]||{}).filter(t=>t&&t.t),dn=ts.filter(t=>t.done).sort((a,b)=>(a.at||0)-(b.at||0)),nd=ts.filter(t=>!t.done);
+const pins=DATA.prepPins||{},pinned=!!pins[pd],pinButton=$('#ppin'),dates=Object.keys(pins).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&pins[dt]).sort();pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));pinButton.textContent='📌';pinButton.title=pinned?'День закреплён':'Закрепить день';$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}">📌 ${esc(day(dt))}</button>`).join('');rBq();rYday()};
+const rBq=()=>{document.querySelectorAll('#psecs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===psec);b.setAttribute('aria-pressed',String(b.dataset.id===psec))});
+const all=Object.values(dm()).filter(t=>t&&t.t),c=s=>{const a=all.filter(t=>s==='banq'?t.g==='banq':t.g!=='banq');return a.length?` ${a.filter(t=>t.done).length}/${a.length}`:''};$('#pcm').textContent=c('main');$('#pcb').textContent=c('banq');
+const bh=$('#bqh');bh.hidden=psec!=='banq';if(psec==='banq'){const m=(DATA.prepMeta||{})[pd]||{},tt=$('#bqt'),gg=$('#bqg');if(document.activeElement!==tt)tt.value=m.title||'';if(document.activeElement!==gg)gg.value=m.guests||''}};
+const rYday=()=>{const prev=dAdd(-1,pd),ts=Object.values((DATA.prep||{})[prev]||{}).filter(t=>t&&t.t&&inSec(t.g)),dn=ts.filter(t=>t.done).sort((a,b)=>(a.at||0)-(b.at||0)),nd=ts.filter(t=>!t.done);
 $('#ydcount').textContent=ts.length?`${day(prev)} · сделано ${dn.length} из ${ts.length}`:day(prev);
 $('#ydlist').innerHTML=ts.length?(dn.length?`<div class="gh">Приготовлено · ${dn.length}</div>`+dn.map(t=>`<div class="ydr ok"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}<small>${t.by?esc(t.by.n):''}${t.at?' · '+tm(t.at):''}</small></div>`).join(''):'')+(nd.length?`<div class="gh">Не сделано · ${nd.length}</div>`+nd.map(t=>`<div class="ydr"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}</div>`).join(''):'')+`<div class="acts"><button class="p" data-a="pcopy">Скопировать на ${esc(day(pd))}</button></div>`:'<div class="em">За предыдущий день записей нет.</div>'};
-const rPlan=()=>{const have=new Set(Object.values(dm()).map(t=>nt(t&&t.t))),seen=new Set(),all=[...libItems().sort((a,b)=>(b.usedAt||0)-(a.usedAt||0)).map(i=>({key:'lib:'+i.id,t:i.t,g:i.g,k:i.k})),...planItems().map(i=>({key:'plan:'+i.id,t:i.t,g:i.g,k:i.k}))].filter(i=>{const n=nt(i.t);if(!n||seen.has(n))return false;seen.add(n);return!have.has(n)&&matchF(i)}).slice(0,12);
+const rPlan=()=>{const have=new Set(Object.values(dm()).filter(t=>t&&inSec(t.g)).map(t=>nt(t.t))),seen=new Set(),all=[...libItems().sort((a,b)=>(b.usedAt||0)-(a.usedAt||0)).map(i=>({key:'lib:'+i.id,t:i.t,g:i.g,k:i.k})),...planItems().map(i=>({key:'plan:'+i.id,t:i.t,g:i.g,k:i.k}))].filter(i=>{const n=nt(i.t);if(!n||seen.has(n))return false;seen.add(n);return!have.has(n)&&matchF(i)}).slice(0,12);
 $('#qlist').innerHTML=all.length?all.map(i=>`<button class="chip qp" data-a="qpick" data-id="${esc(i.key)}">＋ ${esc(i.t)}${i.g==='banq'?' 🎉':''}</button>`).join(''):'<span class="small">В этой категории пока ничего нет.</span>';
-$('#qban').classList.toggle('on',!!qb);$('#qban').setAttribute('aria-pressed',String(!!qb));rFil()};
-const rShifts=()=>{const tom=dAdd(1),sh=(DATA.shifts||{})[tom]||{},k=team(),adm=isAdmin(),on=k.filter(c=>sh[c.id]);$('#shtitle').textContent=on.length?`⏰ Завтра: ${on.map(c=>c.n.split(' ')[0]+' '+sh[c.id]).join(' · ')}`:'⏰ Завтра на смену: не назначено';
-$('#shlist').innerHTML=adm?k.map(c=>`<div class="shr${sh[c.id]?' on':''}"><button class="ck" data-a="sfton" data-id="${esc(c.id)}" aria-label="Выйдет на смену">${sh[c.id]?'✓':''}</button><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><input type="time" data-sft="${esc(c.id)}" value="${esc(sh[c.id]||L.at||'14:00')}"${sh[c.id]?'':' disabled'}></div>`).join(''):(on.length?on.map(c=>`<div class="shr on"><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><b>${esc(sh[c.id])}</b></div>`).join(''):'<div class="small">Руководитель ещё не назначил смену на завтра.</div>');
-$('#shhint').textContent=adm?'Отметьте поваров и время начала — они попадут в сообщение с упоминанием (@username).':''};
-const tomorrowBlock=()=>{const tom=dAdd(1),td=dAdd(0),ln=d=>t=>{const q=qtyText(t,d);return `• ${t.t}${q?' — '+q:''}${t.g==='banq'?' 🎉':''}`},pt=Object.values((DATA.prep||{})[tom]||{}).filter(t=>t&&t.t).sort((a,b)=>(a.c||0)-(b.c||0)),left=Object.values((DATA.prep||{})[td]||{}).filter(t=>t&&t.t&&!t.done).sort((a,b)=>(a.c||0)-(b.c||0)),sh=(DATA.shifts||{})[tom]||{},cooks=team().filter(k=>sh[k.id]),out=[];
-if(pt.length)out.push(`📋 Заготовки на завтра (${day(tom)})`,pt.map(ln(tom)).join('\n'),'');
-if(left.length)out.push(`🔁 Осталось с сегодня (${day(td)})`,left.map(ln(td)).join('\n'),'');
+rFil()};
+const shiftsFor=date=>{const all=DATA.shifts||{},ex=all[date]||{};if(Object.keys(ex).some(k=>ex[k]))return{map:ex,inh:false};const last=all._last||{};return Object.keys(last).some(k=>last[k])?{map:last,inh:true}:{map:{},inh:false}};
+const setShift=(id,val)=>{const tom=dAdd(1),cur=shiftsFor(tom),next=Object.assign({},cur.map);if(cur.inh)Object.keys(next).forEach(k=>{if(next[k])mut('PUT',`shifts/${tom}/${k}`,next[k])});
+if(val){next[id]=val;mut('PUT',`shifts/${tom}/${id}`,val)}else{delete next[id];mut('DELETE',`shifts/${tom}/${id}`)}
+Object.keys(next).forEach(k=>{if(!next[k])delete next[k]});if(Object.keys(next).length)mut('PUT','shifts/_last',next);else mut('DELETE','shifts/_last')};
+const rShifts=()=>{const tom=dAdd(1),S=shiftsFor(tom),sh=S.map,k=team(),adm=isAdmin(),on=k.filter(c=>sh[c.id]);$('#shtitle').textContent=on.length?`⏰ Завтра: ${on.map(c=>c.n.split(' ')[0]+' '+sh[c.id]).join(' · ')}${S.inh?' ↻':''}`:'⏰ Завтра на смену: не назначено';
+$('#shlist').innerHTML=adm?k.map(c=>`<div class="shr${sh[c.id]?' on':''}"><button class="ck" data-a="sfton" data-id="${esc(c.id)}" aria-label="Выйдет на смену">${sh[c.id]?'✓':''}</button><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><input type="time" data-sft="${esc(c.id)}" value="${esc(sh[c.id]||L.at||'14:00')}"${sh[c.id]?'':' disabled'}></div>`).join(''):(on.length?on.map(c=>`<div class="shr on"><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><b>${esc(sh[c.id])}</b></div>`).join(''):'<div class="small">Смена на завтра ещё не назначена.</div>');
+$('#shhint').textContent=adm?(S.inh?'↻ Показан прошлый состав — измените при необходимости. Сохраняется автоматически.':'Отметьте поваров и время начала — они попадут в сообщение с упоминанием (@username).'):(S.inh?'↻ Состав как в прошлый раз.':'')};
+const tomorrowBlock=()=>{const tom=dAdd(1),td=dAdd(0),ln=d=>t=>{const q=qtyText(t,d);return `• ${t.t}${q?' — '+q:''}`},isB=t=>t.g==='banq',srt=(a,b)=>(a.c||0)-(b.c||0),
+pt=Object.values((DATA.prep||{})[tom]||{}).filter(t=>t&&t.t).sort(srt),left=Object.values((DATA.prep||{})[td]||{}).filter(t=>t&&t.t&&!t.done).sort(srt),
+sh=shiftsFor(tom).map,cooks=team().filter(k=>sh[k.id]),mt=(DATA.prepMeta||{})[tom]||{},out=[];
+const main=pt.filter(t=>!isB(t)),bq=pt.filter(isB),lm=left.filter(t=>!isB(t)),lb=left.filter(isB);
+if(main.length)out.push(`📋 Заготовки на завтра (${day(tom)})`,main.map(ln(tom)).join('\n'),'');
+if(bq.length)out.push(`🎉 Банкет на завтра${mt.title?' — '+mt.title:''}${guestsOf(tom)?' · '+guestsOf(tom)+' гостей':''}`,bq.map(ln(tom)).join('\n'),'');
+if(lm.length)out.push(`🔁 Осталось с сегодня (${day(td)})`,lm.map(ln(td)).join('\n'),'');
+if(lb.length)out.push(`🔁 Осталось по банкету (${day(td)})`,lb.map(ln(td)).join('\n'),'');
 if(cooks.length)out.push('⏰ Завтра на смену (начало)',cooks.map(k=>`${k.u?'@'+k.u:k.n} — ${sh[k.id]}`).join('\n'));
 return out.join('\n').trim()};
 const P2=n=>String(n).padStart(2,'0'),SC=()=>DATA.sched||{};
-const rSched=()=>{const k=team(),S=SC(),ed2=se&&isAdmin(),color=id=>{const c=k.find(x=>x.id===id);return c&&PALETTE.includes(c.color)?c.color:hashColor(id)};if(sf!=='all'&&!k.some(c=>c.id===sf))sf='all';
+const rSched0=()=>{const k=team(),S=SC(),ed2=se&&isAdmin(),color=id=>{const c=k.find(x=>x.id===id);return c&&PALETTE.includes(c.color)?c.color:hashColor(id)};if(sf!=='all'&&!k.some(c=>c.id===sf))sf='all';
 $('#sfilter').innerHTML=`<button class="chip${sf==='all'?' on':''}" data-a="sfil" data-id="all">Все</button>`+k.map(c=>`<button class="chip cook-chip${sf===c.id?' on':''}" style="--cook:${color(c.id)}" data-a="sfil" data-id="${c.id}"><i class="cook-dot"></i>${esc(c.n)}<small>${esc(c.r)}</small></button>`).join('');
 const[y,m]=sm.split('-').map(Number),off=(new Date(y,m-1,1,12).getDay()+6)%7,dim=new Date(y,m,0).getDate(),today=dAdd(0),pins=DATA.prepPins||{},filterColor=sf==='all'?'':'--cook:'+color(sf);
 $('#smt').textContent=new Date(y,m-1,1,12).toLocaleDateString('ru',{month:'long',year:'numeric'});
@@ -214,6 +252,54 @@ $('#wocatalogcount').textContent=`${ps.length} товаров`;$('#woproducts').
 const rWoLog=()=>{const rows=woRows(wd).sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.updated||b.created||0)-(a.updated||a.created||0));$('#wocount').textContent=`${rows.length} ${ruCount(rows.length,'запись','записи','записей')}`;$('#wocopy').disabled=!rows.length;$('#woshare').disabled=!rows.length;$('#woshare').hidden=typeof navigator.share!=='function';
 $('#wolog').innerHTML=rows.length?rows.map(v=>`<article class="wo-entry wo-row${v.done?' ok':''}"><button class="ck" data-a="wodone" data-id="${esc(v.id)}" aria-label="Оформлено">${v.done?'✓':''}</button><div class="wo-body"><div class="wo-entry-head"><b>${esc(v.name)}</b><strong>${esc(fmtQ(v.qty))} ${esc(v.unit||'')}</strong></div><div class="libmeta">${esc(woReason(v.reason))}${v.note?` · ${esc(v.note)}`:''}${v.by&&v.by.n?` · Списал: ${esc(v.by.n)}`:''}${v.carryFrom?` · перенос с ${esc(day(v.carryFrom))}`:''}</div><div class="lib-actions"><button data-a="woedit" data-id="${esc(v.id)}">✎ Изменить</button><button class="d" data-a="wodel" data-id="${esc(v.id)}">Удалить</button></div></div></article>`).join(''):'<div class="em">За выбранный день списаний нет.</div>'};
 const rWriteoff=()=>{$('#woDate').value=wd;rWoCats();rWoProducts();rWoLog()};
+// ================= личные кабинеты и зарплата =================
+const PAYROLL=()=>DATA.payroll||{},CUR=()=>(PAYROLL()._cfg||{}).cur||'₽';
+const fmtH=h=>String(Math.round((Number(h)||0)*100)/100).replace('.',','),mny=(n,c)=>(Math.round((Number(n)||0)*100)/100).toLocaleString('ru',{maximumFractionDigits:2})+' '+(c||'₽');
+const MN=ym=>{const a=ym.split('-').map(Number),s=new Date(a[0],a[1]-1,1,12).toLocaleDateString('ru',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1)};
+const nextM=ym=>iso(new Date(Number(ym.slice(0,4)),Number(ym.slice(5,7)),1,12)).slice(0,7),prevM=ym=>iso(new Date(Number(ym.slice(0,4)),Number(ym.slice(5,7))-2,1,12)).slice(0,7);
+const PT={adv:'Аванс',sal:'Зарплата',oth:'Прочее'};
+const daysMap=id=>{const p=PAYROLL()[id]||{},S=(DATA.sched||{})[id]||{},out={};Object.keys(S).forEach(d=>{if(S[d]&&Number(p.dh)>0)out[d]=Number(p.dh)});Object.keys(p.hours||{}).forEach(d=>{const h=Number(p.hours[d])||0;if(h>0)out[d]=h;else delete out[d]});return out};
+const snapFor=id=>{const p=PAYROLL()[id]||{},k=team().find(x=>x.id===id)||{n:'?'},pay={};Object.entries(p.pay||{}).forEach(([i,v])=>{if(v)pay[i]={d:v.d,a:v.a,t:v.t,m:v.m,n:v.n||''}});return{n:k.n,r:Number(p.rate)||0,c:CUR(),dh:Number(p.dh)||0,days:daysMap(id),pay,up:Date.now()}};
+const pubT={};
+const publishAcct=id=>{const p=PAYROLL()[id];if(!p||!p.key||!isAdmin())return;clearTimeout(pubT[id]);pubT[id]=setTimeout(()=>{const q=PAYROLL()[id];if(q&&q.key)mut('PUT','acct/'+q.key,snapFor(id))},700)};
+const publishAll=()=>team().forEach(k=>publishAcct(k.id));
+const calcM=(sn,ym)=>{const r=sn.r||0,list=Object.keys(sn.days||{}).filter(d=>d.slice(0,7)===ym).sort().map(d=>({d,h:sn.days[d],s:Math.round(sn.days[d]*r*100)/100})),hours=list.reduce((a,b)=>a+b.h,0),earned=Math.round(hours*r*100)/100,pays=Object.entries(sn.pay||{}).map(([id,v])=>({id,...v})).filter(v=>v.m===ym).sort((a,b)=>String(a.d).localeCompare(String(b.d))),paid=Math.round(pays.reduce((a,b)=>a+(Number(b.a)||0),0)*100)/100;return{list,hours,earned,pays,paid,left:Math.round((earned-paid)*100)/100}};
+const allTot=sn=>{const ms=new Set(Object.keys(sn.days||{}).map(d=>d.slice(0,7)));Object.values(sn.pay||{}).forEach(v=>{if(v&&v.m)ms.add(v.m)});let e=0,p=0;ms.forEach(m=>{const c=calcM(sn,m);e+=c.earned;p+=c.paid});return{earned:Math.round(e*100)/100,paid:Math.round(p*100)/100,left:Math.round((e-p)*100)/100}};
+async function acctKey(id,pw){const enc=new TextEncoder(),km=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']),bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc.encode('vip-acct:'+id),iterations:60000},km,256);return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+let mm=iso(new Date(Date.now()-BDAY_H*36e5)).slice(0,7);
+const acctHTML=(sn,ym)=>{const c=calcM(sn,ym),cu=sn.c||'₽',tot=allTot(sn),sumT=t=>c.pays.filter(p=>p.t===t).reduce((a,b)=>a+(Number(b.a)||0),0);
+const st=(t,d,l)=>{const v=sumT(t);return `<div class="ac-st${v?' ok':''}"><b>${l}</b><span>${esc(day(d))}</span><strong>${v?'✓ '+esc(mny(v,cu)):'ожидается'}</strong></div>`};
+return `<div class="ac-top"><b>${esc(sn.n)}</b><span>${esc(mny(sn.r,cu))} / час</span></div><div class="mh"><button class="g" data-a="memon" data-id="-1" aria-label="Назад">‹</button><b>${esc(MN(ym))}</b><button class="g" data-a="memon" data-id="1" aria-label="Вперёд">›</button></div>
+<div class="ac-grid"><div><small>Часов</small><b>${fmtH(c.hours)}</b></div><div><small>Начислено</small><b>${esc(mny(c.earned,cu))}</b></div><div><small>Получено</small><b>${esc(mny(c.paid,cu))}</b></div><div class="${c.left>0?'warn':'good'}"><small>Осталось получить</small><b>${esc(mny(c.left,cu))}</b></div></div>
+${st('adv',ym+'-28','Аванс')}${st('sal',nextM(ym)+'-15','Зарплата')}
+<div class="gh">Дни и часы</div>${c.list.length?c.list.map(x=>`<div class="ac-row"><span>${esc(day(x.d))}</span><span>${fmtH(x.h)} ч</span><b>${esc(mny(x.s,cu))}</b></div>`).join(''):'<div class="small">В этом месяце смен нет.</div>'}
+<div class="gh">Выплаты за этот месяц</div>${c.pays.length?c.pays.map(p=>`<div class="ac-row"><span>${esc(day(p.d))}</span><span>${esc(PT[p.t]||'')}${p.n?' · '+esc(p.n):''}</span><b>${esc(mny(p.a,cu))}</b></div>`).join(''):'<div class="small">Выплат пока не было.</div>'}
+<div class="ac-all">За всё время: начислено <b>${esc(mny(tot.earned,cu))}</b> · получено <b>${esc(mny(tot.paid,cu))}</b> · осталось <b>${esc(mny(tot.left,cu))}</b></div>`};
+const rMe=()=>{const s=L.acct,lg=$('#melog'),ac=$('#meacc');if(s&&acctData&&s.id===meId){lg.hidden=true;ac.hidden=false;$('#mebody').innerHTML=acctHTML(acctData,mm)}else{lg.hidden=false;ac.hidden=true}};
+const rMeBox=()=>{const b=$('#mebox');if(!b)return;const k=team().find(x=>x.id===sf);b.innerHTML=k?`<button class="p" data-a="meopen">🔐 Кабинет: ${esc(k.n)} — часы и зарплата</button>`:'<div class="small">Выберите своё имя выше, чтобы открыть личный кабинет (часы и зарплата).</div>'};
+const rPayAdm=()=>{const box=$('#payadm');if(!box)return;box.hidden=!isAdmin();if(!isAdmin()||!box.open)return;const k=team();if(pc&&!k.some(x=>x.id===pc))pc=null;if(!pc&&k.length)pc=(sf!=='all'&&k.some(x=>x.id===sf))?sf:k[0].id;
+const cu=CUR(),P=PAYROLL();
+$('#payov').innerHTML=`<div class="mh"><button class="g" data-a="smon" data-id="-1" aria-label="Назад">‹</button><b>${esc(MN(sm))}</b><button class="g" data-a="smon" data-id="1" aria-label="Вперёд">›</button></div><div class="ovh"><span>Повар</span><span>Часы</span><span>Начислено</span><span>Остаток</span></div>`+k.map(c=>{const m=calcM(snapFor(c.id),sm);return `<button class="ov${pc===c.id?' on':''}" data-a="paypick" data-id="${esc(c.id)}"><span class="ovn">${esc(c.n)}</span><span>${fmtH(m.hours)}</span><span>${esc(mny(m.earned,cu))}</span><b class="${m.left>0?'warn':'good'}">${esc(mny(m.left,cu))}</b></button>`}).join('');
+const ck=k.find(x=>x.id===pc);if(!ck){$('#payed').innerHTML='<div class="small">Добавьте поваров в админ-панели ⚙.</div>';return}
+const p=P[pc]||{},sn=snapFor(pc),m=calcM(sn,sm),tot=allTot(sn);
+$('#payed').innerHTML=`<div class="gh">${esc(ck.n)}</div>
+<div class="row2"><label><div class="lbl">Ставка за час</div><input inputmode="decimal" data-pset="rate" value="${esc(p.rate||'')}" placeholder="0"></label><label><div class="lbl">Часов в смене</div><input inputmode="decimal" data-pset="dh" value="${esc(p.dh||'')}" placeholder="0"></label></div>
+<div class="row2"><label><div class="lbl">Валюта</div><input data-pset="cur" value="${esc(cu)}" maxlength="6"></label><button class="p" data-a="paypw" data-id="${esc(pc)}" style="align-self:end">🔑 ${p.key?'Сменить пароль':'Создать пароль'}</button></div>
+<div class="small">${p.key?'✓ Кабинет включён: повар входит по имени и паролю и видит только свой счёт.':'Пароль не задан — кабинет повара выключен.'} Смены берутся из графика (Р × часов в смене); любой день можно поправить ниже.</div>
+<div class="gh">Дни и часы · ${esc(MN(sm))}</div>${m.list.length?m.list.map(x=>`<div class="ac-row"><span>${esc(day(x.d))}</span><input inputmode="decimal" data-ph="${x.d}" value="${fmtH(x.h)}" aria-label="Часы"><b>${esc(mny(x.s,cu))}</b></div>`).join(''):'<div class="small">Смен в этом месяце нет. Отметьте дни буквой Р в графике или добавьте день ниже.</div>'}
+<div class="row2" style="margin-top:8px"><input type="date" id="phd" value="${dAdd(0)}"><div class="tkrow" style="margin:0"><input id="phh" inputmode="decimal" placeholder="Часов" style="flex:1"><button class="p" data-a="phadd">＋ День</button></div></div>
+<div class="ac-grid" style="margin-top:12px"><div><small>Часов</small><b>${fmtH(m.hours)}</b></div><div><small>Начислено</small><b>${esc(mny(m.earned,cu))}</b></div><div><small>Выплачено</small><b>${esc(mny(m.paid,cu))}</b></div><div class="${m.left>0?'warn':'good'}"><small>Остаток</small><b>${esc(mny(m.left,cu))}</b></div></div>
+<div class="gh">Выплаты за ${esc(MN(sm))}</div>${m.pays.length?m.pays.map(v=>`<div class="ac-row"><span>${esc(day(v.d))}</span><span>${esc(PT[v.t]||'')}${v.n?' · '+esc(v.n):''}</span><b>${esc(mny(v.a,cu))}</b><button class="x" data-a="paydel" data-id="${esc(v.id)}" aria-label="Удалить">✕</button></div>`).join(''):'<div class="small">Выплат нет.</div>'}
+<div class="small">Аванс — 28 числа (идёт в этот месяц), зарплата — 15 числа следующего месяца (закрывает предыдущий).</div>
+<div class="row2"><input type="date" id="pyd" value="${dAdd(0)}"><input id="pya" inputmode="decimal" placeholder="Сумма"></div>
+<div class="row2"><select id="pyt"><option value="adv">Аванс</option><option value="sal">Зарплата</option><option value="oth">Прочее</option></select><input id="pyn" placeholder="Комментарий" maxlength="60"></div>
+<div class="acts"><button class="p" data-a="payadd">＋ Записать выплату</button></div>
+<div class="ac-all">За всё время: начислено <b>${esc(mny(tot.earned,cu))}</b> · выплачено <b>${esc(mny(tot.paid,cu))}</b> · осталось <b>${esc(mny(tot.left,cu))}</b></div>`};
+const rSched=()=>{rSched0();rMeBox();rPayAdm()};
+const payChange=(t,d)=>{if(!isAdmin()||!pc)return;const v=String(t.value).trim();
+if(d.pset==='cur'){mut('PATCH','payroll/_cfg',{cur:v||'₽'});publishAll();snd.tap();return}
+if(d.pset){const n=Number(v.replace(',','.'));if(v!==''&&!(n>=0))return;mut('PATCH','payroll/'+pc,{[d.pset]:v===''?null:n});publishAcct(pc);snd.tap();setTimeout(rPayAdm,0);return}
+if(d.ph){const n=v===''?null:Number(v.replace(',','.'));if(n!==null&&!(n>=0))return;mut('PATCH','payroll/'+pc+'/hours',{[d.ph]:n});publishAcct(pc);snd.tap();setTimeout(rPayAdm,0)}};
 const rDiag=()=>{const o=Object.keys(ES).map(k=>k+':'+(ST.open[k]?'✓':'✗')).join('  ');
 $('#dinfo').textContent=[`Версия: ${VER}`,`Режим: ${DEMO?'ДЕМО (config.js не заполнен)':'облако'}`,`База: ${DB||'не найдена'}`,`Живая связь: ${ST.open.meta&&!metaBroken?'мгновенная (поток)':metaBroken?'быстрый опрос (обновите правила Firebase)':'быстрый опрос'}`,`В очереди на отправку: ${L.out.length}`,`Последняя ошибка: ${ST.lastErr||'нет'}`,`Телефон в сети: ${navigator.onLine?'да':'нет'}`,`Повара: ${team().length} · заказы: ${ords().length} · заготовок на день: ${Object.keys(dm()).length}`,`Устройство: ${DEV}`].join('\n');$('#dlog').textContent=''};
 const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filter(o=>!q||(o.cook.n+' '+o.date+' '+day(o.date)+' '+o.items.map(i=>i.n).join(' ')).toLowerCase().includes(q));
@@ -221,19 +307,19 @@ $('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · 
 function render(){raf=0;const d={...D};for(const k in D)delete D[k];
 if(d.team){if(isAdmin())ensureTeamColors();rCooks();rPCooks();rShifts();if(tab==='prep'){rPrep();rPlan()}if(tab==='sched')rSched();if(dialogOpen('#dt'))rTeam()}
 if((d.sched||d.prepPins)&&tab==='sched')rSched();
-if(d.shifts)rShifts();
+if(d.shifts)rShifts();if(d.payroll&&tab==='sched')rPayAdm();
 if(d.catalog){syncDraft();rCats();rList();rBar();if(tab==='writeoff'){rWoCats();rWoProducts()}if(dialogOpen('#dt'))rAdm()}
 if(d.writeoffs){carryWriteoffs();if(tab==='writeoff')rWoLog()}
 if(d.orders&&dialogOpen('#dh'))rHist();
 if(tab==='prep'&&(d.prep||d.plan||d.prepPins||d.prepLibrary||d.prepMeta))rPrep();
 if(tab==='prep'&&(d.prep||d.plan||d.prepLibrary))rPlan();
-if(tab==='prep'&&d.prepLibrary)rLibrary();
+if(tab==='prep'&&d.prepLibrary){rLibrary();autoLib()}
 clearTimeout(ct);ct=setTimeout(()=>LS.set('vip3-cache',DATA),4000)}
 const tkRes=()=>{const g=Math.round(Number(String($('#tkgst').value).replace(',','.')))||0,k=fq($('#tkk').value)||0;$('#tkres').textContent=g&&k?`= ${fmtQ(Math.round(g*k*100)/100)} ${$('#tkgu').value}`:'Введите число гостей';};
 const tkMode=m=>{tk.mode=m;$('#tkNum').hidden=m!=='n';$('#tkG').hidden=m!=='g';document.querySelectorAll('#tkm button').forEach(b=>b.classList.toggle('on',b.dataset.id===m));if(m==='g')tkRes()};
-const libTouch=p=>{const old=libItems().find(i=>nt(i.t)===nt(p.t)),id=old?old.id:hashText(nt(p.t));mut('PUT','prepLibrary/'+id,{t:p.t,q:p.q||'',g:p.g||'main',k:p.k||'other',...(p.pg?{pg:p.pg,pu:p.pu}:{}),by:old&&old.by?old.by:null,usedAt:Date.now()})};
-const addFromLib=(i,id)=>{if(Object.values(dm()).some(t=>nt(t.t)===nt(i.t))){snd.warn();toast('Уже есть на этот день');return}const nid=uid(),linked=!!i.pg;
-mut('PUT',`prep/${pd}/${nid}`,{t:i.t,g:i.g||'main',k:i.k||'other',...(linked?{pg:i.pg,pu:i.pu||'порц'}:{}),c:Date.now()});if(id)mut('PATCH','prepLibrary/'+id,{usedAt:Date.now()});snd.add();
+const libTouch=p=>{const old=libFind(p.t,p.g),id=old?old.id:libId(p.t,p.g);mut('PUT','prepLibrary/'+id,{t:p.t,q:p.q||'',g:p.g||'main',k:p.k||'other',ks:p.ks||'auto',...(p.pg?{pg:p.pg,pu:p.pu}:{}),by:old&&old.by?old.by:null,usedAt:Date.now()})};
+const addFromLib=(i,id)=>{if(Object.values(dm()).some(t=>nt(t.t)===nt(i.t)&&((t.g==='banq')===(i.g==='banq')))){snd.warn();toast('Уже есть на этот день');return}const nid=uid(),linked=!!i.pg;
+mut('PUT',`prep/${pd}/${nid}`,{t:i.t,g:i.g||'main',k:i.k||'other',...(i.ks?{ks:i.ks}:{}),...(linked?{pg:i.pg,pu:i.pu||'порц'}:{}),c:Date.now()});if(id)mut('PATCH','prepLibrary/'+id,{usedAt:Date.now()});snd.add();
 if(!linked||!guestsOf(pd))setTimeout(()=>ACT.tkopen(nid,1),30);else toast('✓ Добавлено · '+qtyText({pg:i.pg,pu:i.pu||'порц'},pd))};
 const carryWriteoffs=()=>{const today=dAdd(0),prev=dAdd(-1,today);if(!DEMO){const a=MV.woPrev,b=MV.writeoffs;if(!(a&&a.indexOf('writeoffs/'+prev+'|')===0&&b&&b.indexOf('writeoffs/'+today+'|')===0))return}
 const src=((DATA.writeoffs||{})[prev])||{},dst=((DATA.writeoffs||{})[today])||{};let n=0;
@@ -251,7 +337,7 @@ const ask=(t,h,y='Да',n='Нет, вернуться')=>new Promise(res=>{const
 const clip=async t=>{try{await navigator.clipboard.writeText(t);return 1}catch{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch{return 0}}};
 const copyOrder=async()=>{if(!valid())return;if(!await closingCheck())return;try{await onMeta(true)}catch{}const o=snap();o.closed=true;const message=msg(o,o.date===dAdd(1));const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(message)}</pre>`,'Да, копировать','Нет, вернуться');if(!yes)return;
 if(!await clip(message)){snd.warn();toast('Не удалось скопировать. Разрешите доступ к буферу');return}
-o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();$('#dr').close();rAll();snd.ok();vib([60,40,60]);toast('✓ Скопировано и сохранено в истории')};
+o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();$('#dr').close();rAll();snd.ok();vib([60,40,60]);toast(message.length>4000?`✓ Скопировано (${message.length} симв.). Telegram режет сообщения длиннее 4096 символов`:'✓ Скопировано и сохранено в истории')};
 const saveOrder=()=>{if(!valid())return;const o=snap();upsert(o);L.draft.editId=o.id;saveL();snd.ok();toast('✓ Сохранено для всех. Можно редактировать')};
 const open=id=>{rRev();$(id).showModal()};
 const need=()=>{snd.warn();toast('Нужен вход в админ-панель');ACT.admin()};
@@ -318,7 +404,7 @@ const w=t.by||L.me;if(!w){snd.warn();vib(80);toast('Выберите повар�
 mut('PATCH',p,{done:true,by:{id:w.id,n:w.n},at:Date.now()});rememberPrep(t,w);snd.ok();vib(30)},
 async pdel(id){const t=((DATA.prep||{})[pd]||{})[id];if(!t||!await ask('Удалить заготовку?',`<p>${esc(t.t)}</p>`,'Да, удалить','Нет'))return;mut('DELETE',`prep/${pd}/${id}`);snd.warn()},
 async pcopy(){const prev=dAdd(-1,pd);let src=(DATA.prep||{})[prev];if(!src&&!DEMO){try{src=await(await api('GET','prep/'+prev)).json()}catch{toast('Нет сети');return}}
-const es=Object.entries(src||{}).sort((a,b)=>(a[1].c||0)-(b[1].c||0));if(!es.length){snd.warn();toast('За вчера списка нет');return}
+const es=Object.entries(src||{}).sort((a,b)=>(a[1].c||0)-(b[1].c||0)).filter(e=>inSec(e[1].g));if(!es.length){snd.warn();toast('За вчера списка нет');return}
 const m=dm();let n=0;es.forEach(([k,t],i)=>{if(m[k])return;mut('PUT',`prep/${pd}/${k}`,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),...(t.lid?{lid:t.lid}:{}),c:Date.now()+i});n++});snd.ok();toast('✓ Скопировано: '+n)},
 // график работы
 sfil(id){sf=id;L.sf=id;ssel.clear();saveL();snd.tap();rSched()},
@@ -326,8 +412,8 @@ smon(n){const[y,m]=sm.split('-').map(Number);sm=iso(new Date(y,m-1+(+n),1,12)).s
 sedit(){if(!isAdmin()){want='sedit';snd.tap();$('#ap').value='';$('#da').showModal();$('#ap').focus();return}se=!se;ssel.clear();snd.tap();rSched()},
 sday(dt){if(!(se&&isAdmin()&&sf!=='all'))return;ssel.has(dt)?ssel.delete(dt):ssel.add(dt);snd.tap();rSched()},
 sapply(){if(!isAdmin())return need();if(sf==='all'){snd.warn();toast('Сначала выберите повара');return}if(!ssel.size){snd.warn();toast('Выберите дни в календаре');return}
-const n=ssel.size;ssel.forEach(dt=>mut('PUT',`sched/${sf}/${dt}`,{r:'Р',work:true}));ssel.clear();snd.ok();toast('✓ Рабочие дни отмечены: '+n);rSched()},
-sclear(){if(!isAdmin())return need();if(sf==='all'||!ssel.size){snd.warn();toast('Выберите повара и дни');return}const n=ssel.size;ssel.forEach(dt=>mut('DELETE',`sched/${sf}/${dt}`));ssel.clear();snd.warn();toast('Смены убраны: '+n);rSched()},
+const n=ssel.size;ssel.forEach(dt=>mut('PUT',`sched/${sf}/${dt}`,{r:'Р',work:true}));publishAcct(sf);ssel.clear();snd.ok();toast('✓ Рабочие дни отмечены: '+n);rSched()},
+sclear(){if(!isAdmin())return need();if(sf==='all'||!ssel.size){snd.warn();toast('Выберите повара и дни');return}const n=ssel.size;ssel.forEach(dt=>mut('DELETE',`sched/${sf}/${dt}`));publishAcct(sf);ssel.clear();snd.warn();toast('Смены убраны: '+n);rSched()},
 // диагностика
 diag(){snd.tap();rDiag();$('#dd').showModal()},
 async dtest(){const out=[],log=s=>{out.push(s);$('#dlog').textContent=out.join('\n')};if(DEMO){log('Демо-режим: config.js не заполнен');return}
@@ -341,18 +427,34 @@ async dclr(){if(!await ask('Сбросить кэш?','<p>Очистятся в�
 
 cuser(id){if(!isAdmin())return need();const k=team().find(x=>x.id===id);if(!k)return;$('#uu').value=k.u||'';$('#du').dataset.id=id;$('#utitle').textContent='Username: '+k.n;snd.tap();$('#du').showModal();$('#uu').focus()},
 usave(){if(!isAdmin())return need();const id=$('#du').dataset.id,k=team().find(x=>x.id===id),u=$('#uu').value.trim().replace(/^@+/,'').replace(/\s+/g,'');if(!k)return;if(k.virtual)mut('PUT','team/'+id,{n:k.n,r:k.r,color:cookColor(id),u});else mut('PATCH','team/'+id,{u:u||null});$('#du').close();snd.ok();toast(u?'✓ @'+u+' сохранён':'Username убран');rTeam();rShifts()},
-sfton(id){if(!isAdmin())return need();const tom=dAdd(1),cur=((DATA.shifts||{})[tom]||{})[id];if(cur){mut('DELETE',`shifts/${tom}/${id}`);snd.tap();return}const inp=document.querySelector(`[data-sft="${cssEsc(id)}"]`),v=inp&&inp.value||L.at||'14:00';L.at=v;saveL();mut('PUT',`shifts/${tom}/${id}`,v);snd.add()},
+sfton(id){if(!isAdmin())return need();const tom=dAdd(1);if(shiftsFor(tom).map[id]){setShift(id,'');snd.tap();return}const inp=document.querySelector(`[data-sft="${cssEsc(id)}"]`),v=inp&&inp.value||L.at||'14:00';L.at=v;saveL();setShift(id,v);snd.add()},
 woinc(){if(!woDraft)return;const v=Math.round(((fq(woDraft.qty)||0)+1)*100)/100;woDraft.qty=String(v);$('#woQty').value=fmtQ(v);snd.tap()},
 wodec(){if(!woDraft)return;const v=Math.round(((fq(woDraft.qty)||1)-1)*100)/100;if(v<=0){snd.warn();return}woDraft.qty=String(v);$('#woQty').value=fmtQ(v);snd.tap()},
 qban(){qb=qb?0:1;snd.tap();rPlan()},
 qpick(key){const p=String(key).split(':'),kind=p.shift(),id=p.join(':'),i=kind==='lib'?libItems().find(x=>x.id===id):planItems().find(x=>x.id===id);if(!i)return;addFromLib(i,kind==='lib'?id:'')},
-tkopen(id,isNew){const t=dm()[id];if(!t)return;tk={id,mode:t.pg?'g':'n'};const lib=libItems().find(x=>nt(x.t)===nt(t.t));
+tkopen(id,isNew){const t=dm()[id];if(!t)return;tk={id,mode:t.pg?'g':'n',kt:0};const lib=libItems().find(x=>nt(x.t)===nt(t.t));
 $('#tkh').textContent=isNew?'Сколько приготовить?':'Заготовка';$('#tkn').value=t.t;$('#tkb').checked=t.g==='banq';$('#tkc').innerHTML=PCATS.map(c=>`<option value="${c[0]}"${c[0]===pk(t)?' selected':''}>${c[1]} ${c[2]}</option>`).join('');
 const m=String(t.q||'').match(/^\s*(\d+(?:[.,]\d+)?)\s*(.*)$/),u=PU.indexOf(((m&&m[2])||'').trim())>=0?m[2].trim():LS.get('vip3-tk-unit','порц');
 $('#tku').innerHTML=PU.map(x=>`<option${x===u?' selected':''}>${x}</option>`).join('');$('#tkq').value=m?m[1]:'';
 $('#tkgu').innerHTML=PU.map(x=>`<option${x===(t.pu||'порц')?' selected':''}>${x}</option>`).join('');$('#tkk').value=t.pg?fmtQ(t.pg):'1';$('#tkgst').value=guestsOf(pd)||'';
 let h='';if(lib&&lib.pg)h=`<button class="chip qp" data-a="tkhint" data-id="g">👥 как раньше: ${esc(fmtQ(lib.pg))} ${esc(lib.pu||'')} на гостя</button>`;else if(lib&&lib.q)h=`<button class="chip qp" data-a="tkhint" data-id="n">как раньше: ${esc(lib.q)}</button>`;
-if(guestsOf(pd)>0&&!t.pg)h+=`<button class="chip qp" data-a="tkguest">👥 Как число гостей (${guestsOf(pd)})</button>`;$('#tkhint').innerHTML=h;tkMode(tk.mode);snd.tap();$('#dtk').showModal();setTimeout(()=>{(tk.mode==='n'?$('#tkq'):$('#tkgst')).focus()},60)},
+if(guestsOf(pd)>0&&!t.pg)h+=`<button class="chip qp" data-a="tkguest">👥 Как число гостей (${guestsOf(pd)})</button>`;$('#tkhint').innerHTML=h;{const ks=t.ks||(lib&&lib.ks)||'';$('#tkcs').textContent=ks==='auto'?'✨ Определено автоматически — измените, если не так':ks==='?'?'❓ Не удалось определить — выберите категорию':''}tkMode(tk.mode);snd.tap();$('#dtk').showModal();setTimeout(()=>{(tk.mode==='n'?$('#tkq'):$('#tkgst')).focus()},60)},
+
+meopen(){const k=team().find(x=>x.id===sf);if(!k)return;if(DEMO){toast('Нужно подключить облако (config.js)');return}meId=k.id;$('#menm').textContent=k.n;$('#mepw').value='';acctData=null;snd.tap();rMe();$('#dme').showModal();if(L.acct&&L.acct.id===k.id)ACT.loadAcct();else setTimeout(()=>$('#mepw').focus(),60)},
+async loadAcct(){const s=L.acct;if(!s||!DB)return;try{const d=await jget('acct/'+s.key);if(d){acctData=d;rMe()}else{L.acct=null;saveL();acctData=null;rMe();toast('Пароль изменён — войдите снова')}}catch(e){if(!acctData)toast('Нет связи')}},
+async melogin(){const pw=$('#mepw').value;if(!meId||!pw){snd.warn();return}if(!(window.crypto&&crypto.subtle)){toast('Браузер не поддерживает защищённый вход');return}
+try{const key=await acctKey(meId,pw),d=await jget('acct/'+key);if(!d){snd.warn();vib(120);toast('Неверный пароль или кабинет ещё не настроен');return}L.acct={id:meId,key};saveL();acctData=d;snd.ok();rMe()}catch(e){snd.warn();toast('Нет связи')}},
+melogout(){L.acct=null;saveL();acctData=null;$('#dme').close();snd.tap();rMe()},
+memon(n){const a=mm.split('-').map(Number);mm=iso(new Date(a[0],a[1]-1+(+n),1,12)).slice(0,7);snd.tap();rMe()},
+paypick(id){pc=id;snd.tap();rPayAdm()},
+paypw(id){if(!isAdmin())return need();const k=team().find(x=>x.id===id);if(!k)return;$('#pwh').textContent='Пароль кабинета: '+k.n;$('#pwv').value='';$('#dpw').dataset.id=id;$('#pwdel').hidden=!(PAYROLL()[id]&&PAYROLL()[id].key);snd.tap();$('#dpw').showModal();setTimeout(()=>$('#pwv').focus(),60)},
+async pwsave(){if(!isAdmin())return need();const id=$('#dpw').dataset.id,pw=$('#pwv').value.trim();if(pw.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}if(!(window.crypto&&crypto.subtle)){toast('Браузер не поддерживает защищённый вход');return}
+const key=await acctKey(id,pw),old=(PAYROLL()[id]||{}).key;if(old&&old!==key)mut('DELETE','acct/'+old);mut('PATCH','payroll/'+id,{key});publishAcct(id);$('#dpw').close();snd.ok();toast('✓ Пароль установлен. Сообщите его повару');rPayAdm()},
+pwdel(){if(!isAdmin())return need();const id=$('#dpw').dataset.id,old=(PAYROLL()[id]||{}).key;if(old)mut('DELETE','acct/'+old);mut('PATCH','payroll/'+id,{key:null});$('#dpw').close();snd.warn();toast('Кабинет повара отключён');rPayAdm()},
+phadd(){if(!isAdmin()||!pc)return need();const d=$('#phd').value,h=Number(String($('#phh').value).replace(',','.'));if(!d||!(h>0)){snd.warn();toast('Укажите дату и часы');return}mut('PATCH','payroll/'+pc+'/hours',{[d]:h});publishAcct(pc);$('#phh').value='';snd.ok();rPayAdm()},
+payadd(){if(!isAdmin()||!pc)return need();const d=$('#pyd').value,a=Number(String($('#pya').value).replace(',','.')),t=$('#pyt').value,n=$('#pyn').value.trim();if(!d||!(a>0)){snd.warn();toast('Укажите дату и сумму');return}
+const m=t==='sal'?prevM(d.slice(0,7)):d.slice(0,7);mut('PUT',`payroll/${pc}/pay/${uid()}`,{d,a:Math.round(a*100)/100,t,m,n});publishAcct(pc);$('#pya').value=$('#pyn').value='';snd.ok();toast('✓ Выплата записана');rPayAdm()},
+async paydel(id){if(!isAdmin()||!pc)return need();const v=((PAYROLL()[pc]||{}).pay||{})[id];if(!v||!await ask('Удалить выплату?',`<p>${esc(day(v.d))} · ${esc(mny(v.a,CUR()))}</p>`,'Да, удалить','Нет'))return;mut('DELETE',`payroll/${pc}/pay/${id}`);publishAcct(pc);snd.warn();rPayAdm()},
 lfil(id){lf=id;snd.tap();rPlan();rLibrary()},
 tkinc(){const v=Math.round(((fq($('#tkq').value)||0)+1)*100)/100;$('#tkq').value=fmtQ(v);snd.tap()},
 tkdec(){const v=Math.round(((fq($('#tkq').value)||1)-1)*100)/100;if(v>0)$('#tkq').value=fmtQ(v);snd.tap()},
@@ -363,9 +465,9 @@ clgo(){if(!CL)return;if(CL.st.some(x=>!x)){snd.warn();toast('Отметьте в
 clno(){if(!CL)return;const r=CL.res;CL=null;$('#dcl').onclose=null;$('#dcl').close();r(false)},
 tkmode(m){if(tk){tkMode(m);snd.tap()}},
 tkhint(kind){if(!tk)return;const t=dm()[tk.id],lib=t&&libItems().find(x=>nt(x.t)===nt(t.t));if(!lib)return;if(kind==='g'){$('#tkk').value=fmtQ(lib.pg);$('#tkgu').value=lib.pu||'порц';tkMode('g')}else{const m=String(lib.q||'').match(/^\s*(\d+(?:[.,]\d+)?)\s*(.*)$/);if(m){$('#tkq').value=m[1];if(PU.indexOf(m[2].trim())>=0)$('#tku').value=m[2].trim()}tkMode('n')}snd.tap()},
-tksave(){if(!tk)return;const id=tk.id;if(!dm()[id])return;const t=$('#tkn').value.trim().replace(/\s+/g,' ');if(!t){snd.warn();toast('Введите название');return}const g=$('#tkb').checked?'banq':'main',k=$('#tkc').value||'other';let patch;
-if(tk.mode==='g'){const gs=Math.round(Number(String($('#tkgst').value).replace(',','.')))||0,k=fq($('#tkk').value);if(!k){snd.warn();toast('Сколько на одного гостя?');return}if(gs>0&&gs!==guestsOf(pd))mut('PUT',`prepMeta/${pd}/guests`,gs);patch={t,g,k:$('#tkc').value||'other',q:null,pg:k,pu:$('#tkgu').value}}
-else{const n=fq($('#tkq').value),u=$('#tku').value;LS.set('vip3-tk-unit',u);patch={t,g,k,q:n?`${fmtQ(n)} ${u}`:'',pg:null,pu:null}}
+tksave(){if(!tk)return;const id=tk.id;if(!dm()[id])return;const t=$('#tkn').value.trim().replace(/\s+/g,' ');if(!t){snd.warn();toast('Введите название');return}const g=$('#tkb').checked?'banq':'main',k=$('#tkc').value||'other',ks=tk.kt?'user':(dm()[id].ks||'auto');let patch;
+if(tk.mode==='g'){const gs=Math.round(Number(String($('#tkgst').value).replace(',','.')))||0,k=fq($('#tkk').value);if(!k){snd.warn();toast('Сколько на одного гостя?');return}if(gs>0&&gs!==guestsOf(pd))mut('PUT',`prepMeta/${pd}/guests`,gs);patch={t,g,k:$('#tkc').value||'other',ks,q:null,pg:k,pu:$('#tkgu').value}}
+else{const n=fq($('#tkq').value),u=$('#tku').value;LS.set('vip3-tk-unit',u);patch={t,g,k,ks,q:n?`${fmtQ(n)} ${u}`:'',pg:null,pu:null}}
 mut('PATCH',`prep/${pd}/${id}`,patch);libTouch(patch);$('#dtk').close();snd.ok()},
 async tkdel(){const id=tk&&tk.id;if(!id)return;await ACT.pdel(id);if(!dm()[id])$('#dtk').close()},
 gstedit(){$('#gsn').value=guestsOf(pd)||'';snd.tap();$('#dgs').showModal();setTimeout(()=>$('#gsn').focus(),60)},
@@ -375,8 +477,12 @@ qgrp(id){qg=id;snd.tap();rPlan()},
 qnewg(){snd.tap();$('#qgn').value='';$('#dq').showModal();$('#qgn').focus()},
 qaddg(){const n=$('#qgn').value.trim();if(!n){snd.warn();toast('Введите название группы');return}if(pgroups().some(g=>nt(g.n)===nt(n))){snd.warn();toast('Такая группа уже есть');return}const k='q'+uid();mut('PUT','plan/groups/'+k,{n});qg=k;$('#dq').close();snd.ok();rPlan()},
 async qdelg(){const g=pgroups().find(x=>x.id===qg);if(!g||g.id==='main'||g.id==='banq')return;const its=planItems().filter(i=>(i.g||'main')===g.id);if(!await ask('Удалить группу?',`<p>«${esc(g.n)}»${its.length?` и заготовок в ней: ${its.length}`:''} будут удалены.</p>`,'Да, удалить','Нет'))return;its.forEach(i=>mut('DELETE','plan/items/'+i.id));mut('DELETE','plan/groups/'+g.id);qg='main';snd.warn();rPlan()},
-qadd(){const t=$('#qt').value.trim().replace(/\s+/g,' '),q=$('#qq').value.trim();if(!t){snd.warn();toast('Напишите, что приготовить');$('#qt').focus();return}const g=(qb||lf==='banq')?'banq':'main',k=curK();if(Object.values(dm()).some(x=>nt(x.t)===nt(t))){snd.warn();toast('Эта заготовка уже есть на этот день');return}
-mut('PUT',`prep/${pd}/${uid()}`,{t,q,g,k,c:Date.now()});const old=libItems().find(x=>nt(x.t)===nt(t));mut('PUT','prepLibrary/'+(old?old.id:hashText(nt(t))),{t,q,g,k,by:old&&old.by?old.by:null,usedAt:Date.now()});$('#qt').value=$('#qq').value='';snd.add();toast('✓ Добавлено');$('#qt').focus()},
+qadd(){const t=$('#qt').value.trim().replace(/\s+/g,' '),q=$('#qq').value.trim();if(!t){snd.warn();toast('Напишите, что приготовить');$('#qt').focus();return}
+const g=psec==='banq'?'banq':'main';if(Object.values(dm()).some(x=>nt(x.t)===nt(t)&&((x.g==='banq')===(g==='banq')))){snd.warn();toast('Эта заготовка уже есть на этот день');return}
+const old=libFind(t,g),cl=classify(t),ctx=curK();let k,ks;
+if(old&&old.ks==='user'&&old.k&&old.k!=='other'){k=old.k;ks='user'}else if(cl.k!=='other'){k=cl.k;ks='auto'}else if(ctx!=='other'){k=ctx;ks='ctx'}else{k='other';ks='?'}
+mut('PUT',`prep/${pd}/${uid()}`,{t,q,g,k,ks,c:Date.now()});mut('PUT','prepLibrary/'+(old?old.id:libId(t,g)),{t,q,g,k,ks,by:old&&old.by?old.by:null,usedAt:Date.now()});$('#qt').value=$('#qq').value='';snd.add();toast(ks==='?'?'✓ Добавлено · выберите категорию (❓)':'✓ Добавлено · '+pcIcon(k)+' '+(PCATS.find(c=>c[0]===k)||[0,0,''])[2]);$('#qt').focus()},
+psec(id){psec=id==='banq'?'banq':'main';LS.set('vip3-psec',psec);lf='all';snd.tap();rPrep();rPlan();rLibrary()},
 qone(){const t=$('#qt').value.trim().replace(/\s+/g,' '),q=$('#qq').value.trim();if(!t){snd.warn();toast('Напишите название заготовки');$('#qt').focus();return}mut('PUT',`prep/${pd}/${uid()}`,{t,q,g:qg,c:Date.now()});$('#qt').value=$('#qq').value='';snd.add();toast('✓ Добавлено в подготовку на этот день')},
 async qtog(id){const i=planItems().find(x=>x.id===id);if(!i)return;const t=dm()[id];
 if(t){if(t.done&&!await ask('Заготовка уже выполнена',`<p>${esc(t.t)} отмечена поваром. Убрать из дня?</p>`,'Да, убрать','Нет'))return;mut('DELETE',`prep/${pd}/${id}`);snd.tap();return}
@@ -386,7 +492,7 @@ qnone(){const m=dm();let n=0;planItems().filter(i=>(i.g||'main')===qg&&m[i.id]&&
 async qdel(id){const i=planItems().find(x=>x.id===id);if(!i||!await ask('Удалить из списка?',`<p>${esc(i.t)}</p><p style="color:var(--mu)">Из уже созданных дней она не удаляется.</p>`,'Да, удалить','Нет'))return;mut('DELETE','plan/items/'+id);snd.warn()},
 libnew(){libraryDialog(null)},
 libedit(id){const i=libItems().find(x=>x.id===id);if(i)libraryDialog(i)},
-libsave(){const raw=$('#llt').value.trim().replace(/\s+/g,' '),q=$('#llq').value.trim().replace(/\s+/g,' '),g=$('#llg').value||'main',oldId=$('#dl').dataset.id||'';if(!raw){snd.warn();toast('Введите название заготовки');$('#llt').focus();return}const duplicate=libItems().find(i=>i.id!==oldId&&nt(i.t)===nt(raw));if(duplicate){snd.warn();toast('Такая заготовка уже есть в истории');return}const old=oldId?libItems().find(i=>i.id===oldId):null,id=oldId||hashText(nt(raw));mut('PUT','prepLibrary/'+id,{t:raw,q,g,by:old&&old.by?old.by:null,usedAt:old&&old.usedAt||Date.now()});$('#dl').close();snd.ok();toast(old?'Изменения сохранены':'Заготовка добавлена в историю');rLibrary()},
+libsave(){const raw=$('#llt').value.trim().replace(/\s+/g,' '),q=$('#llq').value.trim().replace(/\s+/g,' '),g=$('#llg').value||'main',oldId=$('#dl').dataset.id||'';if(!raw){snd.warn();toast('Введите название заготовки');$('#llt').focus();return}const duplicate=libItems().find(i=>i.id!==oldId&&nt(i.t)===nt(raw));if(duplicate){snd.warn();toast('Такая заготовка уже есть в истории');return}const old=oldId?libItems().find(i=>i.id===oldId):null,id=oldId||libId(raw,g);mut('PUT','prepLibrary/'+id,{t:raw,q,g,by:old&&old.by?old.by:null,usedAt:old&&old.usedAt||Date.now()});$('#dl').close();snd.ok();toast(old?'Изменения сохранены':'Заготовка добавлена в историю');rLibrary()},
 async libdelete(id){const i=libItems().find(x=>x.id===id);if(!i||!await ask('Удалить заготовку из истории?',`<p>${esc(i.t)}</p><p style="color:var(--mu)">Записи в днях подготовки останутся без изменений.</p>`,'Да, удалить','Нет'))return;mut('DELETE','prepLibrary/'+id);snd.warn();toast('Удалено из истории')},
 libadd(id){const i=libItems().find(x=>x.id===id);if(i)addFromLib(i,id)}
 };
@@ -395,6 +501,8 @@ $('#dh').addEventListener('close',streams);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.id);else if(e.target.tagName==='DIALOG'&&!e.target.id.startsWith('dc'))e.target.close()});
 document.addEventListener('input',e=>{const key=e.target.dataset.wovalue;if(key&&woDraft)woDraft[key]=e.target.value;if(e.target.id==='tkgst'||e.target.id==='tkk')tkRes()});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
+if(d.pset||d.ph){payChange(t,d);return}
+if(t.id==='tkc'){if(tk)tk.kt=1;return}
 if(t.id==='tkgu'){tkRes();return}
 if(d.wounit){const units=LS.get('vip3-wo-units',{});units[d.wounit]=t.value;LS.set('vip3-wo-units',units);if(woDraft)woDraft.unit=t.value}
 else if(d.woreason){if(woDraft)woDraft.reason=t.value;LS.set('vip3-wo-reason',t.value)}
@@ -402,14 +510,19 @@ else if(d.woby){if(woDraft)woDraft.byId=t.value}
 else if(d.wovalue){if(woDraft)woDraft[d.wovalue]=t.value}
 else if(d.q){const i=L.draft.items[d.q],v=fq(t.value);if(!i)return;if(v){i.qty=v;snd.tap()}else{delete L.draft.items[d.q];snd.warn()}saveL();rep(d.q)}
 else if(d.un){const i=L.draft.items[d.un];if(i){i.u=t.value;L.lu[d.un]=t.value;saveL();snd.tap();rep(d.un)}}
-else if(d.sft){if(!isAdmin())return;const tom=dAdd(1);if(t.value){L.at=t.value;saveL();mut('PUT',`shifts/${tom}/${d.sft}`,t.value);snd.tap()}}
+else if(d.sft){if(!isAdmin())return;if(t.value){L.at=t.value;saveL();setShift(d.sft,t.value);snd.tap()}}
 else if(d.by){const k=team().find(x=>x.id===t.value);mut('PATCH',`prep/${pd}/${d.by}`,{by:k?{id:k.id,n:k.n}:null});snd.add()}});
 let rf;$('#q').addEventListener('input',e=>{qs=e.target.value;cancelAnimationFrame(rf);rf=requestAnimationFrame(rList)});
 let wrf;$('#woq').addEventListener('input',e=>{wq=e.target.value;cancelAnimationFrame(wrf);wrf=requestAnimationFrame(rWoProducts)});
 $('#woDate').addEventListener('change',e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)){wd=e.target.value;streams();rWriteoff()}});
 $('#date').addEventListener('change',e=>{L.draft.date=e.target.value||dAdd(1);saveL();sumDn()});
-$('#note').addEventListener('input',e=>{L.draft.note=e.target.value;saveL();sumDn()});
-$('#hq').addEventListener('input',rHist);$('#libq').addEventListener('input',rLibrary);
+$('#note').addEventListener('input',e=>{L.draft.note=e.target.value;saveL();sumDn();fitNote()});$('#dnbox').addEventListener('toggle',fitNote);
+$('#hq').addEventListener('input',rHist);
+$('#bqt').addEventListener('change',e=>{const v=e.target.value.trim();mut(v?'PUT':'DELETE',`prepMeta/${pd}/title`,v||undefined);snd.tap()});
+$('#bqg').addEventListener('change',e=>{const n=Math.round(Number(String(e.target.value).replace(',','.')))||0;mut(n>0?'PUT':'DELETE',`prepMeta/${pd}/guests`,n>0?n:undefined);snd.ok()});
+$('#mepw').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.melogin()});
+$('#pwv').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.pwsave()});
+$('#payadm').addEventListener('toggle',()=>{rPayAdm();if($('#payadm').open)pollMeta(true)});setInterval(()=>{if($('#dme').open&&L.acct)ACT.loadAcct()},10000);$('#libq').addEventListener('input',rLibrary);
 const setPd=e=>{if(e.target.value){pd=e.target.value;LS.set('vip3-prep-date',pd);streams();rPrep();rPlan()}};$('#pdate').addEventListener('change',setPd);
 $('#qt').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.qadd()});
 $('#qq').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.qadd()});
