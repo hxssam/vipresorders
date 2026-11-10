@@ -85,7 +85,22 @@
     "acct": {
       "$key": {
         ".read": true,
-        ".write": "auth != null && auth.token.email == 'admin@vip.local'"
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+        "in": {
+          "$date": {
+            ".write": "root.child('acct').child($key).child('n').exists()",
+            ".validate": "$date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)",
+            "h": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 24"
+            },
+            "t": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
       }
     }
   }
