@@ -14,13 +14,16 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <title>ВИАЙПИ РЕСТОБАР КУХНЯ</title>
+<script>addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e})</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="w">
-<div class="top"><img class="logo" src="logo.png" width="38" height="38" alt="ВИАЙПИ" decoding="async"><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" id="inst" hidden aria-label="Установить">⬇</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
 
-<nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="cab" aria-label="Кабинет"><span class="ti">💼</span><span class="tl">Кабинет</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button></nav>
+<div class="instb" id="instb" hidden><span class="ii" aria-hidden="true">📲</span><div class="it2"><b>Установить приложение</b><small id="insub">Иконка на главном экране — открывается как приложение</small></div><button class="p" id="instgo" data-i="go">Установить</button><button class="x" data-i="x" aria-label="Скрыть">✕</button></div>
+
+<nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button></nav>
 <section id="vOrder">
 <div class="card">
 <div class="chips" id="cooks" aria-label="Кто заказывает"></div>
@@ -60,6 +63,7 @@
 <div id="liblist" style="margin-top:10px"></div>
 </details>
 </section>
+<div class="seg gseg" id="gseg" hidden><button id="gsch" data-a="tab" data-id="sched">📅 График</button><button data-a="tab" data-id="cab" id="gcab">👤 Мой кабинет</button></div>
 <section id="vSched" hidden>
 <div class="card"><div class="lbl">Кто смотрит график</div><div class="chips" id="sfilter"></div></div>
 <div class="card"><div class="mh"><button class="g" data-a="smon" data-id="-1" aria-label="Назад">‹</button><b id="smt"></b><button class="g" data-a="smon" data-id="1" aria-label="Вперёд">›</button></div><div class="dw"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="cal" id="sgrid"></div></div>
@@ -70,7 +74,7 @@
 </section>
 <section id="vCab" hidden>
 <div id="cabUser"><div class="card cab-card" id="cabBox"></div></div>
-<details class="card" id="payadm" hidden open><summary>💼 Зарплаты и часы · только руководитель</summary><div id="payov" style="margin-top:8px"></div><div id="payed"></div></details>
+<section class="card" id="payadm" hidden><div class="lbl">💼 Зарплаты · только руководитель</div><div id="payov"></div><div id="payed"></div></section>
 </section>
 <section id="vWriteoff" hidden>
 <div class="card"><div class="lbl">Дата списания</div><input type="date" id="woDate"><div class="small">✓ — оформлено. Записи без ✓ переносятся на следующий день.</div></div>
@@ -86,6 +90,8 @@
 <div class="acts"><button class="p" data-a="copy">Копировать заказ</button><button data-a="save">Сохранить</button><button class="g" data-a="close">Закрыть</button><button class="d" data-a="clear">Очистить</button></div></dialog>
 
 <dialog id="dcl"><h2>Закрытие кухни</h2><div class="small" style="margin:0 0 10px">Перед отправкой отметьте каждый пункт: <b id="cprog"></b></div><div id="clist"></div><div class="acts"><button class="g" data-a="clno">Назад</button><button class="p" id="cgo" data-a="clgo" disabled>Всё проверено — продолжить</button></div></dialog>
+
+<dialog id="di"><h2 id="dih">Добавить на главный экран</h2><div id="dib"></div><div class="acts"><button class="p" data-a="close">Понятно</button></div></dialog>
 
 <dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
 
@@ -106,7 +112,7 @@
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
-<dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
+<dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
 <dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="lbl" style="margin-top:8px">Категория</div><select id="llc"></select><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="du"><h2 id="utitle">Username</h2><div class="lbl">Username (для упоминания в сообщении)</div><input id="uu" maxlength="40" placeholder="например, ali_cook" autocapitalize="off" autocomplete="off"><div class="acts"><button class="p" data-a="usave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
@@ -121,7 +127,7 @@
 <div class="acts"><button class="p" data-a="tksave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="tkdel">Удалить</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Повар вводит его, чтобы увидеть только свои часы и зарплату. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
-<dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button data-i="go">📲 Установить на главный экран</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 
 <dialog id="dp"><h2>Новый товар</h2>
@@ -129,7 +135,7 @@
 <div class="row2"><div><div class="lbl">Группа</div><select id="pc"></select></div><div><div class="lbl">Единица</div><select id="pu"></select></div></div>
 <div class="acts"><button class="p" data-a="addprod">Добавить в каталог</button><button class="g" data-a="close">Отмена</button></div></dialog>
 
-<dialog id="dg"><h2>Новая группа</h2><input id="gn" maxlength="40" placeholder="Например, напитки"><div class="acts"><button class="p" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dg"><h2 id="dgh">Новая группа</h2><div class="row2 catnew"><input id="gne" maxlength="4" placeholder="📦" aria-label="Значок" autocomplete="off"><input id="gn" maxlength="40" placeholder="Например, напитки" aria-label="Название" autocomplete="off"></div><div class="lbl f">Выберите значок</div><div class="emo" id="gemo"></div><div class="acts"><button class="p" id="dgok" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <div class="tg" id="tg" role="status"></div>
 
 <script src="config.js" defer></script>

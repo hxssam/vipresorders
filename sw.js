@@ -1,5 +1,5 @@
-const CACHE = 'vip-restobar-order-v31';
-const FILES = ['./', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './logo.png', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'vip-restobar-order-v32';
+const FILES = ['./', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './logo.png','./logo-ink.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE)

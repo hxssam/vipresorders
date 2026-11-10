@@ -19,7 +19,17 @@
       },
       "groups": {
         "$id": {
-          ".write": "!data.exists() || (auth != null && auth.token.email == 'admin@vip.local')"
+          ".write": "!data.exists() || (auth != null && auth.token.email == 'admin@vip.local')",
+          ".validate": "newData.hasChildren(['n'])",
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+          },
+          "e": {
+            ".validate": "newData.isString() && newData.val().length <= 12"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },
