@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="w">
-<div class="top"><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" id="inst" hidden aria-label="Установить">⬇</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+<div class="top"><img class="logo" src="logo.png" width="38" height="38" alt="ВИАЙПИ" decoding="async"><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" id="inst" hidden aria-label="Установить">⬇</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
 
 <nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="cab" aria-label="Кабинет"><span class="ti">💼</span><span class="tl">Кабинет</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button></nav>
 <section id="vOrder">
@@ -99,13 +99,16 @@
 <div class="lbl f">Каталог</div>
 <div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
 <p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p>
+<div class="lbl f">Заготовки</div>
+<div class="acts" style="margin-top:0"><button data-a="catmgr">🏷️ Категории заготовок</button></div>
 <div class="lbl f">Пароль</div>
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
 <dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
-<dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="lbl" style="margin-top:8px">Категория</div><select id="llc"></select><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="du"><h2 id="utitle">Username</h2><div class="lbl">Username (для упоминания в сообщении)</div><input id="uu" maxlength="40" placeholder="например, ali_cook" autocapitalize="off" autocomplete="off"><div class="acts"><button class="p" data-a="usave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dtk"><h2 id="tkh">Заготовка</h2>
 <input id="tkn" maxlength="80" aria-label="Название">

@@ -100,6 +100,70 @@
               ".validate": false
             }
           }
+        },
+        "rt": {
+          "$id": {
+            ".write": "root.child('acct').child($key).child('n').exists()",
+            ".validate": "$id.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.hasChildren(['f','r','t'])",
+            "f": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+            },
+            "r": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+            },
+            "t": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "pm": {
+          "$id": {
+            ".write": "root.child('acct').child($key).child('n').exists()",
+            ".validate": "$id.matches(/^[A-Za-z0-9_-]{1,40}$/) && newData.hasChildren(['d','a','t','m'])",
+            "d": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+            },
+            "a": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 10000000"
+            },
+            "t": {
+              ".validate": "newData.isString() && (newData.val() == 'adv' || newData.val() == 'sal' || newData.val() == 'oth')"
+            },
+            "m": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}$/)"
+            },
+            "n": {
+              ".validate": "newData.isString() && newData.val().length <= 60"
+            },
+            "w": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "prepCats": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+      "$id": {
+        ".validate": "newData.hasChildren(['n'])",
+        "n": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30"
+        },
+        "e": {
+          ".validate": "newData.isString() && newData.val().length <= 12"
+        },
+        "o": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
         }
       }
     }
