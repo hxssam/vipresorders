@@ -136,7 +136,7 @@ body.modal-fallback-open:after{content:"";position:fixed;inset:0;background:#000
 .qp{background:var(--ac2);border-color:transparent;color:var(--ac);min-height:40px}
 .chips.wrap{flex-wrap:wrap;overflow:visible}
 #qban.on{background:var(--wa);border-color:var(--wa);color:#fff}
-.shr{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--ln)}.shr:last-child{border:0}.shr .n{flex:1;min-width:0;font-weight:600}.shr .n i{display:block;font-style:normal;font-weight:400;font-size:12px;color:var(--mu)}.shr input[type=time]{width:108px;flex:none;min-height:42px;padding:6px 8px;text-align:center}.shr .ck{width:40px;height:40px}.shr b{font-size:17px;color:var(--ac)}.shr.on .ck{background:var(--ac);border-color:var(--ac);color:var(--bg)}
+.shr{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--ln)}.shr:last-child{border:0}.shr .n{flex:1;min-width:0;font-weight:600}.shr .n i{display:block;font-style:normal;font-weight:400;font-size:12px;color:var(--mu)}.shr input[data-sft]{width:108px;flex:none;min-height:42px;padding:6px 8px;text-align:center}.shr .ck{width:40px;height:40px}.shr b{font-size:17px;color:var(--ac)}.shr.on .ck{background:var(--ac);border-color:var(--ac);color:var(--bg)}
 #shbox>summary,#ydbox>summary{font-weight:700}
 .wo-product-head .st{flex:none}.wo-product-head .st input{width:56px}.wo-product-head .st button{width:38px;min-height:40px}
 
@@ -368,3 +368,28 @@ input[type=date]{min-width:0;max-width:100%}
 input[data-tm]{min-width:0;font-variant-numeric:tabular-nums;letter-spacing:.5px}
 #dsv input[data-tm]{font-size:24px;font-weight:800;text-align:center;min-height:56px}
 .bqinfo .acts .p{white-space:normal;line-height:1.25}
+
+/* ===== v8.4: русский выбор даты, время смены, банкеты ===== */
+.dp{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;max-width:100%;min-height:48px;text-align:left;white-space:normal;line-height:1.2;background:var(--sf);color:var(--tx);border:1.5px solid var(--ln);border-radius:12px;padding:8px 13px;font-weight:600}
+.dp::after{content:"📅";flex:none;opacity:.75}
+.prow .dp{flex:1 1 140px;width:auto;min-width:130px;min-height:44px;padding:6px 10px;font-size:15px}
+#dpk{max-width:420px}
+.dpk-n{display:grid;grid-template-columns:44px 44px minmax(0,1fr) 44px 44px;gap:4px;align-items:center;text-align:center;margin:6px 0 10px}
+.dpk-n button{padding:0;min-height:44px;font-size:20px}.dpk-n b{font-size:17px}
+.dpk-w,.dpk-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dpk-w span{text-align:center;font-size:12px;font-weight:700;color:var(--mu);padding-bottom:4px}.dpk-w .we{color:var(--wa)}
+.dpd{padding:0;min-height:44px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);color:var(--tx);font-weight:600}
+.dpd.out{opacity:.38}.dpd.we{color:var(--wa)}.dpd.now{border:2px solid var(--ac)}.dpd.sel{background:var(--ac);border-color:var(--ac);color:var(--bg)}
+.shr input[data-sft]{font-variant-numeric:tabular-nums;font-weight:700}
+
+/* банкеты: панель выбора и сводка «Все» */
+.bqbar{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;margin:8px -2px 0;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}.bqbar::-webkit-scrollbar{display:none}
+.bqc{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:104px;max-width:210px;min-height:56px;padding:8px 12px;border-radius:14px;background:var(--sf);border:1.5px solid var(--ln);color:var(--tx);text-align:left;position:relative}
+.bqc b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.bqc small{color:var(--mu);font-weight:600;font-size:12px;white-space:nowrap}
+.bqc i{position:absolute;top:6px;right:9px;font-style:normal;font-size:11px;font-weight:800;color:var(--ac)}
+.bqc.on{background:var(--ac);border-color:var(--ac);color:var(--bg)}.bqc.on small,.bqc.on i{color:var(--bg);opacity:.9}
+.bqc.add{justify-content:center;align-items:center;min-width:92px;border-style:dashed;background:transparent;color:var(--ac)}
+.bqc b{padding-right:30px}.bqc.add b{padding:0}
+.bqx{margin:12px 0 4px}.bqx-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--ac2);margin-bottom:6px}.bqx-h b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bqx-h span{color:var(--mu);font-size:13px;font-weight:600;white-space:nowrap}.bqx-h i{font-style:normal;font-weight:800;color:var(--ac);font-size:13px}.bqx-h button{padding:0 10px;min-height:36px}
+#bqinfo .acts .d{flex:none}
+.live{color:var(--ok);margin-top:8px}
