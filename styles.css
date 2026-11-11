@@ -337,3 +337,28 @@ em.cin{font-style:normal;font-size:11px;opacity:.85}
 .em0{padding:10px 2px}
 .emo{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.emo button{width:42px;min-height:42px;padding:0;font-size:22px;line-height:1;background:var(--bg);border:1px solid var(--ln);border-radius:11px}.emo button:active{transform:scale(.92)}
 
+
+/* v8.3 — Банкет: вкладки «О банкете / Заготовки», время подачи блюда */
+#vPrep [hidden]{display:none!important}
+.bqtabs{margin:0 0 8px}.bqtabs button b{margin-left:6px;font-size:12px;opacity:.85}
+.bqh{padding:12px 14px}
+.bqs-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bqs-h b{flex:1;min-width:0;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.bqs-h .g{flex:none;min-height:36px;padding:6px 12px;font-size:13px}
+.bqs-m{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-weight:700;font-size:14px}
+.bqs-n{margin-top:6px;color:var(--mu);font-size:13px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}
+.bqinfo{border-color:var(--wa)}
+.bqinfo .lbl{margin-bottom:2px}.bqinfo .lbl small{font-weight:600;text-transform:none;letter-spacing:0;font-size:13px}
+.bqinfo .fl{display:block;margin-top:10px;min-width:0}.bqinfo .fl>span{display:block;font-size:12px;font-weight:700;color:var(--mu);margin-bottom:4px}
+.bqinfo .row2{margin-top:0}
+.bqinfo input[type=time]{min-width:0;text-align:left}
+.bqinfo textarea{display:block;min-height:78px;line-height:1.35;resize:vertical}
+.bqsum{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--bg);border:1px dashed var(--ln);font-size:13.5px;line-height:1.4;color:var(--mu)}.bqsum b{color:var(--tx)}
+.bqinfo .acts{margin-top:12px}.bqinfo .acts .p{width:100%}
+.ckc{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:52px}
+.sv{min-height:0;height:23px;min-width:50px;padding:0 6px;border-radius:9px;border:1.5px solid var(--ac);background:var(--ac2);color:var(--ac);font-size:13px;font-weight:800;line-height:1;letter-spacing:.2px;font-variant-numeric:tabular-nums}
+.sv.empty{border-style:dashed;border-color:var(--ln);background:transparent;color:var(--mu);font-weight:600}
+.pr.ok .sv{border-color:var(--ok);background:transparent;color:var(--ok)}
+#dsv input[type=time]{font-size:22px;font-weight:800;text-align:center;min-height:54px}
+#tksvb input[type=time]{min-width:0}
+@media(max-width:380px){.ckc{width:46px}.sv{min-width:44px;font-size:12.5px;padding:0 4px}}

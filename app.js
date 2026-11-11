@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='8.2';
+const VER='8.3';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 const UNITS=['кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
@@ -144,7 +144,7 @@ const rAdm=()=>{const b=$('#edb');b.textContent='Режим правки тов�
 const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();let qb=0,tk=null;
 const PU=['порц','кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
 const PCATS0=[['cut','🔪','Нарезка'],['sauce','🥫','Соусы'],['hot','🍲','Горячее'],['cold','🥗','Холодное'],['meat','🥩','Мясо и рыба'],['side','🍚','Гарниры'],['dess','🍰','Десерты'],['bake','🥖','Выпечка и тесто'],['other','📦','Другое']];
-let lf='all',CL=null,psec=LS.get('vip3-psec','main'),pc=null,acctData=null,ses=null,cabPick=null,idleT=0,hideT=0,inBusy=0;
+let lf='all',CL=null,psec=LS.get('vip3-psec','main'),bqt=(v=>v==='prep'||v==='info'?v:'')(LS.get('vip3-bqt','')),svd=null,pc=null,acctData=null,ses=null,cabPick=null,idleT=0,hideT=0,inBusy=0;
 const seenRows=new Set(),justDone=new Set();
 const pcats=()=>PCC||(PCC=[...PCATS0.slice(0,-1),...Object.entries(DATA.prepCats||{}).filter(([k,v])=>v&&v.n).sort((a,b)=>(a[1].o||0)-(b[1].o||0)).map(([k,v])=>[k,v.e||'🏷️',v.n]),PCATS0[PCATS0.length-1]]);
 const catById=k=>pcats().find(c=>c[0]===k);
@@ -178,6 +178,16 @@ const rFil=()=>{if(lf!=='all'&&lf!=='unk'&&lf!=='banq'&&!catById(lf))lf='all';co
 const CLOSE_ITEMS=['Всё в порядке на кухне','Все розетки отключены','Фритюр выключен кнопкой','Печь пекаря на кухне выключена кнопкой','Вилка плиты в холодном цеху вынута из розетки','Главные кнопки 4, 6, 7 и 9 выключены','Тестомес чистый','На кухне чисто','Мусорные пакеты вынесены с кухни'];
 const closingCheck=()=>new Promise(res=>{const d=$('#dcl'),st=CLOSE_ITEMS.map(()=>0);const draw=()=>{const n=st.reduce((a,b)=>a+b,0);$('#clist').innerHTML=CLOSE_ITEMS.map((x,i)=>`<button class="cl${st[i]?' on':''}" data-a="clchk" data-id="${i}"><span class="ck">${st[i]?'✓':''}</span><span>${esc(x)}</span></button>`).join('');$('#cprog').textContent=`${n} из ${CLOSE_ITEMS.length}`;$('#cgo').disabled=n<CLOSE_ITEMS.length};CL={st,draw,res};draw();snd.ask();vib(40);d.onclose=()=>res(false);d.oncancel=()=>res(false);d.showModal()});
 const guestsOf=d=>{const g=Number(((DATA.prepMeta||{})[d]||{}).guests);return g>0?g:0};
+const bqEff=()=>bqt||(Object.values(dm()).some(t=>t&&t.g==='banq')?'prep':'info');
+const okTm=v=>typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v),svKey=v=>{const m=+v.slice(0,2)*60+ +v.slice(3);return m<360?m+1440:m},svSort=(a,b)=>{const x=okTm(a.sv),y=okTm(b.sv);if(x&&y)return svKey(a.sv)-svKey(b.sv)||(a.c||0)-(b.c||0);if(x!==y)return x?-1:1;return(a.c||0)-(b.c||0)};
+const bqMeta=d=>{const m=(DATA.prepMeta||{})[d]||{};return{title:String(m.title||''),guests:guestsOf(d),time:okTm(m.time)?m.time:'',place:String(m.place||''),note:String(m.note||'')}};
+const bqWrite=()=>{const m=bqMeta(pd),w=(k,v,old)=>{const nv=v===0?'':String(v);if(nv===String(old||''))return;mut(nv===''?'DELETE':'PUT',`prepMeta/${pd}/${k}`,nv===''?undefined:v)};
+w('title',$('#bqt').value.trim().replace(/\s+/g,' ').slice(0,80),m.title);
+{const gn=Math.round(Number(String($('#bqg').value).replace(',','.')))||0;w('guests',gn>0&&gn<=100000?gn:0,m.guests||'')}
+const tv=$('#bqs').value;w('time',okTm(tv)?tv:'',m.time);
+w('place',$('#bqp').value.trim().replace(/\s+/g,' ').slice(0,60),m.place);
+w('note',$('#bqn').value.trim().slice(0,400),m.note)};
+const svChips=()=>{const bt=bqMeta(pd).time;let a;if(bt){const b=+bt.slice(0,2)*60+ +bt.slice(3);a=[0,30,60,90,120,150].map(x=>{const m=(b+x)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')})}else a=['18:00','19:00','20:00','21:00','22:00','23:00'];return a.map(v=>`<button class="chip" data-a="svset" data-id="${v}">${v}</button>`).join('')};
 const qtyText=(t,d)=>{if(t&&t.pg){const g=guestsOf(d);return g?`${fmtQ(Math.round(t.pg*g*100)/100)} ${t.pu||''}`.trim():`👥 ${fmtQ(t.pg)} ${t.pu||''}/гость`}return t&&t.q||''};
 const qpill=(t,d)=>{const x=qtyText(t,d);return x?`<i class="qpill">${esc(x)}</i>`:'<i class="qpill empty">＋ кол-во</i>'};
 const libFind=(t,g)=>libItems().find(i=>nt(i.t)===nt(t)&&((i.g==='banq')===(g==='banq')));
@@ -200,9 +210,10 @@ const writeoffMessage=(date,rows=woRows(date))=>{const cs=cats(),seen=new Set(),
 const planItems=()=>Object.entries((DATA.plan||{}).items||{}).map(([id,v])=>({id,...v})).filter(i=>i.t);
 const carryPendingPrep=()=>{const today=dAdd(0);if(pd!==today)return;const prev=dAdd(-1,today),loaded=DEMO?true:!!(MV.prepPrev&&MV.prepPrev.indexOf('prep/'+prev+'|')===0);if(!loaded)return;const src=(DATA.prep||{})[prev]||{},dst=(DATA.prep||{})[today]||{},names=new Set(Object.values(dst).map(t=>nt(t&&t.t)));let n=0;Object.entries(src).forEach(([id,t],i)=>{if(!t||!t.t||t.done||dst[id]||names.has(nt(t.t)))return;mut('PUT',`prep/${today}/${id}`,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),...(t.lid?{lid:t.lid}:{}),carryFrom:prev,c:Date.now()+i});names.add(nt(t.t));n++});if(n)toast(`Перенесено с ${day(prev)}: ${n}`)};
 const rPrep=()=>{carryPendingPrep();const allT=Object.entries((DATA.prep||{})[pd]||{}).map(([id,v])=>({id,...v})),ts=allT.filter(t=>inSec(t.g)),rk=t=>nt(t.t)+'|'+(t.g==='banq'),remembered=new Set(libItems().map(rk));allT.filter(t=>t.done&&t.by&&!remembered.has(rk(t))).forEach(t=>{rememberPrep(t,t.by);remembered.add(rk(t))});
-const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),gi=g=>Math.max(0,pgroups().findIndex(x=>x.id===(g||'main'))),td=ts.filter(t=>!t.done).sort((a,b)=>gi(a.g)-gi(b.g)||(a.c||0)-(b.c||0)),k=team();
+const dn=ts.filter(t=>t.done).sort((a,b)=>(b.at||0)-(a.at||0)),gi=g=>Math.max(0,pgroups().findIndex(x=>x.id===(g||'main'))),td=ts.filter(t=>!t.done).sort((a,b)=>psec==='banq'?svSort(a,b):gi(a.g)-gi(b.g)||(a.c||0)-(b.c||0)),k=team();
 const sel=t=>`<select class="who" data-by="${t.id}"><option value="">Кто?</option>${k.map(c=>`<option value="${c.id}"${t.by&&t.by.id===c.id?' selected':''}>${esc(c.n)}</option>`).join('')}${t.by&&!k.some(c=>c.id===t.by.id)?`<option value="${esc(t.by.id)}" selected>${esc(t.by.n)}</option>`:''}</select>`;
-const r=t=>`<div class="pr${t.done?' ok':''}${seenRows.has(t.id)?'':' new'}"><button class="ck${justDone.has(t.id)?' pop':''}" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button><div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b><div class="pm">${qpill(t,pd)}${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.ks==='?'?'<span class="qk">❓ категория</span>':''}${t.carryFrom?`<span class="cf">↩ ${esc(day(t.carryFrom))}</span>`:''}${t.done&&t.by?`<span class="by">✓ ${esc(t.by.n)} · ${tm(t.at)}</span>`:''}</div></div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
+const ckb=t=>`<button class="ck${justDone.has(t.id)?' pop':''}" data-a="ptog" data-id="${t.id}" aria-label="Отметить">${t.done?'✓':''}</button>`,ckCol=t=>t.g==='banq'?`<div class="ckc">${ckb(t)}<button class="sv${okTm(t.sv)?'':' empty'}" data-a="svopen" data-id="${t.id}" aria-label="Время подачи${okTm(t.sv)?': '+t.sv:''}">${okTm(t.sv)?t.sv:'🕐'}</button></div>`:ckb(t);
+const r=t=>`<div class="pr${t.done?' ok':''}${seenRows.has(t.id)?'':' new'}">${ckCol(t)}<div class="pn" data-a="tkopen" data-id="${t.id}"><b>${esc(t.t)}</b><div class="pm">${qpill(t,pd)}${t.g&&t.g!=='main'?`<em>${esc(gname(t.g))}</em>`:''}${t.ks==='?'?'<span class="qk">❓ категория</span>':''}${t.carryFrom?`<span class="cf">↩ ${esc(day(t.carryFrom))}</span>`:''}${t.done&&t.by?`<span class="by">✓ ${esc(t.by.n)} · ${tm(t.at)}</span>`:''}</div></div>${sel(t)}<button class="x" data-a="pdel" data-id="${t.id}" aria-label="Удалить">✕</button></div>`;
 $('#plist').innerHTML=ts.length?(dn.length?`<div class="gh">Выполнено · ${dn.length}</div>`+dn.map(r).join(''):'')+(td.length?`<div class="gh">Осталось · ${td.length}</div>`+td.map(r).join(''):''):(psec==='banq'?'<div class="em">Банкета на этот день нет.<br>Добавьте заготовки банкета ниже.</div>':'<div class="em">На этот день заготовок нет.<br>Добавьте ниже или выберите из истории.</div>');
 ts.forEach(t=>seenRows.add(t.id));justDone.clear();
 $('#pfill').style.width=ts.length?Math.round(dn.length/ts.length*100)+'%':'0%';$('#pinfo').textContent=`${day(pd)} · выполнено ${dn.length} из ${ts.length}`;
@@ -210,7 +221,13 @@ $('#pdate').value=pd;[['-1',dAdd(-1)],['today',dAdd(0)],['1',dAdd(1)]].forEach((
 const pins=DATA.prepPins||{},pinned=!!pins[pd],pinButton=$('#ppin'),dates=Object.keys(pins).filter(dt=>/^\d{4}-\d{2}-\d{2}$/.test(dt)&&pins[dt]).sort();pinButton.classList.toggle('on',pinned);pinButton.setAttribute('aria-pressed',String(pinned));pinButton.textContent='📌';pinButton.title=pinned?'День закреплён':'Закрепить день';$('#ppinlabel').hidden=!dates.length;$('#ppins').innerHTML=dates.map(dt=>`<button class="chip pin-chip${dt===pd?' on':''}" data-a="ppick" data-id="${dt}">📌 ${esc(day(dt))}</button>`).join('');rBq();rYday()};
 const rBq=()=>{document.querySelectorAll('#psecs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===psec);b.setAttribute('aria-pressed',String(b.dataset.id===psec))});
 const all=Object.values(dm()).filter(t=>t&&t.t),c=s=>{const a=all.filter(t=>s==='banq'?t.g==='banq':t.g!=='banq');return a.length?` ${a.filter(t=>t.done).length}/${a.length}`:''};$('#pcm').textContent=c('main');$('#pcb').textContent=c('banq');
-const bh=$('#bqh');bh.hidden=psec!=='banq';if(psec==='banq'){const m=(DATA.prepMeta||{})[pd]||{},tt=$('#bqt'),gg=$('#bqg');if(document.activeElement!==tt)tt.value=m.title||'';if(document.activeElement!==gg)gg.value=m.guests||''}};
+const isB=psec==='banq',cur=bqEff(),info=isB&&cur==='info';$('#bqtabs').hidden=!isB;$('#bqinfo').hidden=!info;$('#bqh').hidden=!isB||info;['#plist','#padd','#ydbox','#libbox'].forEach(q=>{$(q).hidden=info});
+if(!isB)return;
+document.querySelectorAll('#bqtabs button').forEach(b=>{const on=b.dataset.id===cur;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+const bq=all.filter(t=>t.g==='banq'),bn=bq.length,bd=bq.filter(t=>t.done).length,m=bqMeta(pd);$('#pcq').textContent=bn?` ${bd}/${bn}`:'';
+if(info){const fv=(q,v)=>{const e=$(q);if(document.activeElement!==e)e.value=v};fv('#bqt',m.title);fv('#bqs',m.time);fv('#bqg',m.guests||'');fv('#bqp',m.place);fv('#bqn',m.note);$('#bqday').textContent=day(pd);const f=bq.filter(t=>okTm(t.sv)).sort(svSort)[0];$('#bqsum').innerHTML=bn?`Заготовок: <b>${bn}</b> · выполнено <b>${bd}</b>${f?` · первая подача <b>${f.sv}</b>`:''}`:'Заготовок пока нет. Откройте вкладку «Заготовки» и добавьте блюда.'}
+else{const parts=[m.time&&`<span>🕐 ${esc(m.time)}</span>`,m.guests&&`<span>👥 ${m.guests}</span>`,m.place&&`<span>📍 ${esc(m.place)}</span>`].filter(Boolean).join('');
+$('#bqh').innerHTML=(m.title||parts||m.note)?`<div class="bqs-h"><b>🎉 ${esc(m.title||'Банкет')}</b><button class="g" data-a="bqtab" data-id="info" aria-label="Изменить данные банкета">✎ Изменить</button></div>${parts?`<div class="bqs-m">${parts}</div>`:''}${m.note?`<div class="bqs-n">📝 ${esc(m.note)}</div>`:''}`:`<div class="bqs-h"><span class="small" style="margin:0">Данные банкета не заполнены</span><button class="g" data-a="bqtab" data-id="info">＋ Заполнить</button></div>`}};
 const rYday=()=>{const prev=dAdd(-1,pd),ts=Object.values((DATA.prep||{})[prev]||{}).filter(t=>t&&t.t&&inSec(t.g)),dn=ts.filter(t=>t.done).sort((a,b)=>(a.at||0)-(b.at||0)),nd=ts.filter(t=>!t.done);
 $('#ydcount').textContent=ts.length?`${day(prev)} · сделано ${dn.length} из ${ts.length}`:day(prev);
 $('#ydlist').innerHTML=ts.length?(dn.length?`<div class="gh">Приготовлено · ${dn.length}</div>`+dn.map(t=>`<div class="ydr ok"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}<small>${t.by?esc(t.by.n):''}${t.at?' · '+tm(t.at):''}</small></div>`).join(''):'')+(nd.length?`<div class="gh">Не сделано · ${nd.length}</div>`+nd.map(t=>`<div class="ydr"><b>${esc(t.t)}</b>${t.q?`<i>${esc(t.q)}</i>`:''}</div>`).join(''):'')+`<div class="acts"><button class="p" data-a="pcopy">Скопировать на ${esc(day(pd))}</button></div>`:'<div class="em">За предыдущий день записей нет.</div>'};
@@ -231,12 +248,12 @@ const rShifts=()=>{const tom=dAdd(1),S=shiftsFor(tom),sh=S.map,k=team(),adm=isAd
 $('#shtitle').textContent=on.length?`⏰ Завтра: ${on.map(nm).join(' · ')}${tag}`:'⏰ Завтра на смену: не назначено';
 $('#shlist').innerHTML=adm?k.map(c=>{const h=sh[c.id]!==undefined;return `<div class="shr${h?' on':''}"><button class="ck" data-a="sfton" data-id="${esc(c.id)}" aria-label="Выйдет на смену">${h?'✓':''}</button><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><input type="time" data-sft="${esc(c.id)}" value="${esc(sh[c.id]||L.at||'14:00')}"${h?'':' disabled'}></div>`}).join(''):(k.length?k.map(c=>{const h=sh[c.id]!==undefined;return `<div class="shr${h?' on':' off'}"><span class="shdot">${h?'✓':'–'}</span><div class="n">${esc(c.n)}<i>${c.u?'@'+esc(c.u):esc(c.r)}</i></div><b>${h?(sh[c.id]?esc(sh[c.id]):'на смене'):(on.length?'выходной':'не назначено')}</b></div>`}).join(''):'<div class="small">Команда ещё не добавлена.</div>');
 $('#shhint').textContent=adm?(S.src==='sched'?'Состав взят из графика (Р). Укажите время начала — оно сохранится.':S.src==='last'?'↻ Показан прошлый состав — измените при необходимости.':'Отметьте поваров и время начала — они попадут в сообщение с упоминанием (@username).'):(S.src==='sched'?'Состав по графику.':S.src==='last'?'↻ Состав как в прошлый раз.':'')};
-const tomorrowBlock=()=>{const tom=dAdd(1),td=dAdd(0),ln=d=>t=>{const q=qtyText(t,d);return `• ${t.t}${q?' — '+q:''}`},isB=t=>t.g==='banq',srt=(a,b)=>(a.c||0)-(b.c||0),
+const tomorrowBlock=()=>{const tom=dAdd(1),td=dAdd(0),ln=d=>t=>{const q=qtyText(t,d);return `• ${t.t}${q?' — '+q:''}${t.g==='banq'&&okTm(t.sv)?' · подача '+t.sv:''}`},isB=t=>t.g==='banq',srt=(a,b)=>(a.c||0)-(b.c||0),
 pt=Object.values((DATA.prep||{})[tom]||{}).filter(t=>t&&t.t).sort(srt),left=Object.values((DATA.prep||{})[td]||{}).filter(t=>t&&t.t&&!t.done).sort(srt),
 sh=shiftsFor(tom).map,cooks=team().filter(k=>sh[k.id]!==undefined),mt=(DATA.prepMeta||{})[tom]||{},out=[];
-const main=pt.filter(t=>!isB(t)),bq=pt.filter(isB),lm=left.filter(t=>!isB(t)),lb=left.filter(isB);
+const main=pt.filter(t=>!isB(t)),bq=pt.filter(isB).sort(svSort),lm=left.filter(t=>!isB(t)),lb=left.filter(isB).sort(svSort),bm=bqMeta(tom);
 if(main.length)out.push(`📋 Заготовки на завтра (${day(tom)})`,main.map(ln(tom)).join('\n'),'');
-if(bq.length)out.push(`🎉 Банкет на завтра${mt.title?' — '+mt.title:''}${guestsOf(tom)?' · '+guestsOf(tom)+' гостей':''}`,bq.map(ln(tom)).join('\n'),'');
+if(bq.length)out.push(`🎉 Банкет на завтра${bm.title?' — '+bm.title:''}${bm.time?' · '+bm.time:''}${bm.guests?' · '+bm.guests+' гостей':''}${bm.place?' · '+bm.place:''}`,...(bm.note?['📝 '+bm.note.replace(/\s*\n\s*/g,'; ')]:[]),bq.map(ln(tom)).join('\n'),'');
 if(lm.length)out.push(`🔁 Осталось с сегодня (${day(td)})`,lm.map(ln(td)).join('\n'),'');
 if(lb.length)out.push(`🔁 Осталось по банкету (${day(td)})`,lb.map(ln(td)).join('\n'),'');
 if(cooks.length)out.push('⏰ Завтра на смену (начало)',cooks.map(k=>`${k.u?'@'+k.u:k.n}${sh[k.id]?' — '+sh[k.id]:''}`).join('\n'));
@@ -497,7 +514,7 @@ wodec(){if(!woDraft)return;const v=Math.round(((fq(woDraft.qty)||1)-1)*100)/100;
 qban(){qb=qb?0:1;snd.tap();rPlan()},
 qpick(key){const p=String(key).split(':'),kind=p.shift(),id=p.join(':'),i=kind==='lib'?libItems().find(x=>x.id===id):planItems().find(x=>x.id===id);if(!i)return;addFromLib(i,kind==='lib'?id:'')},
 tkopen(id,isNew){const t=dm()[id];if(!t)return;tk={id,mode:t.pg?'g':'n',kt:0};const lib=libItems().find(x=>nt(x.t)===nt(t.t));
-$('#tkh').textContent=isNew?'Сколько приготовить?':'Заготовка';$('#tkn').value=t.t;$('#tkb').checked=t.g==='banq';$('#tkc').innerHTML=pcats().map(c=>`<option value="${esc(c[0])}"${c[0]===pk(t)?' selected':''}>${esc(c[1])} ${esc(c[2])}</option>`).join('');
+$('#tkh').textContent=isNew?'Сколько приготовить?':'Заготовка';$('#tkn').value=t.t;$('#tkb').checked=t.g==='banq';$('#tksv').value=okTm(t.sv)?t.sv:'';$('#tksvb').hidden=t.g!=='banq';$('#tkc').innerHTML=pcats().map(c=>`<option value="${esc(c[0])}"${c[0]===pk(t)?' selected':''}>${esc(c[1])} ${esc(c[2])}</option>`).join('');
 const m=String(t.q||'').match(/^\s*(\d+(?:[.,]\d+)?)\s*(.*)$/),u=PU.indexOf(((m&&m[2])||'').trim())>=0?m[2].trim():LS.get('vip3-tk-unit','порц');
 $('#tku').innerHTML=PU.map(x=>`<option${x===u?' selected':''}>${x}</option>`).join('');$('#tkq').value=m?m[1]:'';
 $('#tkgu').innerHTML=PU.map(x=>`<option${x===(t.pu||'порц')?' selected':''}>${x}</option>`).join('');$('#tkk').value=t.pg?fmtQ(t.pg):'1';$('#tkgst').value=guestsOf(pd)||'';
@@ -550,7 +567,7 @@ tkhint(kind){if(!tk)return;const t=dm()[tk.id],lib=t&&libItems().find(x=>nt(x.t)
 tksave(){if(!tk)return;const id=tk.id;if(!dm()[id])return;const t=$('#tkn').value.trim().replace(/\s+/g,' ');if(!t){snd.warn();toast('Введите название');return}const g=$('#tkb').checked?'banq':'main',k=$('#tkc').value||'other',ks=tk.kt?'user':(dm()[id].ks||'auto');let patch;
 if(tk.mode==='g'){const gs=Math.round(Number(String($('#tkgst').value).replace(',','.')))||0,k=fq($('#tkk').value);if(!k){snd.warn();toast('Сколько на одного гостя?');return}if(gs>0&&gs!==guestsOf(pd))mut('PUT',`prepMeta/${pd}/guests`,gs);patch={t,g,k:$('#tkc').value||'other',ks,q:null,pg:k,pu:$('#tkgu').value}}
 else{const n=fq($('#tkq').value),u=$('#tku').value;LS.set('vip3-tk-unit',u);patch={t,g,k,ks,q:n?`${fmtQ(n)} ${u}`:'',pg:null,pu:null}}
-mut('PATCH',`prep/${pd}/${id}`,patch);libTouch(patch);$('#dtk').close();snd.ok()},
+{const sv=$('#tksv').value;patch.sv=g==='banq'&&okTm(sv)?sv:null}mut('PATCH',`prep/${pd}/${id}`,patch);libTouch(patch);$('#dtk').close();snd.ok()},
 async tkdel(){const id=tk&&tk.id;if(!id)return;await ACT.pdel(id);if(!dm()[id])$('#dtk').close()},
 gstedit(){$('#gsn').value=guestsOf(pd)||'';snd.tap();$('#dgs').showModal();setTimeout(()=>$('#gsn').focus(),60)},
 gstsave(){const n=Math.round(Number(String($('#gsn').value).replace(',','.')))||0;if(n>0)mut('PUT',`prepMeta/${pd}/guests`,n);else mut('DELETE',`prepMeta/${pd}/guests`);$('#dgs').close();snd.ok();rPrep()},
@@ -565,6 +582,12 @@ const old=libFind(t,g),cl=classify(t),ctx=curK();let k,ks;
 if(old&&old.ks==='user'&&old.k&&old.k!=='other'){k=old.k;ks='user'}else if(cl.k!=='other'){k=cl.k;ks='auto'}else if(ctx!=='other'){k=ctx;ks='ctx'}else{k='other';ks='?'}
 mut('PUT',`prep/${pd}/${uid()}`,{t,q,g,k,ks,c:Date.now()});mut('PUT','prepLibrary/'+(old?old.id:libId(t,g)),{t,q,g,k,ks,by:old&&old.by?old.by:null,usedAt:Date.now()});$('#qt').value=$('#qq').value='';snd.add();toast(ks==='?'?'✓ Добавлено · выберите категорию (❓)':'✓ Добавлено · '+pcIcon(k)+' '+(catById(k)||[0,0,''])[2]);$('#qt').focus()},
 psec(id){psec=id==='banq'?'banq':'main';LS.set('vip3-psec',psec);lf='all';snd.tap();rPrep();rPlan();rLibrary()},
+bqtab(id){bqt=id==='prep'?'prep':'info';LS.set('vip3-bqt',bqt);snd.tap();rBq()},
+bqsave(){bqWrite();bqt='prep';LS.set('vip3-bqt',bqt);snd.ok();toast('✓ Банкет сохранён · теперь заготовки');rBq();try{$('#bqtabs').scrollIntoView({block:'start'})}catch{}},
+svopen(id){const t=dm()[id];if(!t)return;svd={id};$('#svn').textContent=t.t;$('#svt').value=okTm(t.sv)?t.sv:'';$('#svq').innerHTML=svChips();snd.tap();$('#dsv').showModal()},
+svset(v){if(okTm(v)){$('#svt').value=v;snd.tap()}},
+svsave(){if(!svd)return;const id=svd.id;if(!dm()[id]){$('#dsv').close();return}const v=$('#svt').value;if(v&&!okTm(v)){snd.warn();toast('Введите время, например 19:30');return}mut('PATCH',`prep/${pd}/${id}`,{sv:v||null});$('#dsv').close();snd.ok();if(v)toast('🕐 Подача в '+v)},
+svclr(){if(!svd)return;const id=svd.id;if(dm()[id])mut('PATCH',`prep/${pd}/${id}`,{sv:null});$('#dsv').close();snd.tap()},
 qone(){const t=$('#qt').value.trim().replace(/\s+/g,' '),q=$('#qq').value.trim();if(!t){snd.warn();toast('Напишите название заготовки');$('#qt').focus();return}mut('PUT',`prep/${pd}/${uid()}`,{t,q,g:qg,c:Date.now()});$('#qt').value=$('#qq').value='';snd.add();toast('✓ Добавлено в подготовку на этот день')},
 async qtog(id){const i=planItems().find(x=>x.id===id);if(!i)return;const t=dm()[id];
 if(t){if(t.done&&!await ask('Заготовка уже выполнена',`<p>${esc(t.t)} отмечена поваром. Убрать из дня?</p>`,'Да, убрать','Нет'))return;mut('DELETE',`prep/${pd}/${id}`);snd.tap();return}
@@ -602,8 +625,9 @@ $('#woDate').addEventListener('change',e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.targe
 $('#date').addEventListener('change',e=>{L.draft.date=e.target.value||dAdd(1);saveL();sumDn()});
 $('#note').addEventListener('input',e=>{L.draft.note=e.target.value;saveL();sumDn();fitNote()});$('#dnbox').addEventListener('toggle',fitNote);
 $('#hq').addEventListener('input',rHist);
-$('#bqt').addEventListener('change',e=>{const v=e.target.value.trim();mut(v?'PUT':'DELETE',`prepMeta/${pd}/title`,v||undefined);snd.tap()});
-$('#bqg').addEventListener('change',e=>{const n=Math.round(Number(String(e.target.value).replace(',','.')))||0;mut(n>0?'PUT':'DELETE',`prepMeta/${pd}/guests`,n>0?n:undefined);snd.ok()});
+$('#bqinfo').addEventListener('change',()=>{bqWrite();snd.tap()});
+$('#bqinfo').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();e.target.blur()}});
+$('#tkb').addEventListener('change',e=>{$('#tksvb').hidden=!e.target.checked});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='cabpw')ACT.cablogin()});document.addEventListener('pointerdown',()=>{if(ses)cabTouch()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(hideT);if(ses)hideT=setTimeout(()=>cabLogout(true),30000)}else clearTimeout(hideT)});
 $('#pwv').addEventListener('keydown',e=>{if(e.key==='Enter')ACT.pwsave()});
 setInterval(()=>{if(document.hidden)return;if(tab==='cab'&&ses&&!busyEdit())refreshAcct();if(tab==='cab'&&isAdmin())loadIn()},8000);$('#libq').addEventListener('input',rLibrary);

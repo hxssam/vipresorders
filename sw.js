@@ -1,4 +1,4 @@
-const CACHE = 'vip-restobar-order-v32';
+const CACHE = 'vip-restobar-order-v33';
 const FILES = ['./', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './logo.png','./logo-ink.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {

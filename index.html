@@ -46,9 +46,19 @@
 <div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div>
 </div>
 <div class="seg" id="psecs"><button data-a="psec" data-id="main">🍽 Основные<b id="pcm"></b></button><button data-a="psec" data-id="banq">🎉 Банкет<b id="pcb"></b></button></div>
-<div class="card bqh" id="bqh" hidden><input id="bqt" placeholder="Название банкета (необязательно)" autocomplete="off"><div class="bqg"><span>👥 Гостей</span><input id="bqg" inputmode="numeric" placeholder="0" autocomplete="off"></div></div>
+<div class="seg bqtabs" id="bqtabs" hidden><button data-a="bqtab" data-id="info">📝 О банкете</button><button data-a="bqtab" data-id="prep">🥘 Заготовки<b id="pcq"></b></button></div>
+<div class="card bqh" id="bqh" hidden></div>
+<section class="card bqinfo" id="bqinfo" hidden aria-label="Данные банкета">
+<div class="lbl"><span>🎉 О банкете</span><small id="bqday"></small></div>
+<label class="fl"><span>Название / повод</span><input id="bqt" maxlength="80" placeholder="Например, свадьба Ивановых" autocomplete="off"></label>
+<div class="row2"><label class="fl"><span>🕐 Время начала</span><input type="time" id="bqs"></label><label class="fl"><span>👥 Гостей</span><input id="bqg" inputmode="numeric" placeholder="0" autocomplete="off"></label></div>
+<label class="fl"><span>📍 Зал / место</span><input id="bqp" maxlength="60" placeholder="Например, большой зал" autocomplete="off"></label>
+<label class="fl"><span>📝 Заметки</span><textarea id="bqn" rows="3" maxlength="400" placeholder="Меню, пожелания гостей, аллергии…"></textarea></label>
+<div class="bqsum" id="bqsum"></div>
+<div class="acts"><button class="p" data-a="bqsave">Сохранить и перейти к заготовкам →</button></div>
+</section>
 <div id="plist"></div>
-<section class="card" aria-label="Добавить заготовку">
+<section class="card" id="padd" aria-label="Добавить заготовку">
 <div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off"><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
 <div class="lbl" style="margin:10px 0 6px"><span>Из истории</span></div>
 <div class="chips" id="qfil"></div>
@@ -124,7 +134,9 @@
 <div class="chips wrap" id="tkhint" style="margin-top:8px"></div>
 <div class="lbl" style="margin:12px 0 4px">Категория</div><select id="tkc"></select><div class="small" id="tkcs" style="margin-top:6px"></div>
 <label class="chk"><input type="checkbox" id="tkb"> 🎉 Банкет</label>
+<div id="tksvb" hidden><div class="lbl" style="margin:10px 0 4px">🕐 Время подачи</div><input type="time" id="tksv" aria-label="Время подачи"></div>
 <div class="acts"><button class="p" data-a="tksave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="tkdel">Удалить</button></div></dialog>
+<dialog id="dsv"><h2>Время подачи</h2><div class="small" id="svn" style="margin:0 0 10px;font-weight:700"></div><input type="time" id="svt" aria-label="Время подачи"><div class="lbl" style="margin:12px 0 6px">Быстрый выбор</div><div class="chips wrap" id="svq"></div><div class="acts"><button class="p" data-a="svsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="svclr">Убрать</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Повар вводит его, чтобы увидеть только свои часы и зарплату. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
 <dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button data-i="go">📲 Установить на главный экран</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
