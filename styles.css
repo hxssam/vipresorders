@@ -351,7 +351,6 @@ em.cin{font-style:normal;font-size:11px;opacity:.85}
 .bqinfo .lbl{margin-bottom:2px}.bqinfo .lbl small{font-weight:600;text-transform:none;letter-spacing:0;font-size:13px}
 .bqinfo .fl{display:block;margin-top:10px;min-width:0}.bqinfo .fl>span{display:block;font-size:12px;font-weight:700;color:var(--mu);margin-bottom:4px}
 .bqinfo .row2{margin-top:0}
-.bqinfo input[type=time]{min-width:0;text-align:left}
 .bqinfo textarea{display:block;min-height:78px;line-height:1.35;resize:vertical}
 .bqsum{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--bg);border:1px dashed var(--ln);font-size:13.5px;line-height:1.4;color:var(--mu)}.bqsum b{color:var(--tx)}
 .bqinfo .acts{margin-top:12px}.bqinfo .acts .p{width:100%}
@@ -359,6 +358,13 @@ em.cin{font-style:normal;font-size:11px;opacity:.85}
 .sv{min-height:0;height:23px;min-width:50px;padding:0 6px;border-radius:9px;border:1.5px solid var(--ac);background:var(--ac2);color:var(--ac);font-size:13px;font-weight:800;line-height:1;letter-spacing:.2px;font-variant-numeric:tabular-nums}
 .sv.empty{border-style:dashed;border-color:var(--ln);background:transparent;color:var(--mu);font-weight:600}
 .pr.ok .sv{border-color:var(--ok);background:transparent;color:var(--ok)}
-#dsv input[type=time]{font-size:22px;font-weight:800;text-align:center;min-height:54px}
-#tksvb input[type=time]{min-width:0}
 @media(max-width:380px){.ckc{width:46px}.sv{min-width:44px;font-size:12.5px;padding:0 4px}}
+
+/* v8.3.1 — iPhone: поля больше не налезают друг на друга */
+.row2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.row2.stk{display:grid;grid-template-columns:minmax(0,1fr)}
+.row2>*{min-width:0}
+input[type=date]{min-width:0;max-width:100%}
+input[data-tm]{min-width:0;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+#dsv input[data-tm]{font-size:24px;font-weight:800;text-align:center;min-height:56px}
+.bqinfo .acts .p{white-space:normal;line-height:1.25}
