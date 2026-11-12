@@ -24,6 +24,7 @@
 <div class="instb" id="instb" hidden><span class="ii" aria-hidden="true">📲</span><div class="it2"><b>Установить приложение</b><small id="insub">Иконка на главном экране — открывается как приложение</small></div><button class="p" id="instgo" data-i="go">Установить</button><button class="x" data-i="x" aria-label="Скрыть">✕</button></div>
 
 <nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button></nav>
+<div class="bqa" id="bqalert" hidden aria-live="polite"></div>
 <section id="vOrder">
 <div class="card">
 <div class="chips" id="cooks" aria-label="Кто заказывает"></div>
@@ -45,6 +46,7 @@
 <div class="pbar"><i id="pfill"></i></div><div class="small" id="pinfo"></div>
 <div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div>
 </div>
+<div id="bqup" class="bqup" hidden></div>
 <div class="seg" id="psecs"><button data-a="psec" data-id="main">🍽 Основные<b id="pcm"></b></button><button data-a="psec" data-id="banq">🎉 Банкет<b id="pcb"></b></button></div>
 <div class="bqbar" id="bqbar" hidden role="group" aria-label="Банкеты"></div>
 <div class="seg bqtabs" id="bqtabs" hidden><button data-a="bqtab" data-id="info">📝 О банкете</button><button data-a="bqtab" data-id="prep">🥘 Заготовки<b id="pcq"></b></button></div>
@@ -121,6 +123,12 @@
 <div class="lbl f">Кухонный день</div>
 <div class="small" style="margin:0 0 8px">Когда в приложении начинается новый день: переносятся невыполненные заготовки, меняется «Завтра на смену» и дата поставки.</div>
 <div class="chips wrap" id="dsl"><button class="chip" data-a="dsset" data-id="0">00:00 · полночь</button><button class="chip" data-a="dsset" data-id="3">03:00</button><button class="chip" data-a="dsset" data-id="5">05:00</button><button class="chip" data-a="dsset" data-id="6">06:00</button></div>
+<div class="lbl f">Часы работы кухни</div>
+<div class="small" style="margin:0 0 8px">Показываются в блоке «Завтра». Закрытие ночью (например, 02:00 или 05:00) относится к тому же рабочему дню.</div>
+<div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div>
+<div class="lbl f">Банкеты — уведомления и заготовки</div>
+<div class="small" style="margin:0 0 8px">За сколько дней до банкета показывать его в списке заготовок и в уведомлении сверху. Например, «за 2 дня»: в четверг видны банкеты пятницы и субботы.</div>
+<div class="chips wrap" id="bqlc"><button class="chip" data-a="bqlset" data-id="1">за 1 день</button><button class="chip" data-a="bqlset" data-id="2">за 2 дня</button><button class="chip" data-a="bqlset" data-id="3">за 3 дня</button></div>
 <div class="lbl f">Пароль</div>
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div>
@@ -147,6 +155,10 @@
 <div class="dpk-g" id="dpg"></div>
 <div class="chips wrap" style="margin-top:10px"><button type="button" class="chip" data-a="dpq" data-id="-1">Вчера</button><button type="button" class="chip" data-a="dpq" data-id="0">Сегодня</button><button type="button" class="chip" data-a="dpq" data-id="1">Завтра</button></div>
 <div class="acts"><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dsh" class="shsheet" aria-label="Смена"><h2 id="dsht">Смена</h2><div class="small" id="dshs" style="margin:0 0 10px"></div>
+<div class="stp"><button type="button" class="g" data-a="shstep" data-id="-0.5" aria-label="Меньше на полчаса">−</button><div class="stv"><input id="dshh" inputmode="decimal" autocomplete="off" aria-label="Часов отработано"><span>ч</span></div><button type="button" class="g" data-a="shstep" data-id="0.5" aria-label="Больше на полчаса">＋</button></div>
+<div class="chips wrap" id="dshq" style="margin-top:10px"></div><div class="small shm" id="dshm" aria-live="polite"></div>
+<div class="acts"><button class="p" id="dshp" data-a="shsave">Записать смену</button><button class="d" id="dshd" data-a="shdel">Удалить смену</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dsv"><h2>Время подачи</h2><div class="small" id="svn" style="margin:0 0 10px;font-weight:700"></div><input id="svt" data-tm inputmode="numeric" maxlength="5" placeholder="19:30" autocomplete="off" enterkeyhint="done" aria-label="Время подачи"><div class="lbl" style="margin:12px 0 6px">Быстрый выбор</div><div class="chips wrap" id="svq"></div><div class="acts"><button class="p" data-a="svsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="svclr">Убрать</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Повар вводит его, чтобы увидеть только свои часы и зарплату. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
