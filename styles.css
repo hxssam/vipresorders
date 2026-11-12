@@ -465,3 +465,35 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 #shtitle .shn{order:3;flex:1 0 100%;font-size:13.5px;color:var(--mu)}
 .myshift .mst b{font-size:22px;overflow-wrap:anywhere}
 .hr1{flex-wrap:wrap}.hr1 b{flex:0 0 100%;width:auto}.hr1 input{flex:1 1 112px;min-width:112px}
+/* v8.6 — отметка «Подано» (шеф) отдельно от «Приготовлено» (повар) */
+:root{--sdbg:#fdf1d6}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--sdbg:#3a2c0b}}
+.pr.bqr{align-items:flex-start}
+.bqw{flex:1 1 0;min-width:0}
+.bqf{display:flex;align-items:center;gap:6px;margin-top:6px}
+.bqf .who{flex:1 1 0;width:auto;min-width:0;max-width:150px}
+.bqf .x{flex:none;margin-left:auto}
+.sdk{flex:none;width:40px;height:40px;min-height:0;padding:0;border-radius:11px;border:2px solid var(--wa);background:var(--bg);color:#1f1400;font-size:22px;line-height:1;font-weight:800;display:flex;align-items:center;justify-content:center;transition:background-color .2s,border-color .2s,transform .15s}
+.sdk .sdg{font-size:19px;line-height:1;filter:grayscale(1);opacity:.5}
+.sdk.on{background:var(--wa);border-color:var(--wa)}
+.sdk.lock{border-style:dashed;opacity:.55}
+.sdk.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.sdk:active{transform:scale(.94)}
+.sdl{height:23px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--mu);letter-spacing:.1px;white-space:nowrap}
+.sdl.on{color:var(--wa);font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.pr.sd,.pr.ok.sd{background:var(--sdbg);border-color:var(--wa)}
+.pr .ck.imp,.pr.ok .ck.imp,.pr.sd .ck.imp{background:transparent;border-style:dashed;border-color:var(--ok);color:var(--ok)}
+.pr.sd .sv,.pr.ok.sd .sv{border-color:var(--ok);background:transparent;color:var(--ok)}
+.bqlg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mu);margin:2px 2px 0}
+.bqlg span{display:inline-flex;align-items:center;gap:6px}
+.bqk{display:inline-block;width:12px;height:12px;border-radius:4px;border:2px solid var(--ln);flex:none}
+.bqk.ok{background:var(--ok);border-color:var(--ok)}.bqk.sd{background:var(--wa);border-color:var(--wa)}
+.bqs-p{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;font-size:13px;font-weight:600;color:var(--mu)}
+.bqs-p span{display:inline-flex;align-items:center;gap:6px}.bqs-p b{color:var(--tx)}
+.gh small{font-size:12px;font-weight:600;color:var(--mu)}
+.gh.sdh{color:var(--wa)}
+.bqall{margin:14px 2px 4px;padding:12px;border-radius:12px;background:var(--okbg);color:var(--ok);font-weight:800;text-align:center}
+.pbar{position:relative}.pbar u{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--wa);border-radius:9px;text-decoration:none;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+@media(max-width:380px){.sdl{font-size:11px}.sdl.on{font-size:12.5px}}
+.bqc.wide b{padding-right:60px}
+#pcq,#pcb,#pcm{white-space:nowrap}
