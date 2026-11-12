@@ -573,3 +573,28 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .rc-flt{margin-top:8px}.rc-head .acts{margin-top:8px}
 .rc-co{margin-top:6px}.rc-co summary{cursor:pointer;font-size:13.5px;color:var(--mu);padding:7px 0;list-style:none;font-weight:600;overflow-wrap:anywhere}.rc-co summary::-webkit-details-marker{display:none}.rc-co summary::after{content:" ▾";opacity:.6}.rc-co[open] summary::after{content:" ▴"}.rc-co input{margin-top:4px}
 .rc-head .rc-flt{flex-wrap:nowrap;overflow:visible;gap:6px}.rc-head .rc-flt .chip{flex:1 1 auto;padding:5px 6px;font-size:13.5px;text-align:center;white-space:nowrap}
+
+/* ===== v22: «срочно» в заказе ===== */
+.it .n .ug{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin:-5px 0 -5px 4px;min-width:34px;width:34px;min-height:34px;height:34px;padding:0;border-radius:11px;background:transparent;font-size:18px;line-height:1;opacity:.3;filter:grayscale(1);transition:opacity .12s,background .12s;-webkit-tap-highlight-color:transparent}
+.it .n .ug::after{content:'';position:absolute;inset:-4px}
+@media(max-width:480px){#rb .it{row-gap:6px}}
+.it .n .ug.on{opacity:1;filter:none;background:rgba(220,38,38,.16);box-shadow:inset 0 0 0 1.5px var(--rd)}
+.it.on.urg,.it.urg{border-color:var(--rd);background:rgba(220,38,38,.07)}
+/* ===== v22: итого блюд по всем банкетам ===== */
+.bqt-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--ac2);margin:10px 0 6px}
+.bqt-h>div{flex:1;min-width:0}.bqt-h b{display:block;font-size:16px}.bqt-h small{display:block;color:var(--mu);font-weight:600;font-size:12.5px;margin-top:2px}
+.bqt-h button{flex:none;min-height:40px;padding:8px 12px;font-size:14px}
+.bqt-lg{margin:0 2px 8px}
+.bqt-r{display:flex;align-items:flex-start;gap:10px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;margin-bottom:6px}
+.bqt-r.ok{border-color:var(--ok)}.bqt-r.sd{border-color:var(--ok);background:var(--okbg)}
+.bqt-n{flex:1;min-width:0}.bqt-n b{display:block;overflow-wrap:anywhere}.bqt-n small{display:block;color:var(--mu);font-size:12.5px;margin-top:2px;overflow-wrap:anywhere}
+.bqt-q{flex:none;text-align:right;max-width:46%}.bqt-q .qpill{display:inline-block;max-width:100%;overflow-wrap:anywhere;white-space:normal}.bqt-q small{display:block;color:var(--mu);font-size:11.5px;margin-top:3px;font-weight:700}
+/* v22: выбор банкетов для «Σ Итого» (из разных дней) */
+.bqt-lbl{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 2px 6px;color:var(--mu);font-size:12.5px;font-weight:700}
+.bqt-m{min-height:34px;padding:4px 12px;margin-left:6px;font-size:13px;border-radius:10px}
+.bqt-pick{display:grid;gap:6px;margin-bottom:8px}
+.bqt-p{display:flex;align-items:center;gap:10px;text-align:left;font-weight:600;background:var(--sf);color:var(--tx);border:1.5px solid var(--ln);border-radius:14px;padding:8px 12px;min-height:56px;box-shadow:inset 4px 0 0 var(--bq,transparent)}
+.bqt-p.on{border-color:var(--ac);background:var(--ac2)}
+.bqt-ck{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--ln);display:grid;place-items:center;font-size:16px;line-height:1;color:var(--bg);background:transparent}
+.bqt-p.on .bqt-ck{background:var(--ac);border-color:var(--ac)}
+.bqt-t{flex:1;min-width:0}.bqt-t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bqt-t small{display:block;color:var(--mu);font-size:12.5px;font-weight:600;margin-top:1px;overflow-wrap:anywhere}
