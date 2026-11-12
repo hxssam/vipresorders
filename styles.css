@@ -551,3 +551,25 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 #drsb{max-height:52dvh;overflow:auto;-webkit-overflow-scrolling:touch}
 .rc-share button{flex:1 1 90px;min-width:0;padding:10px 4px;font-size:14.5px}
 @media(max-width:360px){.rc-ac button{flex-basis:100%}.rc-e small{display:none}}
+
+.rc-flt{margin-top:10px}#rcsb{padding-bottom:6px}#rcsb .chip{min-height:38px;padding:6px 12px}.chip .cn{font-style:normal;font-weight:800;font-size:12px;margin-inline-start:3px;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--rd) 16%,transparent);color:var(--rd)}.chip.on .cn{background:#fff3;color:#fff}
+.rc-head .acts{margin-top:10px}.rc-head .acts button{padding:9px 8px;font-size:14.5px}.rc-cl{margin-top:8px}.rc-cnt{margin-top:10px}.rc-cnt span{font-size:12px;padding:3px 8px}.rc-pb.big{margin:8px 0 2px}.rc-bar button{padding:9px 8px;font-size:14.5px}
+.rc-flt .chip{padding:5px 11px;font-size:14px;min-height:36px}
+
+/* Приёмка — компактные строки (как в «Заказе»): имя + один быстрый кнопка, подробности по нажатию на имя */
+.rc-row{padding:3px 8px 3px 11px;margin-bottom:6px;border-radius:13px}
+.rc-row .rc-r1{align-items:center;gap:8px}
+.rc-nm{flex:1;min-width:0;display:block;text-align:start;background:transparent;border:0;border-radius:8px;padding:6px 2px;min-height:48px;font-weight:400;color:var(--tx)}
+.rc-nm:active{transform:none;background:color-mix(in srgb,var(--ac) 8%,transparent)}
+.rc-nm b{display:block;font-size:15.5px;line-height:1.25;overflow-wrap:anywhere}
+.rc-nm small{display:block;color:var(--mu);font-size:12.5px;margin-top:1px}
+.rc-nm small em{font-style:normal;color:var(--rd);font-weight:700}
+.rc-nm small::after{content:" ▾";opacity:.55}.rc-nm[aria-expanded=true] small::after{content:" ▴"}
+.rc-q{flex:none;min-height:42px;padding:0 13px;font-size:15px;white-space:nowrap;max-width:46%;overflow:hidden;text-overflow:ellipsis}
+.rc-row .rc-st{font-size:13px;padding:6px 10px;max-width:46%;overflow:hidden;text-overflow:ellipsis}
+.rc-row.open{background:color-mix(in srgb,var(--ac2) 45%,var(--sf))}
+.rc-row.open .rc-ac,.rc-row.open .rc-ed{padding-bottom:5px}
+.rc-head h3{font-size:17px;margin:8px 0 2px}.rc-head .small{margin-top:2px;font-size:12.5px;line-height:1.35}
+.rc-flt{margin-top:8px}.rc-head .acts{margin-top:8px}
+.rc-co{margin-top:6px}.rc-co summary{cursor:pointer;font-size:13.5px;color:var(--mu);padding:7px 0;list-style:none;font-weight:600;overflow-wrap:anywhere}.rc-co summary::-webkit-details-marker{display:none}.rc-co summary::after{content:" ▾";opacity:.6}.rc-co[open] summary::after{content:" ▴"}.rc-co input{margin-top:4px}
+.rc-head .rc-flt{flex-wrap:nowrap;overflow:visible;gap:6px}.rc-head .rc-flt .chip{flex:1 1 auto;padding:5px 6px;font-size:13.5px;text-align:center;white-space:nowrap}
