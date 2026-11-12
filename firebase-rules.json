@@ -176,6 +176,12 @@
           ".validate": false
         }
       }
+    },
+    "receipts": {
+      ".read": true,
+      "$oid": {
+        ".write": true
+      }
     }
   }
 }

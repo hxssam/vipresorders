@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
+<script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -19,11 +20,11 @@
 </head>
 <body>
 <div class="w">
-<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
 
 <div class="instb" id="instb" hidden><span class="ii" aria-hidden="true">📲</span><div class="it2"><b>Установить приложение</b><small id="insub">Иконка на главном экране — открывается как приложение</small></div><button class="p" id="instgo" data-i="go">Установить</button><button class="x" data-i="x" aria-label="Скрыть">✕</button></div>
 
-<nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button></nav>
+<nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button><button class="tab" data-a="tab" data-id="recv" aria-label="Приёмка товара"><span class="ti">📦</span><span class="tl">Приёмка</span></button></nav>
 <div class="bqa" id="bqalert" hidden aria-live="polite"></div>
 <section id="vOrder">
 <div class="card">
@@ -89,6 +90,7 @@
 <div id="cabUser"><div class="card cab-card" id="cabBox"></div></div>
 <section class="card" id="payadm" hidden><div class="lbl">💼 Зарплаты · только руководитель</div><div id="payov"></div><div id="payed"></div></section>
 </section>
+<section id="vRecv" hidden><div id="rcmain"></div></section>
 <section id="vWriteoff" hidden>
 <div class="card"><div class="lbl">Дата списания</div><button type="button" class="dp" id="woDate" data-dp data-title="Дата списания" value="" aria-haspopup="dialog">Выберите дату</button><div class="small">✓ — оформлено. Записи без ✓ переносятся на следующий день.</div></div>
 <section class="card"><div class="lbl"><span>Списано за выбранный день</span><small id="wocount"></small></div><div class="acts wo-share-actions" style="margin:0 0 10px"><button class="p" id="wocopy" data-a="wocopy" disabled>📋 Копировать списание</button><button id="woshare" data-a="woshare" disabled hidden>↗ Отправить списание</button></div><div id="wolog"></div></section>
@@ -106,6 +108,12 @@
 
 <dialog id="di"><h2 id="dih">Добавить на главный экран</h2><div id="dib"></div><div class="acts"><button class="p" data-a="close">Понятно</button></div></dialog>
 
+<dialog id="drs"><h2>Лист приёмки</h2><div id="drsb"></div><div class="acts rc-share"><button class="p" data-a="rcpdf">📄 PDF</button><button data-a="rccsv">📊 Excel</button><button data-a="rctext">📋 Копировать</button><button id="rcsend" data-a="rcsend" hidden>↗ Отправить текст</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dth"><h2>Тема оформления</h2><div class="thopts" role="radiogroup" aria-label="Тема оформления">
+<button class="thopt" data-a="setth" data-id="auto" role="radio" aria-checked="false"><span class="thi">📱</span><span class="tht"><b>Авто</b><small>как в настройках телефона</small></span><i class="thck">✓</i></button>
+<button class="thopt" data-a="setth" data-id="light" role="radio" aria-checked="false"><span class="thi">☀️</span><span class="tht"><b>Светлая</b><small>всегда светлый фон</small></span><i class="thck">✓</i></button>
+<button class="thopt" data-a="setth" data-id="dark" role="radio" aria-checked="false"><span class="thi">🌙</span><span class="tht"><b>Тёмная</b><small>для вечера и тёмной кухни</small></span><i class="thck">✓</i></button>
+</div><div class="small">Выбор сохраняется на этом телефоне.</div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
 
 <dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
