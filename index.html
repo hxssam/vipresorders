@@ -25,7 +25,6 @@
 <div class="instb" id="instb" hidden><span class="ii" aria-hidden="true">📲</span><div class="it2"><b>Установить приложение</b><small id="insub">Иконка на главном экране — открывается как приложение</small></div><button class="p" id="instgo" data-i="go">Установить</button><button class="x" data-i="x" aria-label="Скрыть">✕</button></div>
 
 <nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button><button class="tab" data-a="tab" data-id="recv" aria-label="Приёмка товара"><span class="ti">📦</span><span class="tl">Приёмка</span></button></nav>
-<div class="bqa" id="bqalert" hidden aria-live="polite"></div>
 <section id="vOrder">
 <div class="card">
 <div class="chips" id="cooks" aria-label="Кто заказывает"></div>
@@ -41,11 +40,11 @@
 <div id="list"></div>
 </section>
 <section id="vPrep" hidden>
-<div class="card">
-<div class="chips" id="pcooks" aria-label="Я работаю"></div>
-<div class="seg" id="pseg" style="margin-top:8px"><button data-a="pday" data-id="-1">Вчера</button><button data-a="pday" data-id="today">Сегодня</button><button data-a="pday" data-id="1">Завтра</button></div>
-<div class="prow"><button type="button" class="dp" id="pdate" data-dp data-title="День подготовки" value="" aria-label="Другой день" aria-haspopup="dialog">Другой день</button><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false" title="Закрепить день">📌</button></div>
-<div class="pbar"><i id="pfill"></i><u id="pfill2"></u></div><div class="small" id="pinfo"></div>
+<div class="card phd">
+<div class="chips pck" id="pcooks" aria-label="Я работаю"></div>
+<div class="phd-r1"><div class="seg" id="pseg"><button data-a="pday" data-id="-1">Вчера</button><button data-a="pday" data-id="today">Сегодня</button><button data-a="pday" data-id="1">Завтра</button></div><button class="chip pin-toggle" id="ppin" data-a="ptpin" aria-pressed="false" title="Закрепить день" aria-label="Закрепить день">📌</button></div>
+<div class="phd-r2"><button type="button" class="dp" id="pdate" data-dp data-title="День подготовки" value="" aria-label="Другой день" aria-haspopup="dialog">Другой день</button><span class="pinfo" id="pinfo"></span></div>
+<div class="pbar"><i id="pfill"></i><u id="pfill2"></u></div>
 <div class="pin-label" id="ppinlabel" hidden>Закреплённые дни</div><div class="chips pin-list" id="ppins" aria-label="Закреплённые дни подготовки"></div>
 </div>
 <div id="bqup" class="bqup" hidden></div>
@@ -55,6 +54,8 @@
 <div class="card bqh" id="bqh" hidden></div>
 <section class="card bqinfo" id="bqinfo" hidden aria-label="Данные банкета">
 <div class="lbl"><span>🎉 О банкете</span><small id="bqday"></small></div>
+<label class="fl"><span>📅 Дата банкета</span><button type="button" class="dp" id="bqdt" data-dp data-title="Дата банкета" value="" aria-label="Дата банкета" aria-haspopup="dialog">Выберите дату</button></label>
+<div class="bqhint" id="bqhint" hidden role="status"></div>
 <label class="fl"><span>Название / повод</span><input id="bqt" maxlength="80" placeholder="Например, свадьба Ивановых" autocomplete="off"></label>
 <div class="row2"><label class="fl"><span>🕐 Время начала</span><input id="bqs" data-tm inputmode="numeric" maxlength="5" placeholder="18:00" autocomplete="off" enterkeyhint="done" aria-label="Время начала"></label><label class="fl"><span>👥 Гостей</span><input id="bqg" inputmode="numeric" placeholder="0" autocomplete="off"></label></div>
 <label class="fl"><span>📍 Зал / место</span><input id="bqp" maxlength="60" placeholder="Например, большой зал" autocomplete="off"></label>
@@ -65,9 +66,8 @@
 <div id="plist"></div>
 <section class="card" id="padd" aria-label="Добавить заготовку">
 <div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off"><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
-<div class="lbl" style="margin:10px 0 6px"><span>Из истории</span></div>
-<div class="chips" id="qfil"></div>
-<div class="chips wrap" id="qlist" style="margin-top:8px"></div>
+<div class="chips qsug" id="qlist" aria-label="Из истории"></div>
+<details class="qfd"><summary>Категории подсказок</summary><div class="chips" id="qfil"></div></details>
 </section>
 <details class="card" id="ydbox"><summary>Предыдущий день <small id="ydcount"></small></summary><div id="ydlist" style="margin-top:8px"></div></details>
 <details class="card" id="libbox">

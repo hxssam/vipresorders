@@ -636,3 +636,89 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .rcb-in{flex:none;color:var(--ok);font-weight:800;font-size:12.5px;white-space:nowrap}
 .rcb-r.in .rcb-q{color:var(--mu)}
 .rcb-b .acts{margin-top:10px}
+
+/* ================= v9.0 — Заготовки: спокойный и лёгкий вид ================= */
+#vPrep .phd{padding:12px;margin:8px 0 10px}
+#vPrep .pck{margin:0 0 10px;gap:6px}
+#vPrep .pck .chip{min-height:34px;padding:3px 13px;font-size:14px;border-width:1px}
+#vPrep .pck .chip small{display:none}
+.phd-r1{display:flex;align-items:center;gap:8px}
+.phd-r1 .seg{flex:1;min-width:0}
+.phd-r1 .seg button{min-height:38px;font-size:14px}
+#vPrep #ppin{flex:none;width:44px;height:44px;min-height:0;padding:0;margin:0;border-radius:12px;font-size:17px;text-align:center;filter:grayscale(1);opacity:.65}
+#vPrep #ppin.on{filter:none;opacity:1}
+.phd-r2{display:flex;align-items:center;gap:10px;margin-top:10px}
+.phd-r2 .dp{flex:1 1 0;min-width:0;min-height:38px;padding:5px 12px;font-size:14px;background:transparent}
+.pinfo{flex:none;font-size:13px;font-weight:800;color:var(--ac);white-space:nowrap}
+#vPrep .phd .pbar{height:6px;margin-top:10px}
+#vPrep .pbar i{animation:none;background:var(--ac)}
+#vPrep .pin-label{margin-top:10px}
+/* ближайшие банкеты — один узкий список */
+.bqup{margin:0 0 10px}.bqup .bqu-h{margin:2px 2px 6px}
+.bqsl{display:flex;flex-direction:column;background:var(--sf);border:1px solid var(--ln);border-radius:16px;overflow:hidden}
+.bqsr{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:7px 12px;border-radius:0;background:transparent;color:var(--tx);text-align:left;border-top:1px solid var(--ln);font-weight:400}
+.bqsr:first-child{border-top:0}
+.bqsr.now{background:color-mix(in srgb,var(--bq) 10%,var(--sf))}
+.bqsr .bqdot{width:9px;height:9px}
+.bqsr-w{flex:none;min-width:62px;display:flex;flex-direction:column;font-weight:800;font-size:13px;line-height:1.2;color:var(--bq)}
+.bqsr-w small{font-size:11px;font-weight:600;color:var(--mu)}
+.bqsr-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.bqsr-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.bqsr-t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600;color:var(--mu)}
+.bqsr em{flex:none;font-style:normal;font-weight:800;font-size:12px;color:var(--ac)}.bqsr em.all{color:var(--ok)}
+/* переключатель разделов */
+#vPrep #psecs{margin:8px 0}#vPrep #psecs button{min-height:40px;font-size:14px}
+/* список: одна карточка с тонкими линиями, без рамки у каждой строки */
+#vPrep .plc{background:var(--sf);border:1px solid var(--ln);border-radius:16px;overflow:hidden}
+#vPrep .plc .pr,#vPrep .plc .pr.ok{background:transparent;border:0;border-top:1px solid var(--ln);border-radius:0;margin:0;box-shadow:none;padding:9px 10px 9px 8px;gap:10px}
+#vPrep .plc .pr:first-child{border-top:0}
+#vPrep .plc .pr.sd,#vPrep .plc .pr.ok.sd{background:var(--sdbg)}
+#vPrep .pr .ck{position:relative;width:36px;height:36px;border-radius:50%;border:2px solid var(--ln);font-size:19px;line-height:1}
+#vPrep .pr .ck:after{content:"";position:absolute;inset:-6px}
+#vPrep .pr.ok .pn b{color:var(--mu);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--mu) 55%,transparent)}
+#vPrep .pn b{font-size:15.5px;font-weight:650;line-height:1.25}
+#vPrep .pm{margin-top:2px;gap:1px 8px}
+#vPrep .pm .qpill{background:none;padding:0;border-radius:0;font-size:13px;font-weight:700;color:var(--mu)}
+#vPrep .pm .qpill.empty{border:0;color:var(--wa);font-weight:600}
+#vPrep .pm em{border:0;padding:0;margin:0;font-size:12px;font-weight:700;color:var(--mu)}
+#vPrep .pm .cf,#vPrep .pm .by,#vPrep .pm .qk{font-size:12px}
+#vPrep .pm .qk{border:0;padding:0}
+#vPrep .who{flex:none;width:108px;min-width:0;height:36px;min-height:36px;padding:0 24px 0 12px;border-radius:999px;border:1px dashed var(--ln);background-color:transparent;color:var(--mu);font-size:16px;font-weight:700;-webkit-appearance:none;appearance:none;text-overflow:ellipsis;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+#vPrep .who.on{border:1px solid transparent;background-color:var(--ac2);color:var(--ac)}
+#vPrep .pr.ok .who.on{background-color:var(--okbg);color:var(--ok)}
+#vPrep .pr.bqr{align-items:flex-start}
+#vPrep .bqf{margin-top:6px}#vPrep .bqf .who{flex:none}
+#vPrep .gh{margin:12px 2px 6px}
+/* выполнено — свёрнуто */
+details.pdn{margin:10px 0 0}
+details.pdn>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 4px;font-weight:800;font-size:13px;color:var(--ok);cursor:pointer}
+details.pdn>summary::-webkit-details-marker{display:none}
+details.pdn>summary:after{content:"▾";margin-left:auto;color:var(--mu);transition:transform .2s}
+details.pdn[open]>summary:after{transform:rotate(180deg)}
+details.pdn.sdn>summary{color:var(--wa)}
+details.pdn .plc{margin-top:2px}
+.pall{margin:2px 0 4px;padding:14px;border-radius:14px;background:var(--okbg);color:var(--ok);font-weight:800;text-align:center}
+#vPrep .bqx{margin:10px 0 4px}
+.bqlg{font-size:12px}
+/* добавление: одна строка + подсказки в одну линию */
+#padd{padding:10px}
+#padd .qsug{margin-top:8px;flex-wrap:nowrap;gap:6px}
+#padd .qsug:empty{display:none}
+#padd .qsug .chip{min-height:34px;padding:3px 12px;font-size:13px;font-weight:600;border-style:dashed;border-width:1px}
+#padd .qsug .small{padding:4px 2px}
+details.qfd{margin-top:4px}
+details.qfd>summary{list-style:none;display:flex;align-items:center;gap:6px;min-height:30px;padding:2px 2px;font-size:12px;font-weight:700;color:var(--mu);cursor:pointer}
+details.qfd>summary::-webkit-details-marker{display:none}
+details.qfd>summary:after{content:"▾"}
+details.qfd .chips{margin-top:6px}
+#vPrep #ydbox,#vPrep #libbox{padding:8px 14px;margin:8px 0;box-shadow:none}
+#vPrep #ydbox>summary,#vPrep #libbox>summary{font-size:14px;color:var(--mu)}
+/* банкет: дата и подсказка */
+.bqinfo .dp{min-height:44px}
+.bqhint{margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--wa) 14%,var(--sf));border:1px solid var(--wa);font-size:13.5px;line-height:1.4}
+.bqhint .p{display:block;width:100%;margin-top:8px;min-height:40px}
+.bqhint[hidden]{display:none}
+.bqh{border-color:var(--ln);padding:12px 14px}
+.bqc{min-height:50px;padding:6px 12px}
+#vPrep .ckc{width:48px}
+#vPrep .sdc .sdl{font-size:10px}
