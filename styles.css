@@ -599,9 +599,17 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .bqt-p.on .bqt-ck{background:var(--ac);border-color:var(--ac)}
 .bqt-t{flex:1;min-width:0}.bqt-t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bqt-t small{display:block;color:var(--mu);font-size:12.5px;font-weight:600;margin-top:1px;overflow-wrap:anywhere}
 /* v8.9 — скрытие часов смены, компактная «Не привезли», возврат недовезённого в заказ */
-#shtitle .shx{order:2;flex:none;min-height:30px;height:30px;padding:0 10px;margin:0;border-radius:999px;font-size:12px;font-weight:800;line-height:1;white-space:nowrap;background:transparent;color:var(--mu);border:1px solid var(--ln);box-shadow:none;position:relative}
-#shtitle .shx::after{content:"";position:absolute;inset:-7px -4px}
-#shtitle .shx.on{color:var(--ac);border-color:var(--ac);background:var(--ac2)}
+#shtitle .shx{order:2;flex:none;min-height:34px;height:34px;padding:0 12px;margin:0;border-radius:999px;font-size:13px;font-weight:800;line-height:1;white-space:nowrap;background:transparent;color:var(--mu);border:1px solid var(--ln);box-shadow:none;position:relative}
+#shtitle .shx::after{content:"";position:absolute;inset:-6px -3px}
+#shtitle .shx.on{color:var(--wa);border-color:var(--wa);background:color-mix(in srgb,var(--wa) 12%,var(--sf))}
+#shtitle .shl{order:2;flex:none;font-size:12.5px;font-weight:800;color:var(--wa);white-space:nowrap}
+#shtitle .shn.lk{color:var(--wa);font-weight:700}
+.shlock{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;margin:8px 0;border:1px solid color-mix(in srgb,var(--wa) 55%,var(--ln));border-radius:14px;background:color-mix(in srgb,var(--wa) 10%,var(--sf))}
+.shlock>div{flex:1;min-width:0}.shlock b{display:block;font-size:14px}.shlock small{display:block;color:var(--mu);font-size:12.5px;margin-top:2px;overflow-wrap:anywhere}
+.shli{flex:none;font-size:20px}
+.shlock .p{flex:1 0 100%;min-height:42px;padding:6px 12px;font-size:14px;margin:0}
+.shfoot{margin-top:10px;text-align:center}.shfoot .g{min-height:40px;padding:6px 14px}.shfoot small{display:block;color:var(--mu);font-size:12px;margin-top:5px}
+
 .rc-strip{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;margin:8px 0;border:1px solid color-mix(in srgb,var(--rd) 55%,var(--ln));border-inline-start:5px solid var(--rd);border-radius:14px;background:color-mix(in srgb,var(--rd) 7%,var(--sf))}
 .rc-st1{flex:1;min-width:0}.rc-st1 b{display:block;font-size:14.5px}.rc-st1 small{display:block;color:var(--mu);font-size:12.5px;margin-top:1px;overflow-wrap:anywhere}
 .rc-strip button{flex:none;min-height:40px;padding:6px 12px;font-size:13.5px;margin:0}
