@@ -598,3 +598,33 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .bqt-ck{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--ln);display:grid;place-items:center;font-size:16px;line-height:1;color:var(--bg);background:transparent}
 .bqt-p.on .bqt-ck{background:var(--ac);border-color:var(--ac)}
 .bqt-t{flex:1;min-width:0}.bqt-t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bqt-t small{display:block;color:var(--mu);font-size:12.5px;font-weight:600;margin-top:1px;overflow-wrap:anywhere}
+/* v8.9 — скрытие часов смены, компактная «Не привезли», возврат недовезённого в заказ */
+#shtitle .shx{order:2;flex:none;min-height:30px;height:30px;padding:0 10px;margin:0;border-radius:999px;font-size:12px;font-weight:800;line-height:1;white-space:nowrap;background:transparent;color:var(--mu);border:1px solid var(--ln);box-shadow:none;position:relative}
+#shtitle .shx::after{content:"";position:absolute;inset:-7px -4px}
+#shtitle .shx.on{color:var(--ac);border-color:var(--ac);background:var(--ac2)}
+.rc-strip{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;margin:8px 0;border:1px solid color-mix(in srgb,var(--rd) 55%,var(--ln));border-inline-start:5px solid var(--rd);border-radius:14px;background:color-mix(in srgb,var(--rd) 7%,var(--sf))}
+.rc-st1{flex:1;min-width:0}.rc-st1 b{display:block;font-size:14.5px}.rc-st1 small{display:block;color:var(--mu);font-size:12.5px;margin-top:1px;overflow-wrap:anywhere}
+.rc-strip button{flex:none;min-height:40px;padding:6px 12px;font-size:13.5px;margin:0}
+.rc-strip button.g{width:44px;padding:6px 0}
+.rc-ow{margin:0 0 8px}.rc-ow .rc-ord{margin:0}.rc-ow.m .rc-ord{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent}
+.rc-miss{border:1px solid var(--ln);border-top:0;border-inline-start:5px solid var(--rd);border-radius:0 0 14px 14px;background:color-mix(in srgb,var(--rd) 6%,var(--sf));margin-top:0}
+.rc-miss>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:38px;font-size:13px}
+.rc-miss>summary::-webkit-details-marker{display:none}
+.rc-miss>summary b{color:var(--rd);white-space:nowrap;flex:none}
+.rc-miss>summary span{flex:1;min-width:0;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-miss>summary:after{content:"▾";flex:none;color:var(--mu);transition:transform .2s}.rc-miss[open]>summary:after{transform:rotate(180deg)}
+.rc-mc{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px 10px}
+.rc-mi{min-height:34px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:600;background:var(--sf);color:var(--tx);border:1px solid var(--ln);box-shadow:none;margin:0;text-align:start}
+.rc-mi b{color:var(--rd);margin-inline-start:3px;white-space:nowrap}
+.rcb{border-color:color-mix(in srgb,var(--wa) 60%,var(--ln))}
+.rcb[hidden]{display:none}
+.rcb>summary{min-height:34px}
+.rcb-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:start;gap:1px}.rcb-t em{font-style:normal;font-size:12.5px;font-weight:700}.rcb-t em.rcw{color:var(--wa)}.rcb-t em.rco{color:var(--ok)}
+.rcb-b{margin-top:8px}
+.rcb-r{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--ln)}.rcb-r:first-child{border-top:0}
+.rcb-n{flex:1;min-width:0}.rcb-n b{display:block;overflow-wrap:anywhere}.rcb-n small{display:block;color:var(--mu);font-size:12.5px;overflow-wrap:anywhere}
+.rcb-q{flex:none;color:var(--rd);white-space:nowrap}
+.rcb-add{flex:none;width:44px;min-height:40px;padding:0;font-size:20px;margin:0}
+.rcb-in{flex:none;color:var(--ok);font-weight:800;font-size:12.5px;white-space:nowrap}
+.rcb-r.in .rcb-q{color:var(--mu)}
+.rcb-b .acts{margin-top:10px}

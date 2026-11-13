@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='8.8.0';
+const VER='8.9.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 // ---------- тема оформления: Авто / Светлая / Тёмная (для всех телефонов) ----------
@@ -120,7 +120,7 @@ async function jget(p,q,auth){let t='';if(auth){t=await tok();if(!t)throw new Er
 const MV={};let metaBroken=0,pollBusy=0,tickN=0;
 const pendingFor=mk=>L.out.some(o=>mkey(o.p)===mk);
 const routeMap=()=>({team:['team'],catalog:['catalog'],orders:['orders','orderBy=%22created%22&limitToLast=80'],prep:['prep/'+pd],prepPrev:['prep/'+dAdd(-1,pd)],prepTom:['prep/'+dAdd(1)],prepToday:['prep/'+dAdd(0)],plan:['plan'],prepLibrary:['prepLibrary'],prepPins:['prepPins'],prepCats:['prepCats'],writeoffs:['writeoffs/'+(tab==='writeoff'?wd:dAdd(0))],sched:['sched'],shifts:['shifts/'+dAdd(1)],shiftsLast:['shifts/_last'],prepMeta:['prepMeta/'+pd],prepMetaTom:['prepMeta/'+dAdd(1)],prepMetaToday:['prepMeta/'+dAdd(0)],prepMetaT2:['prepMeta/'+dAdd(2)],prepMetaT3:['prepMeta/'+dAdd(3)],prepT2:['prep/'+dAdd(2)],prepT3:['prep/'+dAdd(3)],cfg:['plan/cfg'],seen:['plan/seen/'+dAdd(1)],woPrev:['writeoffs/'+dAdd(-1)],payroll:['payroll','',true],receipts:['receipts','orderBy=%22%24key%22&limitToLast=80']});
-const activeKeys=()=>{const keys=new Set(['team','cfg','prepMetaToday','prepMetaTom']);const bl=bqLook();if(bl>=2)keys.add('prepMetaT2');if(bl>=3)keys.add('prepMetaT3');if(tab==='prep'){keys.add('prepToday');keys.add('prepTom');if(bl>=2)keys.add('prepT2');if(bl>=3)keys.add('prepT3')}if(tab==='order'){keys.add('catalog');keys.add('shifts');keys.add('shiftsLast');keys.add('sched');keys.add('seen')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='recv'){keys.add('catalog');keys.add('orders');keys.add('receipts')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins');keys.add('prepCats')}if(dialogOpen('#dcat'))keys.add('prepCats');if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(tab==='cab'){keys.add('sched');if(isAdmin())keys.add('payroll')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','shiftsLast','sched','seen','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
+const activeKeys=()=>{const keys=new Set(['team','cfg','prepMetaToday','prepMetaTom']);const bl=bqLook();if(bl>=2)keys.add('prepMetaT2');if(bl>=3)keys.add('prepMetaT3');if(tab==='prep'){keys.add('prepToday');keys.add('prepTom');if(bl>=2)keys.add('prepT2');if(bl>=3)keys.add('prepT3')}if(tab==='order'){keys.add('catalog');keys.add('shifts');keys.add('shiftsLast');keys.add('sched');keys.add('seen');keys.add('orders');keys.add('receipts')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='recv'){keys.add('catalog');keys.add('orders');keys.add('receipts')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins');keys.add('prepCats')}if(dialogOpen('#dcat'))keys.add('prepCats');if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(tab==='cab'){keys.add('sched');if(isAdmin())keys.add('payroll')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','shiftsLast','sched','seen','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
 const atPath=p=>{let o=DATA;for(const k of String(p).split('/')){if(o==null||typeof o!=='object')return null;o=o[k]}return o===undefined?null:o};
 const sig=v=>JSON.stringify(v===undefined?null:v);
 function onMeta(force){if(DEMO||!DB)return Promise.resolve();const routes=routeMap(),meta=DATA.meta||{},jobs=[];if(tab==='cab'&&isAdmin()&&MV.cabinet!==meta.cabinet){MV.cabinet=meta.cabinet;loadIn()}
@@ -164,7 +164,7 @@ for(const c of cs){const g=ps.filter(p=>p.c===c.id);if(g.length)h+=(cat==='all'|
 $('#list').innerHTML=h||`<div class="em">Ничего не найдено.<br>Нажмите «＋ Товар», чтобы добавить.</div>`};
 const sumDn=()=>{$('#dnsum').textContent='📅 Поставка '+day(L.draft.date)+(L.draft.note?' · 💬 '+L.draft.note.slice(0,22):'')};
 const placeInd=()=>{const nav=document.querySelector('.tabs'),on=nav&&nav.querySelector('.tab.on'),ind=nav&&nav.querySelector('.tabind');if(!on||!ind)return;if(!on.offsetWidth)return;ind.style.width=on.offsetWidth+'px';ind.style.transform='translateX('+on.offsetLeft+'px)';nav.classList.add('ind')};
-const rBar=()=>{$('#cnt').textContent=cnt()?cnt()+' поз.':'пусто';setDp($('#date'),L.draft.date);$('#note').value=L.draft.note;fitNote();sumDn()};
+const rBar=()=>{$('#cnt').textContent=cnt()?cnt()+' поз.':'пусто';setDp($('#date'),L.draft.date);$('#note').value=L.draft.note;fitNote();sumDn();try{rBack()}catch(e){console.error('rBack',e)}};
 function fitNote(){const n=$('#note');if(!n||!n.scrollHeight)return;n.style.height='auto';n.style.height=Math.min(n.scrollHeight+2,260)+'px'}
 const rRev=()=>{const it=dI(),c=L.draft.cook;$('#rc').innerHTML=c?esc(c.n)+' — '+esc(c.r):'<span style="color:var(--rd)">не выбран</span>';
 $('#rb').innerHTML=it.length?it.sort((a,b)=>COL.compare(a.n,b.n)).map(i=>`<div class="it on${i.urg?' urg':''}"><div class="n">${esc(i.n)}${ugBtn(i.id,i.urg)}</div>${stepper(i)}<button class="x" data-a="rm" data-id="${esc(i.id)}">✕</button></div>`).join(''):'<div class="em">Список пуст</div>'};
@@ -397,7 +397,8 @@ const rShifts=()=>{const tom=dAdd(1),S=shiftsFor(tom),sh=S.map,k=team(),adm=isAd
 isSeen=c=>{const s=seen[c.id];return!!(s&&typeof s==='object'&&s.t&&String(s.v||'')===String(sh[c.id]||''))},
 chg=c=>{const s=seen[c.id];return!!(s&&typeof s==='object'&&s.t&&String(s.v||'')!==String(sh[c.id]||''))},
 ns=on.filter(isSeen).length,hr=hoursFor(tom),nm=c=>c.n.split(' ')[0]+(sh[c.id]?' '+sh[c.id]:''),tag=S.src==='sched'?' · по графику':S.src==='last'?' ↻':'',mine=!!(me&&sh[me.id]!==undefined),mySeen=mine&&isSeen(me);
-$('#shtitle').innerHTML=`<span class="shh"><b>⏰ Завтра</b><em>${esc(day(tom))}</em></span>`+(on.length?`<span class="shn">${esc(on.map(nm).join(' · ')+tag)}</span><span class="seenb${ns===on.length?' all':''}" title="Увидели свою смену">👁 ${ns}/${on.length}</span>`:'<span class="shn mu">на смену не назначено</span>');
+const canHide=!(mine&&!mySeen),hide=canHide&&LS.get('vip3-shhide',false)===true;
+$('#shtitle').innerHTML=`<span class="shh"><b>⏰ Завтра</b><em>${esc(day(tom))}</em></span>`+(on.length?(hide?'':`<span class="shn">${esc(on.map(nm).join(' · ')+tag)}</span>`)+`<span class="seenb${ns===on.length?' all':''}" title="Увидели свою смену">👁 ${ns}/${on.length}</span>`+(canHide?`<button type="button" class="shx${hide?' on':''}" data-a="shhide" aria-pressed="${hide?'true':'false'}" aria-label="${hide?'Показать часы смены':'Скрыть часы смены'}">${hide?'👁 Часы':'🙈 Скрыть'}</button>`:''):'<span class="shn mu">на смену не назначено</span>');
 const box=$('#shbox');box.classList.toggle('need',mine&&!mySeen);if(mine&&!mySeen&&seenOpen!==tom){seenOpen=tom;box.open=true}
 const st=c=>{if(sh[c.id]===undefined)return'';if(isSeen(c))return` · <span class="sn ok">👁 ${esc(tm(seen[c.id].t))}</span>`;if(chg(c))return' · <span class="sn chg">время изменено</span>';return' · <span class="sn">не отметил(а)</span>'};
 const sub=c=>(c.u?'@'+esc(c.u):esc(c.r))+st(c);
@@ -457,11 +458,14 @@ let rcOid='',rcF='all',rcCat='all',rcSearch='',rcOpen='',rcCoOpen=0,rcDraft=null
 const h36=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h.toString(36)},rk=id=>{const s=String(id),k=s.replace(/[^\p{L}\p{N}:_-]/gu,'_');return k===s?k:k+'~'+h36(s)};
 const rcRec=oid=>(DATA.receipts||{})[oid]||{},rcTouched=oid=>Object.values(rcRec(oid).rows||{}).some(r=>r&&(r.x||Object.keys(r.e||{}).length)),meObj=()=>L.me?{id:L.me.id,n:L.me.n}:null;
 const rcSel=iid=>`.rc-row[data-iid="${String(iid).replace(/["\\]/g,'')}"]`;
-const rcLines=o=>{const rows=rcRec(o.id).rows||{};return o.items.map(it=>{const iid=rk(it.id),r=rows[iid]||{},es=Object.entries(r.e||{}).map(([id,e])=>({...e,id})).filter(e=>e&&Number(e.q)>0).sort((a,b)=>(a.at||0)-(b.at||0));
-let got=0;const oth=[];es.forEach(e=>{const c=cvt(Number(e.q),e.u,it.u);if(Number.isNaN(c))oth.push(e);else got+=c});got=r3(got);const qty=Number(it.qty)||0,x=!!r.x,
-st=x?'cx':got>0&&got>=qty-1e-9?'ok':got>0?'part':oth.length?'chk':'none',rem=st==='part'||st==='none'?r3(Math.max(0,qty-got)):0;return{it,iid,es,got,oth,qty,rem,st,x,xn:r.xn||''}})};
-const rcSum=ls=>{const s={n:ls.length,ok:0,part:0,none:0,chk:0,cx:0};ls.forEach(l=>{s[l.st]++});s.open=s.part+s.none;s.done=s.ok+s.chk;return s};
-const rcLabel=l=>l.st==='ok'?'Принято':l.st==='part'?'Частично':l.st==='none'?'Не привезли':l.st==='chk'?'Принято (другая ед.)':l.got>0?'Закрыто (частично)':'Не будет';
+const frs=i=>{const f=i&&i.fr;return Array.isArray(f)?f:(f&&typeof f==='object'?Object.values(f):[])};
+let carFp='',carM=new Map();
+const carried=()=>{const os=DATA.orders||{};let n=0,fp=0;for(const k in os){const o=os[k];if(o){n++;fp+=(Number(o.updated)||Number(o.created)||0)}}const key=n+':'+fp;if(key!==carFp){carFp=key;carM=new Map();ords().forEach(o=>o.items.forEach(i=>{frs(i).forEach(f=>{if(f&&f.o&&f.i)carM.set(f.o+'|'+f.i,o)})}))}return carM};
+const rcLines=o=>{const rows=rcRec(o.id).rows||{},cm=carried();return o.items.map(it=>{const iid=rk(it.id),r=rows[iid]||{},car=cm.get(o.id+'|'+iid)||null,es=Object.entries(r.e||{}).map(([id,e])=>({...e,id})).filter(e=>e&&Number(e.q)>0).sort((a,b)=>(a.at||0)-(b.at||0));
+let got=0;const oth=[];es.forEach(e=>{const c=cvt(Number(e.q),e.u,it.u);if(Number.isNaN(c))oth.push(e);else got+=c});got=r3(got);const qty=Number(it.qty)||0,st0=got>0&&got>=qty-1e-9?'ok':got>0?'part':oth.length?'chk':'none',x=!!r.x||(!!car&&(st0==='part'||st0==='none')),
+st=x?'cx':st0,rem=st==='part'||st==='none'?r3(Math.max(0,qty-got)):0;const xo=car&&!r.x&&x?car.id:'';return{it,iid,es,got,oth,qty,rem,st,x,xo,xn:xo?'Перенесено в заказ на '+day(car.date):(r.xn||'')}})};
+const rcSum=ls=>{const s={n:ls.length,ok:0,part:0,none:0,chk:0,cx:0,car:0};ls.forEach(l=>{s[l.st]++;if(l.xo)s.car++});s.open=s.part+s.none;s.done=s.ok+s.chk;return s};
+const rcLabel=l=>l.st==='ok'?'Принято':l.st==='part'?'Частично':l.st==='none'?'Не привезли':l.st==='chk'?'Принято (другая ед.)':l.xo?'Перенесено в новый заказ':l.got>0?'Закрыто (частично)':'Не будет';
 const rcQ=(q,u)=>fmtQ(r3(q))+' '+u;
 const rcGot=l=>{const p=[];if(l.got>0)p.push(rcQ(l.got,l.it.u));l.oth.forEach(e=>p.push(rcQ(Number(e.q),e.u)));return p.join(' + ')};
 const rcNote=l=>[...l.es.map(e=>e.nt).filter(Boolean),l.xn].filter(Boolean).join('; ');
@@ -470,15 +474,18 @@ const rcOut=()=>{const out=[];ords().forEach(o=>{if(!rcTouched(o.id))return;cons
 const rcTouch=o=>{const rec=rcRec(o.id);mut('PATCH','receipts/'+o.id,{oid:o.id,date:o.date,updated:Date.now(),...(rec.created?{}:{created:Date.now()})})};
 const rcTyping=()=>{const a=document.activeElement;return!!(a&&a.closest&&a.closest('#rcmain,#rchead')&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))};
 const rcOrderBtn=o=>{const ls=rcLines(o),s=rcSum(ls),touched=rcTouched(o.id),full=touched&&s.open===0,pct=s.n?Math.round((s.done+s.cx)/s.n*100):0,
-lab=!touched?'Ещё не принимали':full?(s.done?'✓ Принято полностью':'Закрыто'):`Принято ${s.done+s.part} из ${s.n}`+(s.none?` · не привезли ${s.none}`:'');
+lab=!touched?'Ещё не принимали':full?(s.car?(s.done?`✓ Принято · перенесено ${s.car}`:'↩ Перенесено в новый заказ'):s.done?'✓ Принято полностью':'Закрыто'):`Принято ${s.done+s.part} из ${s.n}`+(s.none?` · не привезли ${s.none}`:'');
 return `<button class="rc-ord ${!touched?'new':full?'full':'part'}" data-a="rcopen" data-id="${esc(o.id)}"><div class="rc-ot"><b>Поставка ${esc(day(o.date))}</b><span>${s.n} поз.</span></div><small>${esc(o.cook.n)} · заказ от ${dshort(o.created)} ${tm(o.created)}</small><div class="rc-lab">${esc(lab)}</div><div class="rc-pb"><i style="width:${pct}%"></i></div></button>`};
-const rcListHtml=()=>{const od=ords().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))||b.created-a.created).slice(0,40),out=rcOut();let h='';
-if(out.length){const n=out.reduce((a,g)=>a+g.ls.length,0);h+=`<section class="card rc-out"><div class="lbl"><span>⚠️ Не привезли</span><small>${n} ${ruCount(n,'позиция','позиции','позиций')}</small></div>`+out.map(g=>`<div class="rc-og" data-a="rcopen" data-id="${esc(g.o.id)}"><b>Заказ на ${esc(day(g.o.date))}</b><small>${esc(g.o.cook.n)} · оформлен ${dshort(g.o.created)}</small></div>`+g.ls.map(l=>`<div class="rc-ol"><span class="n">${l.it.urg?'🚨 ':''}${esc(l.it.n)}</span><b>${esc(rcQ(l.rem,l.it.u))}</b><small>из ${esc(fmtQ(l.qty))}</small></div>`).join('')).join('')+`<div class="acts"><button class="g" data-a="rcoutcopy">📋 Копировать список недопоставки</button></div></section>`}
-h+=`<section class="card"><div class="lbl"><span>📦 Заказы для приёмки</span><small>нажмите, чтобы принять товар</small></div>`+(od.length?od.map(rcOrderBtn).join(''):'<div class="em">Заказов пока нет.<br>Оформите заказ во вкладке «Заказ».</div>')+`</section>`;return h};
+const rcMissOpen=new Set();
+const rcMiss=(o,ls)=>{if(!ls||!ls.length)return'';const nm=ls.slice(0,2).map(l=>l.it.n).join(', ')+(ls.length>2?' +'+(ls.length-2):'');
+return `<details class="rc-miss" data-oid="${esc(o.id)}"${rcMissOpen.has(o.id)?' open':''}><summary><b>⚠️ Не привезли: ${ls.length}</b><span>${esc(nm)}</span></summary><div class="rc-mc">${ls.map(l=>`<button class="rc-mi" data-a="rcopen" data-id="${esc(o.id)}">${l.it.urg?'🚨 ':''}${esc(l.it.n)} <b>${esc(rcQ(l.rem,l.it.u))}</b></button>`).join('')}</div></details>`};
+const rcListHtml=()=>{const od=ords().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))||b.created-a.created).slice(0,40),out=rcOut(),mo=new Map(out.map(g=>[g.o.id,g.ls]));let h='';
+if(out.length){const n=out.reduce((a,g)=>a+g.ls.length,0);h+=`<div class="rc-strip"><div class="rc-st1"><b>⚠️ Не привезли</b><small>${n} поз. · ${out.length} ${ruCount(out.length,'заказ','заказа','заказов')}</small></div><button class="g" data-a="rcoutcopy" aria-label="Копировать список недопоставки">📋</button><button class="p" data-a="rcgoorder">↩ В заказ</button></div>`}
+h+=`<section class="card"><div class="lbl"><span>📦 Заказы для приёмки</span><small>нажмите, чтобы принять товар</small></div>`+(od.length?od.map(o=>`<div class="rc-ow${mo.has(o.id)?' m':''}">${rcOrderBtn(o)}${rcMiss(o,mo.get(o.id))}</div>`).join(''):'<div class="em">Заказов пока нет.<br>Оформите заказ во вкладке «Заказ».</div>')+`</section>`;return h};
 const rcRow=(o,l,n)=>{const ed=rcDraft&&rcDraft.oid===o.id&&rcDraft.iid===l.iid,op=ed||rcOpen===l.iid;rcIx.r[n]=l;
 const ents=l.es.map(e=>{const k=rcIx.e.push({l,e})-1;return `<div class="rc-e"><span>✓ ${esc(rcQ(Number(e.q),e.u))}${e.nt?` · ${esc(e.nt)}`:''}</span><small>${dshort(e.at||0)} ${tm(e.at||0)}${e.by&&e.by.n?' · '+esc(e.by.n):''}</small><button data-a="rcedit" data-id="${k}" aria-label="Изменить запись">✎</button></div>`}).join('')+(l.x?`<div class="rc-e x"><span>${esc(l.xn||'Остаток не привезут')}</span></div>`:'');
 const sub=l.st==='part'?`Принято ${esc(rcGot(l))} из ${esc(rcQ(l.qty,l.it.u))} · <em>осталось ${esc(rcQ(l.rem,l.it.u))}</em>`:`Заказано: ${esc(rcQ(l.qty,l.it.u))}`+(l.st==='cx'&&l.got>0?` · принято ${esc(rcGot(l))}`:'');
-let rt='';if(!ed){rt=l.st==='none'||l.st==='part'?`<button class="p rc-q" data-a="rcfull" data-id="${n}" aria-label="${l.st==='part'?'Привезли остаток':'Привезли всё'}">✓ ${esc(rcQ(l.rem,l.it.u))}</button>`:`<span class="rc-st s-${l.st}">${l.st==='cx'?'Не будет':'✓ '+esc(rcGot(l)||'Принято')}</span>`}
+let rt='';if(!ed){rt=l.st==='none'||l.st==='part'?`<button class="p rc-q" data-a="rcfull" data-id="${n}" aria-label="${l.st==='part'?'Привезли остаток':'Привезли всё'}">✓ ${esc(rcQ(l.rem,l.it.u))}</button>`:`<span class="rc-st s-${l.st}">${l.st==='cx'?(l.xo?'↩ Перенесено':'Не будет'):'✓ '+esc(rcGot(l)||'Принято')}</span>`}
 let body='';if(ed){const d=rcDraft,us=UNITS.includes(d.unit)?UNITS:[...UNITS,d.unit];body=`<div class="rc-ed"><div class="st"><button data-a="rcdec" aria-label="Меньше">−</button><input id="rcQty" inputmode="decimal" data-rcv="qty" value="${esc(fmtQ(d.qty))}" aria-label="Привезли, количество"><select class="us" data-rcunit aria-label="Единица">${us.map(u=>`<option${u===d.unit?' selected':''}>${esc(u)}</option>`).join('')}</select><button data-a="rcinc" aria-label="Больше">+</button></div><input data-rcv="nt" maxlength="120" value="${esc(d.nt)}" placeholder="Вес или примечание (необязательно)" aria-label="Примечание"><div class="rc-ea"><button class="p" data-a="rcsave">Сохранить</button><button class="g" data-a="rccancel">Отмена</button>${d.eid?`<button class="d" data-a="rcdel">Удалить</button>`:''}</div></div>`}
 else if(op){const a=[];if(!l.x)a.push(`<button data-a="rcnew" data-id="${n}">＋ Другое количество</button>`);if(l.st==='none'||l.st==='part')a.push(`<button class="g" data-a="rcxx" data-id="${n}">✕ Не привезут</button>`);if(l.x)a.push(`<button data-a="rcxx" data-id="${n}">↩ Вернуть в ожидание</button>`);body=`<div class="rc-ac">${a.join('')}</div>`}
 return `<article class="rc-row s-${l.st}${ed?' editing':''}${op?' open':''}" data-iid="${esc(String(l.iid).replace(/["\\]/g,''))}"><div class="rc-r1"><button class="rc-nm" data-a="rctog" data-id="${n}" aria-expanded="${op}"><b>${l.it.urg?'🚨 ':''}${esc(l.it.n)}</b><small>${sub}</small></button>${rt}</div>${op?ents:''}${body}</article>`};
@@ -488,7 +495,7 @@ flt=[['all','Все',s.n],['todo','Осталось',s.open],['done','Приня
 return `<section class="card rc-head"><div class="rc-bar"><button class="g" data-a="rcback">← Заказы</button><button class="g" data-a="rcsheet">📄 Лист владельцу</button></div><h3>Поставка ${esc(dlong(o.date))}</h3><div class="small">Заказал: ${esc(o.cook.n)}${o.cook.r?', '+esc(o.cook.r):''} · заказ от ${dshort(o.created)} ${tm(o.created)}${o.note?' · 💬 '+esc(o.note):''}${who?` · принимали: ${esc(who)}`:''}</div>
 <div class="rc-pb big"><i style="width:${pct}%"></i></div>
 <div class="chips wrap rc-flt">${flt.map(([id,n,c])=>`<button class="chip${rcF===id?' on':''}" data-a="rcflt" data-id="${id}">${n} · ${c}</button>`).join('')}</div>
-${s.open?`<div class="acts"><button class="p" data-a="rcall">✓ Всё привезли</button><button class="g" data-a="rcclose">✕ Закрыть остаток</button></div>`:`<div class="rc-all">🎉 По этому заказу вопросов не осталось</div>`}
+${s.open?`<div class="acts"><button class="p" data-a="rcall">✓ Всё привезли</button><button class="g" data-a="rcclose">✕ Закрыть остаток</button></div>`:`<div class="rc-all">${s.car?'↩️ Остаток перенесён в новый заказ':'🎉 По этому заказу вопросов не осталось'}</div>`}
 <details class="rc-co"${rcCoOpen?' open':''}><summary>🚚 ${cur?esc(cur):'Курьер / поставщик'}</summary><input data-rccourier maxlength="40" value="${esc(cur)}" placeholder="Кто привёз (необязательно)" aria-label="Курьер или поставщик" autocomplete="off"></details></section>`};
 const rcChipsHtml=ls=>{const cs=cats(),m=new Map();ls.forEach(l=>{const k=rcCk(cs,l),c=m.get(k)||m.set(k,{n:0,o:0}).get(k);c.n++;if(l.st==='none'||l.st==='part')c.o++});
 return `<button class="chip${rcCat==='all'?' on':''}" data-a="rccat" data-id="all">Все</button>`+[...cs,{id:'_',n:'Другое',e:'📦'}].filter(c=>m.has(c.id)).map(c=>{const x=m.get(c.id);return `<button class="chip${rcCat===c.id?' on':''}" data-a="rccat" data-id="${esc(c.id)}">${c.e} ${esc(rcShort(c))}${x.o?` <i class="cn">${x.o}</i>`:''}</button>`}).join('')};
@@ -507,13 +514,14 @@ const rcRefresh=iid=>{if(iid)keepAt(rcSel(iid),rRecv);else rRecv()};
 const rcModel=o=>{const ls=rcLines(o),s=rcSum(ls),cs=cats(),g=new Map();ls.forEach(l=>{const k=cs.some(c=>c.id===l.it.c)?l.it.c:'_';(g.get(k)||g.set(k,[]).get(k)).push(l)});const rows=[];
 for(const c of [...cs,{id:'_',n:'Другое',e:''}])(g.get(c.id)||[]).sort((x,y)=>COL.compare(x.it.n,y.it.n)).forEach(l=>rows.push({cat:c.n,l,name:l.it.n,ord:rcQ(l.qty,l.it.u),got:rcGot(l)||'—',rem:l.rem>0?rcQ(l.rem,l.it.u):'—',st:rcLabel(l),note:rcNote(l)}));
 return{o,ls,s,rows,who:rcWho(ls),courier:rcRec(o.id).courier||'',out:ls.filter(l=>l.rem>0&&!l.x),title:'Приёмка товара',date:dlong(o.date),order:`${o.cook.n}${o.cook.r?', '+o.cook.r:''} · заказ от ${dshort(o.created)} ${tm(o.created)}`,made:`${d2(new Date().getDate())}.${d2(new Date().getMonth()+1)}.${new Date().getFullYear()} ${tm(Date.now())}`}};
-const rcSummary=s=>`Принято ${s.done} из ${s.n}`+(s.part?` · частично ${s.part}`:'')+(s.none?` · не привезли ${s.none}`:'')+(s.cx?` · не будет ${s.cx}`:'');
+const rcSummary=s=>`Принято ${s.done} из ${s.n}`+(s.part?` · частично ${s.part}`:'')+(s.none?` · не привезли ${s.none}`:'')+(s.cx-s.car>0?` · не будет ${s.cx-s.car}`:'')+(s.car?` · перенесено ${s.car}`:'');
 const rcText=o=>{const m=rcModel(o),L2=[`📦 ${m.title}`,`Поставка: ${m.date}`,`Заказал: ${m.order}`];if(m.who)L2.push('Принимали: '+m.who);if(m.courier)L2.push('Курьер / поставщик: '+m.courier);L2.push('');
 const sec=(t,a,f)=>{if(a.length)L2.push(t,...a.map(f),'')},ln=l=>`• ${l.it.n} — `;
 sec('✅ Принято',m.ls.filter(l=>l.st==='ok'||l.st==='chk'),l=>ln(l)+`${rcGot(l)||'—'} (заказано ${rcQ(l.qty,l.it.u)})${rcNote(l)?' · '+rcNote(l):''}`);
 sec('🟠 Частично',m.ls.filter(l=>l.st==='part'),l=>ln(l)+`привезли ${rcGot(l)} из ${rcQ(l.qty,l.it.u)}, осталось ${rcQ(l.rem,l.it.u)}${rcNote(l)?' · '+rcNote(l):''}`);
 sec('❌ Не привезли',m.ls.filter(l=>l.st==='none'),l=>ln(l)+`${rcQ(l.qty,l.it.u)}`);
-sec('➖ Остаток закрыт (не будет)',m.ls.filter(l=>l.st==='cx'),l=>ln(l)+(l.got>0?`привезли ${rcGot(l)} из ${rcQ(l.qty,l.it.u)}`:`${rcQ(l.qty,l.it.u)}`));
+sec('↩️ Перенесено в новый заказ',m.ls.filter(l=>l.st==='cx'&&l.xo),l=>ln(l)+rcQ(r3(Math.max(0,l.qty-l.got)),l.it.u));
+sec('➖ Остаток закрыт (не будет)',m.ls.filter(l=>l.st==='cx'&&!l.xo),l=>ln(l)+(l.got>0?`привезли ${rcGot(l)} из ${rcQ(l.qty,l.it.u)}`:`${rcQ(l.qty,l.it.u)}`));
 L2.push('Итого: '+rcSummary(m.s));return L2.join('\n')};
 const csvq=v=>{v=String(v??'');return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
 const rcCsv=o=>{const m=rcModel(o),R=[['Поставка','Группа','Товар','Заказано','Принято','Остаток','Статус','Примечание','Принял(и)']];
@@ -580,6 +588,24 @@ const rcNum=q=>{const v=parseFloat(String(q).replace(',','.'));return isFinite(v
 const stepOf=u=>u==='кг'||u==='л'?.5:u==='г'||u==='мл'?50:1;
 const rcStable=fn=>{const rows=[...document.querySelectorAll('#rcmain .rc-row[data-iid]')],a=rows.find(r=>r.getBoundingClientRect().bottom>8);if(a)keepAt(rcSel(a.dataset.iid),fn);else fn()};
 const rcRender=()=>{if(tab!=='recv')return;if(rcTyping()){rcPend=1;return}rcStable(rRecv)};
+// ---------- недовезённое возвращается во вкладку «Заказ» ----------
+const rcBackList=()=>{const lim=dAdd(-30),M=new Map();ords().forEach(o=>{if(String(o.date)<lim||!rcTouched(o.id))return;rcLines(o).forEach(l=>{if(!(l.rem>0)||l.x)return;const k=l.it.id+'|'+l.it.u;let g=M.get(k);if(!g){g={k,it:l.it,rem:0,src:[]};M.set(k,g)}g.rem=r3(g.rem+l.rem);g.src.push({o,l});if(l.it.urg)g.urg=1})});return[...M.values()].sort((a,b)=>COL.compare(a.it.n,b.it.n))};
+const rcbIn=g=>{const c=L.draft.items[g.it.id];return!!(c&&g.src.every(s=>frs(c).some(f=>f&&f.o===s.o.id&&f.i===s.l.iid)))};
+const rcbPut=g=>{const id=g.it.id,c=L.draft.items[id];
+if(c&&c.u!==g.it.u){snd.warn();toast('Этот товар уже в заказе в другой единице — измените вручную');return false}
+const have=c?frs(c):[],fresh=g.src.filter(s=>!have.some(f=>f&&f.o===s.o.id&&f.i===s.l.iid));if(!fresh.length)return true;
+const add=r3(fresh.reduce((a,s)=>a+s.l.rem,0)),fr=fresh.map(s=>({o:s.o.id,i:s.l.iid}));
+if(c){c.qty=r3((Number(c.qty)||0)+add);c.fr=have.concat(fr);if(g.urg)c.urg=1;return true}
+L.draft.items[id]={id,n:g.it.n,c:g.it.c,u:g.it.u,qty:add,...(g.urg?{urg:1}:{}),fr};return true};
+let rcbHtml='';
+const rBack=()=>{const box=$('#rcback');if(!box)return;const gs=tab==='order'?rcBackList():[];
+if(!gs.length){box.hidden=true;if(rcbHtml){box.innerHTML='';rcbHtml=''}return}
+const pend=gs.filter(g=>!rcbIn(g)),
+row=g=>{const inn=rcbIn(g),dt=[...new Set(g.src.map(s=>day(s.o.date)))].join(', '),q=g.src.length===1?` · заказано ${fmtQ(g.src[0].l.qty)}`:'';
+return `<div class="rcb-r${inn?' in':''}"><div class="rcb-n"><b>${g.urg?'🚨 ':''}${esc(g.it.n)}</b><small>поставка ${esc(dt)}${esc(q)}</small></div><b class="rcb-q">${esc(rcQ(g.rem,g.it.u))}</b>${inn?'<span class="rcb-in">✓ в заказе</span>':`<button class="p rcb-add" data-a="rcbadd" data-id="${esc(g.k)}" aria-label="Добавить в заказ">＋</button>`}</div>`},
+html=`<summary><span class="rcb-t"><b>↩️ Не привезли ранее</b><em class="${pend.length?'rcw':'rco'}">${pend.length?pend.length+' '+ruCount(pend.length,'позиция','позиции','позиций')+' — вернуть в заказ':'всё добавлено в заказ'}</em></span></summary><div class="rcb-b">${gs.map(row).join('')}${pend.length>1?`<div class="acts"><button class="p" data-a="rcball">＋ Добавить все (${pend.length})</button></div>`:''}</div>`;
+box.hidden=false;if(html!==rcbHtml){rcbHtml=html;box.innerHTML=html}};
+
 // ================= личные кабинеты и зарплата =================
 const PAYROLL=()=>DATA.payroll||{},CUR=()=>(PAYROLL()._cfg||{}).cur||'₽';
 const fnum=n=>{n=Math.round((Number(n)||0)*100)/100;const neg=n<0,s=Math.abs(n).toFixed(2).replace(/\.?0+$/,''),p=s.split('.'),i=p[0].replace(/\B(?=(\d{3})+$)/g,'\u00a0');return(neg?'-':'')+i+(p[1]?','+p[1]:'')};
@@ -694,7 +720,7 @@ if(d.shifts||d.sched||d.shiftsLast||d.plan)rShifts();if(d.payroll&&tab==='cab'&&
 if(d.prepCats){rFil();if(tab==='prep'){rPrep();rPlan();rLibrary()}if(dialogOpen('#dcat'))rCatMgr()}
 if(d.catalog){syncDraft();rCats();rList();rBar();if(tab==='writeoff'){rWoCats();rWoProducts()}if(dialogOpen('#dt'))rAdm()}
 if(d.writeoffs&&tab==='writeoff')keepAt('#woproducts',rWoLog);
-if(d.orders&&dialogOpen('#dh'))rHist();if(tab==='recv'&&(d.receipts||d.orders||d.catalog||d.team))rcRender();
+if(d.orders&&dialogOpen('#dh'))rHist();if(tab==='recv'&&(d.receipts||d.orders||d.catalog||d.team))rcRender();if(tab==='order'&&(d.orders||d.receipts)){try{rBack()}catch(e){console.error('rBack',e)}}
 if(tab==='prep'&&(d.prep||d.plan||d.prepPins||d.prepLibrary||d.prepMeta))rPrep();
 if(tab==='prep'&&(d.prep||d.plan||d.prepLibrary))rPlan();
 if(tab==='prep'&&d.prepLibrary){rLibrary();autoLib()}
@@ -745,8 +771,12 @@ unhide(){if(!isAdmin())return need();mut('DELETE','catalog/hidden');snd.ok()},
 tab(id){if(id==='plan')id='prep';const was=tab;if(id==='prep'||id==='writeoff')carryAll();if((was==='cab'||was==='sched')&&id!=='cab'&&id!=='sched'&&(ses||cabPick))cabLogout(false);tab=id;snd.tap();
 [['order','#vOrder'],['prep','#vPrep'],['sched','#vSched'],['cab','#vCab'],['writeoff','#vWriteoff'],['recv','#vRecv']].forEach(([k,s])=>{const e=$(s);e.hidden=id!==k;if(id===k&&was!==k){e.classList.remove('vin');void e.offsetWidth;e.classList.add('vin')}});
 $('#bar').hidden=id!=='order';const navId=id==='cab'?'sched':id;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.id===navId));rGseg();requestAnimationFrame(placeInd);
-if(id==='order'){rShifts();refreshRoster()}if(id==='prep'){rPrep();rPlan();rLibrary()}if(id==='sched')rSched();if(id==='cab'){rCab();loadIn()}if(id==='writeoff')rWriteoff();if(id==='recv')rRecv();streams()},
+if(id==='order'){rShifts();refreshRoster();try{rBack()}catch(e){console.error('rBack',e)}}if(id==='prep'){rPrep();rPlan();rLibrary()}if(id==='sched')rSched();if(id==='cab'){rCab();loadIn()}if(id==='writeoff')rWriteoff();if(id==='recv')rRecv();streams()},
 add(id){const p=prods().find(x=>x.id===id);if(!p)return;L.draft.items[id]={id,n:p.n,c:p.c,u:L.lu[id]||p.u,qty:1};saveL();snd.add();vib(20);rep(id)},
+shhide(){const on=LS.get('vip3-shhide',false)!==true;LS.set('vip3-shhide',on);snd.tap();vib(10);rShifts()},
+rcgoorder(){ACT.tab('order');const b=$('#rcback');if(b&&!b.hidden){b.open=true;setTimeout(()=>{try{b.scrollIntoView({block:'start',behavior:'smooth'})}catch{}},80)}},
+rcbadd(k){const g=rcBackList().find(x=>x.k===k);if(!g)return;if(rcbPut(g)===false)return;saveL();snd.add();vib(20);rep(g.it.id)},
+rcball(){const gs=rcBackList().filter(g=>!rcbIn(g));let n=0;for(const g of gs)if(rcbPut(g)!==false)n++;if(!n)return;saveL();snd.add();vib(25);rList();rBar();if(dialogOpen('#dr'))rRev();toast('↩ Добавлено в заказ: '+n)},
 urg(id){const i=L.draft.items[id];if(i){const on=!i.urg;if(on)i.urg=1;else delete i.urg;saveL();if(on){snd.warn();vib(35)}else{snd.tap();vib(15)}rep(id);return}const p=prods().find(x=>x.id===id);if(!p)return;L.draft.items[id]={id,n:p.n,c:p.c,u:L.lu[id]||p.u,qty:1,urg:1};saveL();snd.warn();vib(35);rep(id)},
 inc(id){const i=L.draft.items[id];if(i){i.qty=Math.round((i.qty+1)*100)/100;saveL();snd.tap();rep(id)}},
 dec(id){const i=L.draft.items[id];if(!i)return;i.qty=Math.round((i.qty-1)*100)/100;if(i.qty<=0){delete L.draft.items[id];snd.warn()}else snd.tap();saveL();rep(id)},
@@ -1009,7 +1039,7 @@ libadd(id){const i=libItems().find(x=>x.id===id);if(i)addFromLib(i,id)}
 };
 const rAll=()=>{rCooks();rPCooks();rCats();rList();rBar();rShifts();rBqAlert();rPrep();rPlan();rLibrary();rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
 $('#dh').addEventListener('close',streams);
-document.addEventListener('click',e=>{const dpb=e.target.closest&&e.target.closest('[data-dp]');if(dpb&&!dpb.disabled)return openDp(dpb);const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.id);else if(e.target.tagName==='DIALOG'&&!e.target.id.startsWith('dc'))e.target.close()});
+document.addEventListener('click',e=>{const dpb=e.target.closest&&e.target.closest('[data-dp]');if(dpb&&!dpb.disabled)return openDp(dpb);const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a]){if(e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.id)}else if(e.target.tagName==='DIALOG'&&!e.target.id.startsWith('dc'))e.target.close()});
 document.addEventListener('input',e=>{const rv=e.target.dataset.rcv;if(rv&&rcDraft)rcDraft[rv]=e.target.value;const key=e.target.dataset.wovalue;if(key&&woDraft)woDraft[key]=e.target.value;if(e.target.id==='tkgst'||e.target.id==='tkk')tkRes()});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
 if(d.rcunit!==undefined){if(rcDraft)rcDraft.unit=t.value;return}
@@ -1030,7 +1060,7 @@ else if(d.sft){if(!isAdmin())return;const nv=normTm(t.value);if(nv){t.value=nv;L
 else if(d.by){const k=team().find(x=>x.id===t.value);mut('PATCH',`prep/${pd}/${d.by}`,{by:k?{id:k.id,n:k.n}:null});snd.add()}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&e.target.dataset&&e.target.dataset.rcv!==undefined){e.preventDefault();ACT.rcsave()}else if(e.key==='Enter'&&e.target.id==='rcq'){e.preventDefault();e.target.blur()}});
 document.addEventListener('focusout',()=>{if(!rcPend)return;setTimeout(()=>{if(rcPend&&!rcTyping())rcRender()},80)});
-document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.matches&&t.matches('details.bqu'))bquOpen.set(t.dataset.k,t.open);if(t&&t.matches&&t.matches('details.rc-co'))rcCoOpen=t.open?1:0},true);
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.matches&&t.matches('details.bqu'))bquOpen.set(t.dataset.k,t.open);if(t&&t.matches&&t.matches('details.rc-co'))rcCoOpen=t.open?1:0;if(t&&t.matches&&t.matches('details.rc-miss')){const k=t.dataset.oid;if(t.open)rcMissOpen.add(k);else rcMissOpen.delete(k)}},true);
 let rf;$('#q').addEventListener('input',e=>{qs=e.target.value;cancelAnimationFrame(rf);rf=requestAnimationFrame(rList)});
 let rcrf;$('#rcq').addEventListener('input',e=>{rcSearch=e.target.value;cancelAnimationFrame(rcrf);rcrf=requestAnimationFrame(()=>{const o=rcCur();if(o)$('#rcmain').innerHTML=rcListRows(o,rcLines(o))})});$('#rcq').addEventListener('focus',e=>{const t=e.target;setTimeout(()=>{try{t.select()}catch{}},0)});
 let wrf;$('#woq').addEventListener('input',e=>{wq=e.target.value;cancelAnimationFrame(wrf);wrf=requestAnimationFrame(rWoProducts)});
