@@ -538,7 +538,7 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .rc-e{display:flex;align-items:center;gap:8px;margin-top:6px;padding:4px 4px 4px 10px;border-radius:10px;background:var(--okbg);font-size:14px;min-width:0}
 .rc-e span{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}.rc-e small{color:var(--mu);font-size:11.5px;text-align:end}
 .rc-e button{flex:none;width:38px;min-height:38px;padding:0;font-size:17px;background:transparent}
-.rc-e.x{background:color-mix(in srgb,var(--mu) 14%,var(--sf))}.rc-e.x span{color:var(--mu);padding:8px 0}
+.rc-e.rcx{background:color-mix(in srgb,var(--mu) 14%,var(--sf))}.rc-e.rcx span{color:var(--mu);padding:8px 0}
 .rc-ac{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.rc-ac button{flex:1 1 130px;padding:8px 10px;font-size:14.5px}
 .rc-ed{margin-top:8px;display:grid;gap:8px}.rc-ed .st{justify-content:center;gap:6px}.rc-ed .st input{width:88px;font-size:18px}.rc-ed .st select{width:auto;min-width:68px;max-width:96px}
 .rc-ea{display:flex;gap:6px;flex-wrap:wrap}.rc-ea button{flex:1 1 90px}
@@ -728,14 +728,6 @@ details.qfd .chips{margin-top:6px}
 .em{padding:24px 16px;margin:6px 0;border:1.5px dashed var(--ln);border-radius:var(--r);line-height:1.45}
 .em>i{display:block;font-style:normal;font-size:30px;line-height:1;margin-bottom:6px}
 .em>b{display:block;color:var(--tx);font-size:16px;margin-bottom:2px}
-/* товар в заказе: название на всю ширину, счётчик ниже — ничего не ломается и не сжимается */
-#list .it.on{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px;align-items:center;padding:8px 8px 10px 12px}
-#list .it.on>.n{grid-column:1;grid-row:1}
-#list .it.on>.x{grid-row:1}
-#list .it.on>.st{grid-column:1/-1;grid-row:2;gap:6px}
-#list .it.on>.st button{flex:none;width:48px;min-height:44px}
-#list .it.on>.st input{flex:1;min-width:0;width:auto}
-#list .it.on>.st select{flex:none;width:auto;min-width:76px}
 /* админ-панель: разделы-аккордеон */
 #dt details.adm{border:1px solid var(--ln);border-radius:14px;margin:0 0 8px;background:var(--sf);overflow:hidden}
 #dt details.adm>summary{display:flex;align-items:center;gap:10px;min-height:54px;padding:8px 14px;cursor:pointer;list-style:none;font-size:16px}
@@ -751,3 +743,15 @@ details.qfd .chips{margin-top:6px}
 #dt .adm .adb>.acts:first-child{margin-top:0}
 #dt>.acts:last-child{margin-top:14px}
 @media(prefers-reduced-motion:reduce){#dt details.adm>summary::after{transition:none}}
+
+/* Приёмка: товар сверх заказа */
+.rc-xadd{width:100%;margin-top:8px;min-height:46px}
+.rc-row.ex{border-inline-start-color:var(--ac)}
+#dxe .st{margin-top:2px}
+#dxe .st input{flex:1;min-width:0;width:auto}
+#dxe .st button{width:48px;min-height:46px}
+#dxe .st select{flex:none;width:auto;min-width:76px;font-size:16px}
+#dxe #dxs{margin-top:8px}
+#dxe #dxs:empty{display:none}
+#dxe .chip small{color:var(--mu);margin-left:4px}
+#dxe #dxd{margin-top:6px}

@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.1.0';
+const VER='9.2.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 // ---------- тема оформления: Авто / Светлая / Тёмная (для всех телефонов) ----------
@@ -474,15 +474,17 @@ const dlong=s=>{const[y,m,d]=String(s).split('-').map(Number);return y>0&&m>0&&d
 const d2=n=>String(n).padStart(2,'0'),dshort=ts=>{const d=new Date(ts);return d2(d.getDate())+'.'+d2(d.getMonth()+1)};
 const FAM={'г':['m',1],'кг':['m',1000],'мл':['v',1],'л':['v',1000]};
 const cvt=(q,a,b)=>{if(a===b)return q;const x=FAM[a],y=FAM[b];return x&&y&&x[0]===y[0]?q*x[1]/y[1]:NaN},r3=n=>Math.round(n*1000)/1000;
-let rcOid='',rcF='all',rcCat='all',rcSearch='',rcOpen='',rcCoOpen=0,rcDraft=null,rcPend=0,rcIx={r:[],e:[]};
+let xeD=null,rcOid='',rcF='all',rcCat='all',rcSearch='',rcOpen='',rcCoOpen=0,rcDraft=null,rcPend=0,rcIx={r:[],e:[]};
 const h36=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h.toString(36)},rk=id=>{const s=String(id),k=s.replace(/[^\p{L}\p{N}:_-]/gu,'_');return k===s?k:k+'~'+h36(s)};
-const rcRec=oid=>(DATA.receipts||{})[oid]||{},rcTouched=oid=>Object.values(rcRec(oid).rows||{}).some(r=>r&&(r.x||Object.keys(r.e||{}).length)),meObj=()=>L.me?{id:L.me.id,n:L.me.n}:null;
+const rcRec=oid=>(DATA.receipts||{})[oid]||{},rcTouched=oid=>{const r=rcRec(oid);return Object.values(r.rows||{}).some(x=>x&&(x.x||Object.keys(x.e||{}).length))||Object.values(r.extra||{}).some(x=>x&&x.n&&Number(x.q)>0)},meObj=()=>L.me?{id:L.me.id,n:L.me.n}:null;
 const rcSel=iid=>`.rc-row[data-iid="${String(iid).replace(/["\\]/g,'')}"]`;
 const frs=i=>{const f=i&&i.fr;return Array.isArray(f)?f:(f&&typeof f==='object'?Object.values(f):[])};
 let carDv=-1,carM=new Map(),covM=new Map();
+// товар, который привезли, но не заказывали: receipts/{oid}/extra/{id} = {n,u,q,c,nt,at,by}
+const rcEx=o=>Object.entries(rcRec(o.id).extra||{}).filter(([k,v])=>v&&v.n&&Number(v.q)>0).sort((a,b)=>(a[1].at||0)-(b[1].at||0)||(a[0]<b[0]?-1:1)).map(([k,v])=>{const q=r3(Number(v.q)),u=v.u||'шт',it={id:'ex:'+k,n:String(v.n),c:v.c||'',u,qty:0,ex:1,eid:k};return{it,iid:'ex_'+k,r:{},es:[{id:'e0',q,u,...(v.nt?{nt:v.nt}:{}),at:v.at||0,...(v.by?{by:v.by}:{})}],got:q,oth:[],qty:0,st0:'ok',rem0:0}});
 const rcBase=o=>{const rows=rcRec(o.id).rows||{};return o.items.map(it=>{const iid=rk(it.id),r=rows[iid]||{},es=Object.entries(r.e||{}).map(([id,e])=>({...e,id})).filter(e=>e&&Number(e.q)>0).sort((a,b)=>(a.at||0)-(b.at||0));
 let got=0;const oth=[];es.forEach(e=>{const c=cvt(Number(e.q),e.u,it.u);if(Number.isNaN(c))oth.push(e);else got+=c});got=r3(got);const qty=Number(it.qty)||0,st0=got>0&&got>=qty-1e-9?'ok':got>0?'part':oth.length?'chk':'none';
-return{it,iid,r,es,got,oth,qty,st0,rem0:st0==='part'||st0==='none'?r3(Math.max(0,qty-got)):0}})};
+return{it,iid,r,es,got,oth,qty,st0,rem0:st0==='part'||st0==='none'?r3(Math.max(0,qty-got)):0}}).concat(rcEx(o))};
 // Остаток недопоставки считается «перенесённым», если более поздний заказ уже содержит этот товар (вручную добавленный «↩ Не привезли ранее» или набранный самим поваром)
 const carried=()=>{if(carDv===DV)return carM;carDv=DV;carM=new Map();covM=new Map();const os=ords();
 os.forEach(o=>o.items.forEach(i=>{frs(i).forEach(f=>{if(f&&f.o&&f.i)carM.set(f.o+'|'+f.i,o)})}));
@@ -497,9 +499,9 @@ return carM};
 const rcCarr=(oid,iid)=>{carried();const k=oid+'|'+iid,v=covM.get(k);return carM.has(k)||!!(v&&v.full)};
 const rcLines=o=>{const cm=carried();return rcBase(o).map(b=>{const{it,iid,r,es,got,oth,qty,st0,rem0}=b,k=o.id+'|'+iid,car=r.nc?null:(cm.get(k)||(covM.get(k)&&covM.get(k).full?covM.get(k).o:null)),cv=r.nc?null:covM.get(k)||null,
 xr=!!r.x,carr=!!car&&(st0==='part'||st0==='none'),x=xr||carr,st=x?'cx':st0,rem=st==='part'||st==='none'?rem0:0,xo=!xr&&carr?car.id:'',cov=!x&&cv&&!cv.full?cv.cov:0;
-return{it,iid,es,got,oth,qty,rem,st,x,xo,cov,cvo:cov?cv.o.id:'',need:r3(Math.max(0,rem-cov)),xn:xo?'Перенесено в заказ на '+day(car.date):(r.xn||'')}})};
-const rcSum=ls=>{const s={n:ls.length,ok:0,part:0,none:0,chk:0,cx:0,car:0};ls.forEach(l=>{s[l.st]++;if(l.xo)s.car++});s.open=s.part+s.none;s.done=s.ok+s.chk;return s};
-const rcLabel=l=>l.st==='ok'?'Принято':l.st==='part'?'Частично':l.st==='none'?'Не привезли':l.st==='chk'?'Принято (другая ед.)':l.xo?'Перенесено в новый заказ':l.got>0?'Закрыто (частично)':'Не будет';
+return{it,iid,es,got,oth,qty,rem,st,x,xo,cov,ex:!!it.ex,eid:it.eid||'',cvo:cov?cv.o.id:'',need:r3(Math.max(0,rem-cov)),xn:xo?'Перенесено в заказ на '+day(car.date):(r.xn||'')}})};
+const rcSum=ls=>{const s={n:0,ok:0,part:0,none:0,chk:0,cx:0,car:0,ex:0};ls.forEach(l=>{if(l.ex){s.ex++;return}s.n++;s[l.st]++;if(l.xo)s.car++});s.open=s.part+s.none;s.done=s.ok+s.chk;return s};
+const rcLabel=l=>l.ex?'Сверх заказа':l.st==='ok'?'Принято':l.st==='part'?'Частично':l.st==='none'?'Не привезли':l.st==='chk'?'Принято (другая ед.)':l.xo?'Перенесено в новый заказ':l.got>0?'Закрыто (частично)':'Не будет';
 const rcQ=(q,u)=>fmtQ(r3(q))+' '+u;
 const rcGot=l=>{const p=[];if(l.got>0)p.push(rcQ(l.got,l.it.u));l.oth.forEach(e=>p.push(rcQ(Number(e.q),e.u)));return p.join(' + ')};
 const rcNote=l=>[...l.es.map(e=>e.nt).filter(Boolean),l.xn].filter(Boolean).join('; ');
@@ -516,8 +518,9 @@ return `<details class="rc-miss" data-oid="${esc(o.id)}"${rcMissOpen.has(o.id)?'
 const rcListHtml=()=>{const od=ords().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))||b.created-a.created).slice(0,40),out=rcOut(),mo=new Map(out.map(g=>[g.o.id,g.ls]));let h='';
 if(out.length){const n=out.reduce((a,g)=>a+g.ls.length,0);h+=`<div class="rc-strip"><div class="rc-st1"><b>⚠️ Не привезли</b><small>${n} поз. · ${out.length} ${ruCount(out.length,'заказ','заказа','заказов')}</small></div><button class="g" data-a="rcoutcopy" aria-label="Копировать список недопоставки">📋</button><button class="p" data-a="rcgoorder">↩ В заказ</button></div>`}
 h+=`<section class="card"><div class="lbl"><span>📦 Заказы для приёмки</span>${od.length?'<small>нажмите, чтобы принять товар</small>':''}</div>`+(od.length?od.map(o=>`<div class="rc-ow${mo.has(o.id)?' m':''}">${rcOrderBtn(o)}${rcMiss(o,mo.get(o.id))}</div>`).join(''):'<div class="em"><i aria-hidden="true">📦</i><b>Принимать пока нечего</b>Оформите заказ во вкладке «Заказ» — он появится здесь.</div>')+`</section>`;return h};
-const rcRow=(o,l,n)=>{const ed=rcDraft&&rcDraft.oid===o.id&&rcDraft.iid===l.iid,op=ed||rcOpen===l.iid;rcIx.r[n]=l;
-const ents=l.es.map(e=>{const k=rcIx.e.push({l,e})-1;return `<div class="rc-e"><span>✓ ${esc(rcQ(Number(e.q),e.u))}${e.nt?` · ${esc(e.nt)}`:''}</span><small>${dshort(e.at||0)} ${tm(e.at||0)}${e.by&&e.by.n?' · '+esc(e.by.n):''}</small><button data-a="rcedit" data-id="${k}" aria-label="Изменить запись">✎</button></div>`}).join('')+(l.x?`<div class="rc-e x"><span>${esc(l.xn||'Остаток не привезут')}</span></div>`:'');
+const rcExRow=(l,n,op)=>{const e=l.es[0]||{},g=rcGot(l);return `<article class="rc-row s-ok ex${op?' open':''}" data-iid="${esc(l.iid)}"><div class="rc-r1"><button class="rc-nm" data-a="rctog" data-id="${n}" aria-expanded="${op}"><b>➕ ${esc(l.it.n)}</b><small>Сверх заказа · привезли ${esc(g)}</small></button><span class="rc-st s-ok">✓ ${esc(g)}</span></div>${op?`<div class="rc-e"><span>✓ ${esc(g)}${e.nt?` · ${esc(e.nt)}`:''}</span><small>${dshort(e.at||0)} ${tm(e.at||0)}${e.by&&e.by.n?' · '+esc(e.by.n):''}</small></div><div class="rc-ac"><button data-a="rcxedit" data-id="${n}">✎ Изменить</button><button class="g" data-a="rcxdel" data-id="${n}">🗑 Удалить</button></div>`:''}</article>`};
+const rcRow=(o,l,n)=>{const ed=rcDraft&&rcDraft.oid===o.id&&rcDraft.iid===l.iid,op=ed||rcOpen===l.iid;rcIx.r[n]=l;if(l.ex)return rcExRow(l,n,op);
+const ents=l.es.map(e=>{const k=rcIx.e.push({l,e})-1;return `<div class="rc-e"><span>✓ ${esc(rcQ(Number(e.q),e.u))}${e.nt?` · ${esc(e.nt)}`:''}</span><small>${dshort(e.at||0)} ${tm(e.at||0)}${e.by&&e.by.n?' · '+esc(e.by.n):''}</small><button data-a="rcedit" data-id="${k}" aria-label="Изменить запись">✎</button><button data-a="rcentdel" data-id="${k}" aria-label="Удалить запись">🗑</button></div>`}).join('')+(l.x?`<div class="rc-e rcx"><span>${esc(l.xn||'Остаток не привезут')}</span></div>`:'');
 const covT=l.cov>0?` · <em class="rcov">в заказе на ${esc(day((ords().find(x=>x.id===l.cvo)||{}).date||''))}: ${esc(rcQ(l.cov,l.it.u))}</em>`:'';
 const sub=(l.st==='part'?`Принято ${esc(rcGot(l))} из ${esc(rcQ(l.qty,l.it.u))} · <em>осталось ${esc(rcQ(l.rem,l.it.u))}</em>`:`Заказано: ${esc(rcQ(l.qty,l.it.u))}`+(l.st==='cx'&&l.got>0?` · принято ${esc(rcGot(l))}`:''))+covT;
 let rt='';if(!ed){rt=l.st==='none'||l.st==='part'?`<button class="p rc-q" data-a="rcfull" data-id="${n}" aria-label="${l.st==='part'?'Привезли остаток':'Привезли всё'}">✓ ${esc(rcQ(l.rem,l.it.u))}</button>`:`<span class="rc-st s-${l.st}">${l.st==='cx'?(l.xo?'↩ Перенесено':'Не будет'):'✓ '+esc(rcGot(l)||'Принято')}</span>`}
@@ -531,7 +534,7 @@ return `<section class="card rc-head"><div class="rc-bar"><button class="g" data
 <div class="rc-pb big"><i style="width:${pct}%"></i></div>
 <div class="chips wrap rc-flt">${flt.map(([id,n,c])=>`<button class="chip${rcF===id?' on':''}" data-a="rcflt" data-id="${id}">${n} · ${c}</button>`).join('')}</div>
 ${s.open?`<div class="acts"><button class="p" data-a="rcall">✓ Всё привезли</button><button class="g" data-a="rcclose">✕ Закрыть остаток</button></div>`:`<div class="rc-all">${s.car?'↩️ Остаток перенесён в новый заказ':'🎉 По этому заказу вопросов не осталось'}</div>`}
-<details class="rc-co"${rcCoOpen?' open':''}><summary>🚚 ${cur?esc(cur):'Курьер / поставщик'}</summary><input data-rccourier maxlength="40" value="${esc(cur)}" placeholder="Кто привёз (необязательно)" aria-label="Курьер или поставщик" autocomplete="off"></details></section>`};
+<button class="g rc-xadd" data-a="xnew">➕ Привезли то, что не заказывали</button><details class="rc-co"${rcCoOpen?' open':''}><summary>🚚 ${cur?esc(cur):'Курьер / поставщик'}</summary><input data-rccourier maxlength="40" value="${esc(cur)}" placeholder="Кто привёз (необязательно)" aria-label="Курьер или поставщик" autocomplete="off"></details></section>`};
 const rcChipsHtml=ls=>{const cs=cats(),m=new Map();ls.forEach(l=>{const k=rcCk(cs,l),c=m.get(k)||m.set(k,{n:0,o:0}).get(k);c.n++;if(l.st==='none'||l.st==='part')c.o++});
 return `<button class="chip${rcCat==='all'?' on':''}" data-a="rccat" data-id="all">Все</button>`+[...cs,{id:'_',n:'Другое',e:'📦'}].filter(c=>m.has(c.id)).map(c=>{const x=m.get(c.id);return `<button class="chip${rcCat===c.id?' on':''}" data-a="rccat" data-id="${esc(c.id)}">${c.e} ${esc(rcShort(c))}${x.o?` <i class="cn">${x.o}</i>`:''}</button>`}).join('')};
 const rcListRows=(o,ls)=>{rcIx={r:[],e:[]};const q=rcFold(rcSearch.trim()),cs=cats(),g=new Map(),
@@ -547,17 +550,17 @@ const rcReset=()=>{rcCat='all';rcSearch='';rcOpen='';const q=$('#rcq');if(q)q.va
 const rcRefresh=iid=>{if(iid)keepAt(rcSel(iid),rRecv);else rRecv()};
 // ---- модель отчёта (лист, текст, CSV, PDF)
 const rcModel=o=>{const ls=rcLines(o),s=rcSum(ls),cs=cats(),g=new Map();ls.forEach(l=>{const k=cs.some(c=>c.id===l.it.c)?l.it.c:'_';(g.get(k)||g.set(k,[]).get(k)).push(l)});const rows=[];
-for(const c of [...cs,{id:'_',n:'Другое',e:''}])(g.get(c.id)||[]).sort((x,y)=>COL.compare(x.it.n,y.it.n)).forEach(l=>rows.push({cat:c.n,l,name:l.it.n,ord:rcQ(l.qty,l.it.u),got:rcGot(l)||'—',rem:l.rem>0?rcQ(l.rem,l.it.u):'—',st:rcLabel(l),note:rcNote(l)}));
+for(const c of [...cs,{id:'_',n:'Другое',e:''}])(g.get(c.id)||[]).sort((x,y)=>COL.compare(x.it.n,y.it.n)).forEach(l=>rows.push({cat:c.n,l,name:l.it.n,ord:l.ex?'—':rcQ(l.qty,l.it.u),got:rcGot(l)||'—',rem:l.rem>0?rcQ(l.rem,l.it.u):'—',st:rcLabel(l),note:rcNote(l)}));
 return{o,ls,s,rows,who:rcWho(ls),courier:rcRec(o.id).courier||'',out:ls.filter(l=>l.rem>0&&!l.x),title:'Приёмка товара',date:dlong(o.date),order:`${o.cook.n}${o.cook.r?', '+o.cook.r:''} · заказ от ${dshort(o.created)} ${tm(o.created)}`,made:`${d2(new Date().getDate())}.${d2(new Date().getMonth()+1)}.${new Date().getFullYear()} ${tm(Date.now())}`}};
-const rcSummary=s=>`Принято ${s.done} из ${s.n}`+(s.part?` · частично ${s.part}`:'')+(s.none?` · не привезли ${s.none}`:'')+(s.cx-s.car>0?` · не будет ${s.cx-s.car}`:'')+(s.car?` · перенесено ${s.car}`:'');
+const rcSummary=s=>`Принято ${s.done} из ${s.n}`+(s.part?` · частично ${s.part}`:'')+(s.none?` · не привезли ${s.none}`:'')+(s.cx-s.car>0?` · не будет ${s.cx-s.car}`:'')+(s.car?` · перенесено ${s.car}`:'')+(s.ex?` · сверх заказа ${s.ex}`:'');
 const rcText=o=>{const m=rcModel(o),L2=[`📦 ${m.title}`,`Поставка: ${m.date}`,`Заказал: ${m.order}`];if(m.who)L2.push('Принимали: '+m.who);if(m.courier)L2.push('Курьер / поставщик: '+m.courier);L2.push('');
 const sec=(t,a,f)=>{if(a.length)L2.push(t,...a.map(f),'')},ln=l=>`• ${l.it.n} — `;
-sec('✅ Принято',m.ls.filter(l=>l.st==='ok'||l.st==='chk'),l=>ln(l)+`${rcGot(l)||'—'} (заказано ${rcQ(l.qty,l.it.u)})${rcNote(l)?' · '+rcNote(l):''}`);
+sec('✅ Принято',m.ls.filter(l=>(l.st==='ok'||l.st==='chk')&&!l.ex),l=>ln(l)+`${rcGot(l)||'—'} (заказано ${rcQ(l.qty,l.it.u)})${rcNote(l)?' · '+rcNote(l):''}`);
 sec('🟠 Частично',m.ls.filter(l=>l.st==='part'),l=>ln(l)+`привезли ${rcGot(l)} из ${rcQ(l.qty,l.it.u)}, осталось ${rcQ(l.rem,l.it.u)}${rcNote(l)?' · '+rcNote(l):''}`);
 sec('❌ Не привезли',m.ls.filter(l=>l.st==='none'),l=>ln(l)+`${rcQ(l.qty,l.it.u)}`);
 sec('↩️ Перенесено в новый заказ',m.ls.filter(l=>l.st==='cx'&&l.xo),l=>ln(l)+rcQ(r3(Math.max(0,l.qty-l.got)),l.it.u));
 sec('➖ Остаток закрыт (не будет)',m.ls.filter(l=>l.st==='cx'&&!l.xo),l=>ln(l)+(l.got>0?`привезли ${rcGot(l)} из ${rcQ(l.qty,l.it.u)}`:`${rcQ(l.qty,l.it.u)}`));
-L2.push('Итого: '+rcSummary(m.s));return L2.join('\n')};
+sec('➕ Привезли сверх заказа',m.ls.filter(l=>l.ex),l=>`• ${l.it.n} — ${rcGot(l)||'—'}${rcNote(l)?' · '+rcNote(l):''}`);L2.push('Итого: '+rcSummary(m.s));return L2.join('\n')};
 const csvq=v=>{v=String(v??'');return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
 const rcCsv=o=>{const m=rcModel(o),R=[['Поставка','Группа','Товар','Заказано','Принято','Остаток','Статус','Примечание','Принял(и)']];
 m.rows.forEach(r=>R.push([m.date,r.cat,r.name,r.ord,r.got,r.rem,r.st,r.note,rcWho([r.l])]));R.push([],['Итого',rcSummary(m.s)],['Заказал',m.order],...(m.courier?[['Курьер / поставщик',m.courier]]:[]),['Составлено',m.made]);
@@ -616,6 +619,8 @@ else if(it.type==='sig'){font(22,400);g.fillStyle='#333';g.fillText('Приня�
 font(18,400);g.fillStyle='#777';g.textBaseline='alphabetic';g.fillText('ВИАЙПИ РЕСТОБАР КУХНЯ · составлено '+m.made,MX,H-48);g.textAlign='right';g.fillText('стр. '+(pi+1)+' из '+N,W-MX,H-48);g.textAlign='left';
 const b=atob(cv.toDataURL('image/jpeg',.92).split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);jpgs.push(u)});
 return pdfBuild(jpgs,W,H,m.title+' '+m.date)};
+const rcXSug=()=>{const box=$('#dxs');if(!box)return;const q=rcFold($('#dxn').value.trim());if(q.length<2){box.innerHTML='';return}const a=prods().filter(p=>rcFold(p.n).includes(q)&&rcFold(p.n)!==q).slice(0,6);box.innerHTML=a.map(p=>`<button type="button" class="chip" data-a="xpick" data-id="${esc(p.id)}">${esc(p.n)}<small>${esc(p.u)}</small></button>`).join('')};
+const rcXFill=(n,eid,q,u,nt)=>{$('#dxeh').textContent=eid?'Изменить позицию':'Привезли сверх заказа';$('#dxn').value=n;$('#dxq').value=q;const us=UNITS.includes(u)?UNITS:[...UNITS,u];$('#dxu').innerHTML=us.map(x=>`<option${x===u?' selected':''}>${esc(x)}</option>`).join('');$('#dxt').value=nt;$('#dxd').hidden=!eid;rcXSug()};
 const rcFile=(o,ext)=>'Priemka_'+String(o.date)+'.'+ext;
 const rcCur=()=>rcOid&&ords().find(x=>x.id===rcOid);
 const rcAdd=(o,l,q,u,nt,eid)=>{const id=eid||uid(),old=eid&&l.es.find(e=>e.id===eid),me=meObj();mut('PUT',`receipts/${o.id}/rows/${l.iid}/e/${id}`,{q,u,...(nt?{nt}:{}),at:old&&old.at?old.at:Date.now(),...(old&&old.by?{by:old.by}:me?{by:me}:{}),...(old?{upd:Date.now()}:{})})};
@@ -922,6 +927,24 @@ rcsave(){const o=rcCur();if(!o||!rcDraft)return;const q=$('#rcQty'),qty=rcNum(q?
 if(!qty){snd.warn();toast('Укажите количество больше нуля');if(q)q.focus();return}if(!unit){snd.warn();toast('Выберите единицу');return}
 const d=rcDraft,l=rcLines(o).find(x=>x.iid===d.iid);if(!l){rcDraft=null;rRecv();return}rcAdd(o,l,qty,unit,nt,d.eid);rcTouch(o);rcDraft=null;rcOpen='';snd.add();vib(20);toast('✓ Записано: '+l.it.n+' — '+rcQ(qty,unit));rcRefresh(l.iid)},
 rccancel(){const iid=rcDraft&&rcDraft.iid;rcDraft=null;rcOpen='';snd.tap();rcRefresh(iid)},
+xnew(){const o=rcCur();if(!o)return;xeD={eid:'',c:''};rcXFill('','', '','шт','');snd.tap();$('#dxe').showModal()},
+rcxedit(n){const o=rcCur(),l=rcIx.r[n];if(!o||!l||!l.ex)return;const e=l.es[0]||{};xeD={eid:l.eid,c:l.it.c||''};rcXFill(l.it.n,l.eid,fmtQ(Number(e.q)||1),l.it.u,e.nt||'');snd.tap();$('#dxe').showModal()},
+xpick(id){const p=prods().find(x=>x.id===id);if(!p||!xeD)return;$('#dxn').value=p.n;xeD.c=p.c||'';const u=$('#dxu');if(![...u.options].some(o=>o.value===p.u)){const op=document.createElement('option');op.textContent=p.u;u.appendChild(op)}u.value=p.u;rcXSug();snd.tap();const q=$('#dxq');if(q&&!touchy())q.focus()},
+xinc(){const q=$('#dxq'),u=$('#dxu');if(!q)return;q.value=fmtQ(r3(rcNum(q.value)+stepOf(u?u.value:'шт')));snd.tap()},
+xdec(){const q=$('#dxq'),u=$('#dxu');if(!q)return;const v=r3(rcNum(q.value)-stepOf(u?u.value:'шт'));if(v<=0){snd.warn();return}q.value=fmtQ(v);snd.tap()},
+xsave(){const o=rcCur();if(!o||!xeD)return;const n=$('#dxn').value.trim().replace(/\s+/g,' '),q=rcNum($('#dxq').value),u=$('#dxu').value,nt=$('#dxt').value.trim();
+if(!n){snd.warn();toast('Напишите название товара');$('#dxn').focus();return}if(!q){snd.warn();toast('Укажите количество больше нуля');$('#dxq').focus();return}
+const dup=!xeD.eid&&o.items.find(i=>rcFold(i.n)===rcFold(n));if(dup){snd.warn();toast('«'+dup.n+'» уже есть в этом заказе — отметьте приёмку в списке');return}
+let c=xeD.c||'';const m=prods().find(p=>rcFold(p.n)===rcFold(n));if(m)c=m.c||c;
+const old=xeD.eid&&(rcRec(o.id).extra||{})[xeD.eid],id=xeD.eid||uid(),me=meObj();
+mut('PUT',`receipts/${o.id}/extra/${id}`,{n,u,q,...(c?{c}:{}),...(nt?{nt}:{}),at:old&&old.at?old.at:Date.now(),...(old&&old.by?{by:old.by}:me?{by:me}:{}),...(old?{upd:Date.now()}:{})});
+rcTouch(o);xeD=null;$('#dxe').close();rcOpen='ex_'+id;snd.add();vib(20);toast('➕ Сверх заказа: '+n+' — '+rcQ(q,u));rRecv()},
+async xdel(){const o=rcCur();if(!o||!xeD||!xeD.eid)return;const id=xeD.eid,nm=$('#dxn').value.trim();if(!await ask('Удалить позицию?',`<p style="margin:0"><b>${esc(nm)}</b><br>Строка будет удалена из приёмки и из листа.</p>`,'Да, удалить','Нет, вернуться'))return;
+mut('DELETE',`receipts/${o.id}/extra/${id}`);rcTouch(o);xeD=null;$('#dxe').close();rcOpen='';snd.tap();rRecv()},
+async rcxdel(n){const o=rcCur(),l=rcIx.r[n];if(!o||!l||!l.ex)return;if(!await ask('Удалить позицию?',`<p style="margin:0"><b>${esc(l.it.n)}</b> — ${esc(rcGot(l))}<br>Строка будет удалена из приёмки и из листа.</p>`,'Да, удалить','Нет, вернуться'))return;
+mut('DELETE',`receipts/${o.id}/extra/${l.eid}`);rcTouch(o);rcOpen='';snd.tap();rcRefresh(l.iid)},
+async rcentdel(k){const o=rcCur(),x=rcIx.e[k];if(!o||!x)return;const{l,e}=x;if(!await ask('Удалить запись?',`<p style="margin:0"><b>${esc(l.it.n)}</b><br>${esc(rcQ(Number(e.q),e.u))} — запись будет удалена, количество вернётся в «осталось».</p>`,'Да, удалить','Нет, вернуться'))return;
+mut('DELETE',`receipts/${o.id}/rows/${l.iid}/e/${e.id}`);rcTouch(o);if(rcDraft&&rcDraft.eid===e.id)rcDraft=null;snd.tap();rcRefresh(l.iid)},
 async rcdel(){const o=rcCur();if(!o||!rcDraft||!rcDraft.eid)return;const d=rcDraft;if(!await ask('Удалить запись?',`<p style="margin:0">Запись о приёмке будет удалена, количество вернётся в «осталось».</p>`,'Да, удалить','Нет, вернуться'))return;if(!rcDraft||rcDraft.eid!==d.eid)return;mut('DELETE',`receipts/${o.id}/rows/${d.iid}/e/${d.eid}`);rcTouch(o);rcDraft=null;rcOpen='';snd.tap();rcRefresh(d.iid)},
 async rcxx(n){const o=rcCur(),l=rcIx.r[n];if(!o||!l)return;const p=`receipts/${o.id}/rows/${l.iid}`;if(l.x){mut('PATCH',p,{x:null,xn:null,xat:null,...(rcCarr(o.id,l.iid)?{nc:true}:{})});rcTouch(o);rcOpen='';snd.tap();rcRefresh(l.iid);return}
 if(!await ask('Остаток не привезут?',`<p style="margin:0"><b>${esc(l.it.n)}</b><br>Осталось: ${esc(rcQ(l.rem,l.it.u))}. Позиция уйдёт из списка «Не привезли».</p>`,'Да, не привезут','Нет, вернуться'))return;
@@ -1074,7 +1097,7 @@ libadd(id){const i=libItems().find(x=>x.id===id);if(i)addFromLib(i,id)}
 const rAll=()=>{rCooks();rPCooks();rCats();rList();rBar();rShifts();rBqAlert();rPrep();rPlan();rLibrary();rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
 $('#dh').addEventListener('close',streams);
 document.addEventListener('click',e=>{const dpb=e.target.closest&&e.target.closest('[data-dp]');if(dpb&&!dpb.disabled)return openDp(dpb);const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a]){if(e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.id)}else if(e.target.tagName==='DIALOG'&&!e.target.id.startsWith('dc'))e.target.close()});
-document.addEventListener('input',e=>{const rv=e.target.dataset.rcv;if(rv&&rcDraft)rcDraft[rv]=e.target.value;const key=e.target.dataset.wovalue;if(key&&woDraft)woDraft[key]=e.target.value;if(e.target.id==='tkgst'||e.target.id==='tkk')tkRes()});
+document.addEventListener('input',e=>{const rv=e.target.dataset.rcv;if(rv&&rcDraft)rcDraft[rv]=e.target.value;const key=e.target.dataset.wovalue;if(key&&woDraft)woDraft[key]=e.target.value;if(e.target.id==='tkgst'||e.target.id==='tkk')tkRes();if(e.target.id==='dxn'){if(xeD)xeD.c='';rcXSug()}});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
 if(d.rcunit!==undefined){if(rcDraft)rcDraft.unit=t.value;return}
 if(d.rccourier!==undefined){const o=rcCur();if(o){const v=t.value.trim().slice(0,40);mut('PATCH','receipts/'+o.id,{oid:o.id,date:o.date,updated:Date.now(),courier:v||null,...(rcRec(o.id).created?{}:{created:Date.now()})})}return}
