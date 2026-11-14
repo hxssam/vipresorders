@@ -120,27 +120,29 @@
 <dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
 <dialog id="dt"><h2>Админ-панель</h2>
-<div class="lbl">Команда</div><div id="tl"></div>
+<details class="adm" id="adT" open><summary><span class="ai" aria-hidden="true">👥</span><b>Команда</b><small id="adsT"></small></summary><div class="adb">
+<div id="tl"></div>
 <div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
 <input id="tu" placeholder="Username в Telegram, например ali_cook (необязательно)" maxlength="40" style="margin-top:8px" autocapitalize="off" autocomplete="off">
-<div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div>
-<div class="lbl f">Каталог</div>
+<div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div></div></details>
+<details class="adm" id="adC"><summary><span class="ai" aria-hidden="true">📦</span><b>Каталог товаров</b><small id="adsC"></small></summary><div class="adb">
 <div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
-<p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p>
-<div class="lbl f">Заготовки</div>
+<p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p></div></details>
+<details class="adm" id="adP"><summary><span class="ai" aria-hidden="true">✅</span><b>Заготовки и банкеты</b><small id="adsB"></small></summary><div class="adb">
 <div class="acts" style="margin-top:0"><button data-a="catmgr">🏷️ Категории заготовок</button></div>
-<div class="lbl f">Кухонный день</div>
+<div class="lbl f">Банкеты — уведомления и заготовки</div>
+<div class="small" style="margin:0 0 8px">За сколько дней до банкета показывать его в списке заготовок и в уведомлении сверху. Например, «за 2 дня»: в четверг видны банкеты пятницы и субботы.</div>
+<div class="chips wrap" id="bqlc"><button class="chip" data-a="bqlset" data-id="1">за 1 день</button><button class="chip" data-a="bqlset" data-id="2">за 2 дня</button><button class="chip" data-a="bqlset" data-id="3">за 3 дня</button></div></div></details>
+<details class="adm" id="adD"><summary><span class="ai" aria-hidden="true">🕕</span><b>Кухонный день</b><small id="adsD"></small></summary><div class="adb">
+<div class="lbl">Начало дня</div>
 <div class="small" style="margin:0 0 8px">Когда в приложении начинается новый день: переносятся невыполненные заготовки, меняется «Завтра на смену» и дата поставки.</div>
 <div class="chips wrap" id="dsl"><button class="chip" data-a="dsset" data-id="0">00:00 · полночь</button><button class="chip" data-a="dsset" data-id="3">03:00</button><button class="chip" data-a="dsset" data-id="5">05:00</button><button class="chip" data-a="dsset" data-id="6">06:00</button></div>
 <div class="lbl f">Часы работы кухни</div>
 <div class="small" style="margin:0 0 8px">Показываются в блоке «Завтра». Закрытие ночью (например, 02:00 или 05:00) относится к тому же рабочему дню.</div>
-<div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div>
-<div class="lbl f">Банкеты — уведомления и заготовки</div>
-<div class="small" style="margin:0 0 8px">За сколько дней до банкета показывать его в списке заготовок и в уведомлении сверху. Например, «за 2 дня»: в четверг видны банкеты пятницы и субботы.</div>
-<div class="chips wrap" id="bqlc"><button class="chip" data-a="bqlset" data-id="1">за 1 день</button><button class="chip" data-a="bqlset" data-id="2">за 2 дня</button><button class="chip" data-a="bqlset" data-id="3">за 3 дня</button></div>
-<div class="lbl f">Пароль</div>
+<div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div></div></details>
+<details class="adm" id="adW"><summary><span class="ai" aria-hidden="true">🔐</span><b>Пароль руководителя</b></summary><div class="adb">
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
-<div class="acts"><button data-a="setpw">Сменить пароль</button></div>
+<div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>

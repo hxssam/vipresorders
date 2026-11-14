@@ -1,5 +1,5 @@
-:root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#6a6f8e;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#d97706;--rd:#dc2626;--ok:#059669;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#6366f1,#a855f7);--sh:0 6px 22px #0008}}
+:root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{overscroll-behavior-y:none;-webkit-text-size-adjust:100%}
 button,.chip,.it,.bar{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -502,7 +502,7 @@ details.bqu>.acts{margin-bottom:10px;margin-top:8px}
 .wo-inline-grid label span{font-size:12px}
 /* v8.7 — ручной выбор темы: Авто / Светлая / Тёмная */
 :root[data-theme=light]{color-scheme:light}
-:root[data-theme=dark]{color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#6366f1,#a855f7);--sh:0 6px 22px #0008;--sdbg:#3a2c0b}
+:root[data-theme=dark]{color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008;--sdbg:#3a2c0b}
 .thopts{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px}
 .thopt{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;text-align:left;background:var(--sf);border:2px solid var(--ln);border-radius:14px;color:var(--tx)}
 .thopt .thi{font-size:26px;line-height:1;flex:none}.thopt .tht{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.thopt .tht b{font-size:16px}.thopt .tht small{font-size:12.5px;color:var(--mu)}
@@ -722,3 +722,32 @@ details.qfd .chips{margin-top:6px}
 .bqc{min-height:50px;padding:6px 12px}
 #vPrep .ckc{width:48px}
 #vPrep .sdc .sdl{font-size:10px}
+
+/* ===== v9.1 — единый спокойный вид ===== */
+/* пустые состояния: рамка, значок, короткая подсказка */
+.em{padding:24px 16px;margin:6px 0;border:1.5px dashed var(--ln);border-radius:var(--r);line-height:1.45}
+.em>i{display:block;font-style:normal;font-size:30px;line-height:1;margin-bottom:6px}
+.em>b{display:block;color:var(--tx);font-size:16px;margin-bottom:2px}
+/* товар в заказе: название на всю ширину, счётчик ниже — ничего не ломается и не сжимается */
+#list .it.on{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:6px;align-items:center;padding:8px 8px 10px 12px}
+#list .it.on>.n{grid-column:1;grid-row:1}
+#list .it.on>.x{grid-row:1}
+#list .it.on>.st{grid-column:1/-1;grid-row:2;gap:6px}
+#list .it.on>.st button{flex:none;width:48px;min-height:44px}
+#list .it.on>.st input{flex:1;min-width:0;width:auto}
+#list .it.on>.st select{flex:none;width:auto;min-width:76px}
+/* админ-панель: разделы-аккордеон */
+#dt details.adm{border:1px solid var(--ln);border-radius:14px;margin:0 0 8px;background:var(--sf);overflow:hidden}
+#dt details.adm>summary{display:flex;align-items:center;gap:10px;min-height:54px;padding:8px 14px;cursor:pointer;list-style:none;font-size:16px}
+#dt details.adm>summary::-webkit-details-marker{display:none}
+#dt details.adm>summary b{flex:1;min-width:0;font-weight:700}
+#dt details.adm>summary small{color:var(--mu);font-size:13px;font-weight:600;white-space:nowrap}
+#dt details.adm>summary::after{content:"▾";color:var(--mu);transition:transform .15s}
+#dt details.adm[open]>summary::after{transform:rotate(180deg)}
+#dt details.adm[open]>summary{border-bottom:1px solid var(--ln)}
+#dt .adm .ai{font-size:20px;width:26px;text-align:center;flex:none}
+#dt .adm .adb{padding:12px 14px 14px}
+#dt .adm .adb>.lbl:first-child{margin-top:0}
+#dt .adm .adb>.acts:first-child{margin-top:0}
+#dt>.acts:last-child{margin-top:14px}
+@media(prefers-reduced-motion:reduce){#dt details.adm>summary::after{transition:none}}
