@@ -154,6 +154,13 @@
 <div class="lbl f">Часы работы кухни</div>
 <div class="small" style="margin:0 0 8px">Показываются в блоке «Завтра». Закрытие ночью (например, 02:00 или 05:00) относится к тому же рабочему дню.</div>
 <div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div></div></details>
+<details class="adm" id="adK"><summary><span class="ai" aria-hidden="true">💾</span><b>Данные и копия</b><small id="adsK"></small></summary><div class="adb">
+<div class="small bkl" id="bkinfo" style="margin:0 0 8px"></div>
+<div class="acts" style="margin-top:0"><button class="p" data-a="backup">💾 Скачать копию всех данных</button></div>
+<div class="lbl f">Трафик</div><div class="small" id="txinfo"></div>
+<div class="lbl f">Ошибки устройств</div><div class="small" id="errinfo" style="margin:0 0 8px"></div>
+<div class="acts" style="margin-top:0"><button data-a="errshow">Показать</button><button data-a="errcopy">Копировать</button><button class="d" data-a="errclear">Очистить</button></div>
+<pre class="errbox" id="errbox" hidden></pre></div></details>
 <details class="adm" id="adW"><summary><span class="ai" aria-hidden="true">🔐</span><b>Пароль руководителя</b></summary><div class="adb">
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>

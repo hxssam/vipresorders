@@ -842,3 +842,8 @@ dialog.whog h2{font-size:26px;margin:0 0 6px}
 .msum{text-align:center;color:var(--mu);font-weight:700;font-size:14px;margin:-2px 0 8px}.msum b{color:var(--ac);font-size:16px}
 
 .who-wait{padding:22px 4px;color:var(--mu);font-weight:600;font-size:15px}
+
+/* ---- 9.4: данные и копия, журнал ошибок */
+.bkl.bkw{font-weight:700;color:var(--tx)}
+pre.errbox{white-space:pre-wrap;word-break:break-word;max-height:40dvh;overflow:auto;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:10px;margin:8px 0 0;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace}
+pre.errbox[hidden]{display:none}

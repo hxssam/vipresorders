@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.3.0';
+const VER='9.4.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 // ---------- тема оформления: Авто / Светлая / Тёмная (для всех телефонов) ----------
@@ -89,6 +89,26 @@ else if(val===null||val===undefined)delete o[l];else o[l]=val}
 const D={},LIVE={msg:null};let raf=0,ct;
 const dirty=k=>{D[k]=1;if(k==='catalog')PC=null;if(k==='prepCats')PCC=null;if(!raf)raf=requestAnimationFrame(render)};
 const DEV=LS.get('vip3-dev','')||(()=>{const v=uid();LS.set('vip3-dev',v);return v})();
+// ---- 9.4: счётчик трафика (оценка по размеру ответов, до сжатия)
+const txDay=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+let TX=(()=>{const v=LS.get('vip3-tx',null);return v&&typeof v==='object'&&v.d===txDay()?v:{d:txDay(),b:0,n:0}})(),txT=0;
+const txAdd=n=>{try{if(TX.d!==txDay())TX={d:txDay(),b:0,n:0};TX.b+=n|0;TX.n++;if(!txT)txT=setTimeout(()=>{txT=0;LS.set('vip3-tx',TX)},15000)}catch{}};
+const txFmt=()=>{const b=TX.d===txDay()?TX.b:0;return b>=1048576?(b/1048576).toFixed(1)+' МБ':Math.max(0,Math.round(b/1024))+' КБ'};
+// ---- 9.4: журнал ошибок этого телефона → errlog/<DEV> (редко, не через meta)
+const ERRK='vip3-errs';let ERRS=(()=>{const v=LS.get(ERRK,[]);return Array.isArray(v)?v.filter(x=>x&&x.t>Date.now()-12096e5).slice(-30):[]})(),errTm=0,errBroken=0,errLast=0;
+const errClean=x=>String(x==null?'':x).replace(/([?&]auth=)[^&\s"')]+/gi,'$1…').replace(/\beyJ[\w-]{10,}\.[\w-]+\.[\w-]+/g,'jwt…').replace(/\s+/g,' ').slice(0,300);
+const errAdd=(m,src)=>{m=errClean(m);if(!m||/ResizeObserver|^Script error\.?$|Failed to fetch|Load failed|NetworkError|AbortError|aborted/i.test(m))return;
+let k='',w='cook';try{k=String(tab)}catch{}try{w=isAdmin()?'chief':'cook'}catch{}
+const now=Date.now(),sg=m+'|'+(src||''),p=ERRS.find(x=>x.g===sg&&now-x.t<6e4);
+if(p){p.n=(p.n||1)+1;p.t=now}else{ERRS.push({t:now,m,s:errClean(src).slice(0,120),v:VER,k,g:sg,n:1,w});if(ERRS.length>30)ERRS.shift()}
+LS.set(ERRK,ERRS);errSoon()};
+const errSend=async()=>{errTm=0;if(errBroken||DEMO||!DB||!ERRS.length)return;if(!navigator.onLine||Date.now()-errLast<3e5){errTm=setTimeout(errSend,6e4);return}
+const o={};ERRS.forEach((x,i)=>{o[x.t.toString(36)+i]={t:x.t,m:x.m,s:x.s||'',v:x.v,k:x.k||'',n:x.n||1,w:x.w||''}});
+try{await api('PUT','errlog/'+DEV,o);errLast=Date.now();LS.set('vip3-errsent',errLast)}catch(e){if(e&&[400,401,403,404].includes(e.status))errBroken=1;else errTm=setTimeout(errSend,12e4)}};
+const errSoon=()=>{if(!errTm&&!errBroken)errTm=setTimeout(errSend,20000)};
+addEventListener('error',e=>{try{errAdd(e.message||(e.error&&e.error.message),String(e.filename||'').split('/').pop()+':'+(e.lineno||0)+':'+(e.colno||0))}catch{}});
+addEventListener('unhandledrejection',e=>{try{const r=e.reason;errAdd(r&&r.message?r.message:r,'promise')}catch{}});
+
 const ST={open:{},seen:{},err:'',lastErr:'',poll:0};
 const setSt=()=>{const s=$('#saved');if(DEMO){s.textContent='◌';s.title='Демо-режим';s.classList.remove('on','err','pend');return}
 const n=L.out.length,h=(L.hold||[]).length,o=Object.values(ST.open).some(Boolean)||Date.now()-(ST.poll||0)<8000;
@@ -117,13 +137,13 @@ function mut(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/'
 const ES={};
 function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
 const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);es.__route=route;ST.open[key]=false;
-es.__seen=0;const on=(t,m)=>es.addEventListener(t,e=>{es.__seen=ST.seen[key]=Date.now();try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);if(key==='meta')onMeta().catch(()=>{});else dirty(prefix.split('/')[0])}catch{}});
+es.__seen=0;const on=(t,m)=>es.addEventListener(t,e=>{es.__seen=ST.seen[key]=Date.now();txAdd((e.data||'').length);try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);if(key==='meta')onMeta().catch(()=>{});else dirty(prefix.split('/')[0])}catch{}});
 on('put',0);on('patch',1);es.addEventListener('keep-alive',()=>{es.__seen=ST.seen[key]=Date.now()});
 es.onopen=()=>{ST.open[key]=true;es.__seen=ST.seen[key]=Date.now();setSt();flush()};
 es.onerror=()=>{ST.open[key]=false;setSt();if(es.readyState===2&&ES[key]===es)setTimeout(()=>{if(ES[key]===es)listen(key,prefix,q)},4000)}}
 // ---- «живая» связь: ОДИН поток по лёгкому узлу meta (мгновенно) + короткие запросы данных; если поток недоступен — быстрый опрос ----
 const mkey=p=>{const a=String(p).split('/');return(a[0]==='prep'||a[0]==='writeoffs'||a[0]==='shifts'||a[0]==='prepMeta')&&a[1]?a[0]+'_'+a[1]:a[0]};
-async function jget(p,q,auth){let t='';if(auth){t=await tok();if(!t)throw new Error('auth')}const qs=[q,t?'auth='+t:''].filter(Boolean).join('&');const r=await fetchFast(`${DB}/${p}.json${qs?'?'+qs:''}`,{},9000);if(!r.ok){const e=new Error('http');e.status=r.status;throw e}return r.json()}
+async function jget(p,q,auth){let t='';if(auth){t=await tok();if(!t)throw new Error('auth')}const qs=[q,t?'auth='+t:''].filter(Boolean).join('&');const r=await fetchFast(`${DB}/${p}.json${qs?'?'+qs:''}`,{},9000);if(!r.ok){const e=new Error('http');e.status=r.status;throw e}const tx=await r.text();txAdd(tx.length);return JSON.parse(tx)}
 const MV={};let metaBroken=0,pollBusy=0,tickN=0;
 const pendingFor=mk=>L.out.some(o=>mkey(o.p)===mk)||(L.hold||[]).some(o=>mkey(o.p)===mk&&o.at&&Date.now()-o.at<72e5);
 const BQ_SPAN=150,bqRq=()=>'orderBy=%22%24key%22&startAt=%22'+dAdd(0)+'%22&endAt=%22'+dAdd(BQ_SPAN)+'%22';let bqRangeOk=0;
@@ -134,12 +154,14 @@ const routeMap=()=>({team:['team'],catalog:['catalog'],orders:['orders','orderBy
 const activeKeys=()=>{const keys=new Set(['team','cfg','prepMetaToday','prepMetaTom','shiftsHide']);const bl=bqLook();if(bl>=2)keys.add('prepMetaT2');if(bl>=3)keys.add('prepMetaT3');if(tab==='prep'){keys.add('prepToday');keys.add('prepTom');if(bl>=2)keys.add('prepT2');if(bl>=3)keys.add('prepT3')}if(tab==='order'){keys.add('catalog');keys.add('shifts');keys.add('shiftsLast');keys.add('sched');keys.add('seen');keys.add('orders');keys.add('receipts')}if(tab==='writeoff'){keys.add('catalog');keys.add('writeoffs');keys.add('woPrev')}if(tab==='recv'){keys.add('catalog');keys.add('orders');keys.add('receipts')}if(tab==='prep'||dialogOpen('#dbt')){keys.add('prepMetaUp');keys.add('prepUp')}if(tab==='prep'){keys.add('prep');keys.add('prepMeta');keys.add('prepPrev');keys.add('plan');keys.add('prepLibrary');keys.add('prepPins');keys.add('prepCats')}if(dialogOpen('#dcat'))keys.add('prepCats');if(tab==='sched'){keys.add('sched');keys.add('prepPins')}if(tab==='cab'){keys.add('sched');if(isAdmin())keys.add('payroll')}if(dialogOpen('#dr')||dialogOpen('#dh')){['shifts','shiftsLast','sched','seen','prepTom','prepToday','prepMetaTom','prepMetaToday','writeoffs','woPrev','catalog'].forEach(k=>keys.add(k))}if(dialogOpen('#dh'))keys.add('orders');return keys};
 const atPath=p=>{let o=DATA;for(const k of String(p).split('/')){if(o==null||typeof o!=='object')return null;o=o[k]}return o===undefined?null:o};
 const sig=v=>JSON.stringify(v===undefined?null:v);
-function onMeta(force){if(DEMO||!DB)return Promise.resolve();try{liveCheck()}catch(e){}const routes=routeMap(),meta=DATA.meta||{},jobs=[];if(tab==='cab'&&isAdmin()&&MV.cabinet!==meta.cabinet){MV.cabinet=meta.cabinet;loadIn()}
-activeKeys().forEach(k=>{const r=routes[k];if(!r)return;const rg=r[3]==='range',mk=mkey(r[0]),want=r[0]+'|'+(r[1]||'')+'#'+(rg?rangeSig(meta):(meta[mk]||0)),pend=()=>rg?rangePend():pendingFor(mk);if(!force&&MV[k]===want)return;if(pend())return;
-jobs.push(jget(r[0],r[1],r[2]).then(d=>{if(pend())return;MV[k]=want;if(rg){mergeRange(r[0],d,dAdd(0),dAdd(BQ_SPAN));return}if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}).catch(e=>{if(r[2])return;throw e}))});
+const HEAVY={orders:1,receipts:1,sched:1,payroll:1},HV={},HEAVY_MS=12e4,metaOk=()=>!metaBroken&&Object.keys(DATA.meta||{}).length>0;
+function onMeta(force,soft){if(DEMO||!DB)return Promise.resolve();try{liveCheck()}catch(e){}const routes=routeMap(),meta=DATA.meta||{},jobs=[];if(tab==='cab'&&isAdmin()&&MV.cabinet!==meta.cabinet){MV.cabinet=meta.cabinet;loadIn()}
+activeKeys().forEach(k=>{const r=routes[k];if(!r)return;const rg=r[3]==='range',mk=mkey(r[0]),want=r[0]+'|'+(r[1]||'')+'#'+(rg?rangeSig(meta):(meta[mk]||0)),pend=()=>rg?rangePend():pendingFor(mk);if(MV[k]===want&&(!force||(soft&&HEAVY[k]&&metaOk()&&Date.now()-(HV[k]||0)<HEAVY_MS)))return;if(pend())return;
+jobs.push(jget(r[0],r[1],r[2]).then(d=>{if(pend())return;MV[k]=want;HV[k]=Date.now();if(rg){mergeRange(r[0],d,dAdd(0),dAdd(BQ_SPAN));return}if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}).catch(e=>{if(r[2])return;throw e}))});
 return Promise.all(jobs)}
-async function pollMeta(force){if(pollBusy||DEMO||!DB||document.hidden)return;pollBusy=1;
-try{const sse=ST.open.meta&&!metaBroken;if(!sse&&!metaBroken)DATA.meta=(await jget('meta'))||{};const noMeta=!Object.keys(DATA.meta||{}).length;await onMeta(force||metaBroken||noMeta);ST.poll=Date.now()}catch{}
+let MPT=0,MPF=0;const metaMax=m=>{let x=0;for(const v of Object.values(m||{}))if(typeof v==='number'&&v>x)x=v;return x};
+async function pollMeta(force,soft){if(pollBusy||DEMO||!DB||document.hidden)return;pollBusy=1;
+try{const sse=ST.open.meta&&!metaBroken;if(!sse&&!metaBroken){const nw=Date.now();if(!MPT||force||nw-MPF>3e4||!Object.keys(DATA.meta||{}).length){DATA.meta=(await jget('meta'))||{};MPF=nw;MPT=metaMax(DATA.meta)}else{const d=await jget('meta','orderBy=%22%24value%22&startAt='+Math.max(0,MPT-6e5));if(d&&typeof d==='object'){const m=DATA.meta||(DATA.meta={});for(const[k,v]of Object.entries(d)){if(v&&typeof v==='object')m[k]=v;else{m[k]=v;if(typeof v==='number'&&v>MPT)MPT=v}}}}}const noMeta=!Object.keys(DATA.meta||{}).length;await onMeta(force||metaBroken||noMeta,soft);ST.poll=Date.now()}catch{}
 pollBusy=0;setSt()}
 const streams=()=>{Object.keys(ES).forEach(k=>{if(k!=='meta'){ES[k].close();delete ES[k];ST.open[k]=false}});listen('meta','meta');pollMeta(false)};
 const restartStreams=()=>{Object.keys(ES).forEach(k=>{try{ES[k].close()}catch{}delete ES[k];ST.open[k]=false});streams()};
@@ -201,7 +223,7 @@ function fitNote(){const n=$('#note');if(!n||!n.scrollHeight)return;n.style.heig
 const rRev=()=>{const it=dI(),c=L.draft.cook;$('#rc').innerHTML=c?esc(c.n)+' — '+esc(c.r):'<span style="color:var(--rd)">не выбран</span>';
 $('#rb').innerHTML=it.length?it.sort((a,b)=>COL.compare(a.n,b.n)).map(i=>`<div class="it on${i.urg?' urg':''}"><div class="n">${esc(i.n)}${ugBtn(i.id,i.urg)}</div>${stepper(i)}<button class="x" data-a="rm" data-id="${esc(i.id)}">✕</button></div>`).join(''):'<div class="em">Список пуст</div>'};
 const rTeam=()=>{{const e=$('#adsT');if(e)e.textContent=team().length?String(team().length):''}$('#tl').innerHTML=team().length?team().map(k=>`<div class="it"><div class="n">${esc(k.n)}<i>${esc(k.r)}${k.u?' · @'+esc(k.u):''}</i></div><button class="x" data-a="cuser" data-id="${esc(k.id)}" aria-label="Username" title="Username">@</button>${k.virtual?'':`<button class="x" data-a="delc" data-id="${esc(k.id)}">✕</button>`}</div>`).join(''):'<div class="em">Добавьте поваров с должностями</div>'};
-const rAdm=()=>{rDs();{const e=$('#adsC');if(e){const h2=Object.keys(cat0().hidden||{}).length;e.textContent=ed()?'правка ВКЛ':(h2?'скрыто: '+h2:'')}}const b=$('#edb');b.textContent='Режим правки товаров: '+(ed()?'ВКЛ':'выкл');b.className=ed()?'d':'';const h=Object.keys(cat0().hidden||{}).length,u=$('#unh');u.textContent='Вернуть скрытые ('+h+')';u.disabled=!h};
+const rAdm=()=>{rDs();try{rBk()}catch(e){}{const e=$('#adsC');if(e){const h2=Object.keys(cat0().hidden||{}).length;e.textContent=ed()?'правка ВКЛ':(h2?'скрыто: '+h2:'')}}const b=$('#edb');b.textContent='Режим правки товаров: '+(ed()?'ВКЛ':'выкл');b.className=ed()?'d':'';const h=Object.keys(cat0().hidden||{}).length,u=$('#unh');u.textContent='Вернуть скрытые ('+h+')';u.disabled=!h};
 const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();let qb=0,tk=null;
 const PU=['порц','кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
 const PCATS0=[['cut','🔪','Нарезка'],['sauce','🥫','Соусы'],['hot','🍲','Горячее'],['cold','🥗','Холодное'],['meat','🥩','Мясо и рыба'],['side','🍚','Гарниры'],['dess','🍰','Десерты'],['bake','🥖','Выпечка и тесто'],['other','📦','Другое']];
@@ -808,7 +830,7 @@ if(d.pset==='cur'){mut('PATCH','payroll/_cfg',{cur:v||'₽'});publishAll();snd.t
 if(d.pset){const n=Number(v.replace(',','.'));if(v!==''&&!(n>=0))return;mut('PATCH','payroll/'+pc,{[d.pset]:v===''?null:n});publishAcct(pc);snd.tap();setTimeout(rPayAdm,0);return}
 if(d.ph){const n=v===''?null:Number(v.replace(',','.'));if(n!==null&&!(n>=0))return;mut('PATCH','payroll/'+pc+'/hours',{[d.ph]:n});publishAcct(pc);snd.tap();setTimeout(rPayAdm,0)}};
 const rDiag=()=>{const o=Object.keys(ES).map(k=>k+':'+(ST.open[k]?'✓':'✗')).join('  ');
-$('#dinfo').textContent=[`Версия: ${VER}`,`Режим: ${DEMO?'ДЕМО (config.js не заполнен)':'облако'}`,`База: ${DB||'не найдена'}`,`Живая связь: ${ST.open.meta&&!metaBroken?'мгновенная (поток)':metaBroken?'быстрый опрос (обновите правила Firebase)':'быстрый опрос'}`,`В очереди на отправку: ${L.out.length}`,`Последняя ошибка: ${ST.lastErr||'нет'}`,`Телефон в сети: ${navigator.onLine?'да':'нет'}`,`Повара: ${team().length} · заказы: ${ords().length} · заготовок на день: ${Object.keys(dm()).length}`,`Устройство: ${DEV}`].join('\n');$('#dlog').textContent=''};
+$('#dinfo').textContent=[`Версия: ${VER}`,`Режим: ${DEMO?'ДЕМО (config.js не заполнен)':'облако'}`,`База: ${DB||'не найдена'}`,`Живая связь: ${ST.open.meta&&!metaBroken?'мгновенная (поток)':metaBroken?'быстрый опрос (обновите правила Firebase)':'быстрый опрос'}`,`В очереди на отправку: ${L.out.length}`,`Последняя ошибка: ${ST.lastErr||'нет'}`,`Скачано сегодня: ${txFmt()}`,`Ошибок на телефоне: ${ERRS.length}`,`Телефон в сети: ${navigator.onLine?'да':'нет'}`,`Повара: ${team().length} · заказы: ${ords().length} · заготовок на день: ${Object.keys(dm()).length}`,`Устройство: ${DEV}`].join('\n');$('#dlog').textContent=''};
 const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filter(o=>!q||(o.cook.n+' '+o.date+' '+day(o.date)+' '+o.items.map(i=>i.n).join(' ')).toLowerCase().includes(q));
 $('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc([...o.items].sort((a,b)=>(b.urg?1:0)-(a.urg?1:0)).slice(0,5).map(i=>(i.urg?'🚨 ':'')+i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="rcgo" data-id="${o.id}">📦 Принять</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em"><i aria-hidden="true">🕘</i><b>История пока пуста</b>Отправленные заказы появятся здесь.</div>'};
 function render(){raf=0;const d={...D};for(const k in D)delete D[k];if(d.plan)applyDs();
@@ -852,7 +874,7 @@ const open=id=>{rRev();$(id).showModal()};
 const need=()=>{snd.warn();toast('Нужен вход в админ-панель');ACT.admin()};
 const rep=id=>{const p=prods().find(x=>x.id===id),r=document.querySelector(`[data-r="${cssEsc(id)}"]`);if(p&&r)r.outerHTML=row(p);rBar();if(dialogOpen('#dr'))rRev()};
 const ui=()=>{rFil();rCats();rList();rAdm();rShifts();rGseg();if(tab==='sched')rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
-const afterLogin=()=>{ensureTeamColors();if(L.hold&&L.hold.length){L.out.push(...L.hold.splice(0));saveL();flush()}ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();rDs();$('#dt').showModal()}};
+const afterLogin=()=>{ensureTeamColors();try{bkNag()}catch(e){}if(L.hold&&L.hold.length){L.out.push(...L.hold.splice(0));saveL();flush()}ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();rDs();$('#dt').showModal()}};
 const authErr=m=>/TOO_MANY/.test(m)?'Google временно ограничил вход. Подождите и повторите':/CREDENTIAL_TOO_OLD/.test(m)?'Войдите заново и повторите':'Неверный пароль';
 const ACT={
 whopick(id){const k=team().find(x=>x.id===id);if(!k)return;L.me=k;if(!cnt()||!L.draft.cook)L.draft.cook=k;saveL();whoDone();$('#dwho').close();snd.ok();vib(25);rCooks();rPCooks();rShifts();if(tab==='sched')rSched();toast('Здравствуйте, '+k.n+' 👋')},
@@ -1029,6 +1051,20 @@ const n=ssel.size;ssel.forEach(dt=>mut('PUT',`sched/${sf}/${dt}`,{r:'Р',work:tr
 sclear(){if(!isAdmin())return need();if(sf==='all'||!ssel.size){snd.warn();toast('Выберите повара и дни');return}const n=ssel.size;ssel.forEach(dt=>mut('DELETE',`sched/${sf}/${dt}`));publishAcct(sf);ssel.clear();snd.warn();toast('Смены убраны: '+n);rSched()},
 // диагностика
 diag(){snd.tap();rDiag();$('#dd').showModal()},
+async backup(){if(!isAdmin()){toast('Копия — только для руководителя');return}
+const b=$('[data-a=backup]');if(b&&b.dataset.busy)return;if(b){b.dataset.busy='1';b.disabled=true}toast('Готовлю копию…');
+try{const out={},bad=[];for(const n of BK_NODES){try{out[n]=await jget(n,'',true)}catch(e){bad.push(n+(e&&e.status?' ('+e.status+')':''))}}
+const keys=Object.values(out.payroll||{}).map(p=>p&&p.key).filter(k=>typeof k==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(k));
+out.acct={};for(const k of keys){try{const v=await jget('acct/'+k,'',true);if(v)out.acct[k]=v}catch(e){bad.push('acct')}}
+if(bad.includes('payroll (auth)')||!out.team){toast('Не удалось прочитать данные. Войдите как руководитель заново');return}
+const txt=JSON.stringify({app:'vip-restobar',ver:VER,at:new Date().toISOString(),notread:bad,data:out}),d=new Date(),p2=n=>String(n).padStart(2,'0'),nm=`vip-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`;
+const r=await sendFile(new Blob([txt],{type:'application/json'}),nm,'Резервная копия ВИАЙПИ');
+if(r==='shared'||r==='download'){LS.set('vip3-lastbk',Date.now());toast('✓ Копия сохранена · '+(txt.length/1048576).toFixed(2)+' МБ'+(bad.length?' · не прочитано: '+bad.length:''));rBk()}else if(r==='cancel')toast('Отменено')}
+catch(e){toast('Не удалось сделать копию. Проверьте связь')}finally{if(b){delete b.dataset.busy;b.disabled=false}}},
+async errshow(){snd.tap();const x=$('#errbox');x.hidden=false;x.textContent='Загрузка…';const mine=Object.fromEntries(ERRS.map((e,i)=>['l'+i,e]));let d={},note='';try{d=(await jget('errlog'))||{}}catch(e){note='\n\n⚠ Журнал других телефонов не прочитан. Если правила Firebase ещё не обновлены (новый узел errlog), опубликуйте firebase-rules.json.'}d[DEV]=mine;x.textContent=errFmt(d)+note},
+async errcopy(){snd.tap();const x=$('#errbox');const t=x.hidden?errFmt({[DEV]:Object.fromEntries(ERRS.map((e,i)=>[i,e]))}):x.textContent;toast(await clip(t)?'✓ Скопировано':'Не удалось скопировать')},
+async errclear(){if(!isAdmin()){toast('Только для руководителя');return}if(!await ask('Очистить журнал ошибок?','<p>Будут удалены записи ошибок со всех телефонов. Данные приложения не затрагиваются.</p>','Очистить'))return;try{await api('DELETE','errlog');ERRS=[];LS.set(ERRK,[]);$('#errbox').textContent='Ошибок нет 👍';rBk();toast('Журнал очищен')}catch(e){toast('Не удалось очистить журнал')}},
+
 async dtest(){const out=[],log=s=>{out.push(s);$('#dlog').textContent=out.join('\n')};if(DEMO){log('Демо-режим: config.js не заполнен');return}
 if(!DB){await detect();log('Поиск базы: '+(DB||'не найдена'));if(!DB)return}log('База: '+DB);
 try{const r=await fetchFast(DB+'/.json?shallow=true',{},5000);log('Чтение: HTTP '+r.status)}catch(e){log('Чтение: нет связи')}
@@ -1225,12 +1261,31 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){wake();tr
 addEventListener('pageshow',e=>{if(e.persisted)wake()});addEventListener('focus',()=>{if(!dayCheck())carryAll()});document.addEventListener('resume',wake);
 setInterval(dayCheck,15000);armDay();setInterval(()=>{if(tab==='order')refreshRoster()},60000);addEventListener('offline',()=>setSt());
 setInterval(()=>{if(!DB&&!DEMO)detect().then(()=>{streams();setSt();refreshRoster()});if(AU.rt&&L.hold&&L.hold.length&&!L.out.length){L.out.push(...L.hold.splice(0));saveL()}flush();if(!document.hidden&&Object.keys(ES).some(k=>ST.open[k]&&Date.now()-(ST.seen[k]||0)>90000))restartStreams()},30000);
-setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!metaBroken,hasMeta=Object.keys(DATA.meta||{}).length>0;if(sse&&hasMeta&&tickN%12)return;pollMeta(sse?tickN%12===0:(metaBroken||!hasMeta||tickN%8===0))},2500);
+setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!metaBroken,hasMeta=Object.keys(DATA.meta||{}).length>0;if(sse&&hasMeta&&tickN%12)return;pollMeta(sse?tickN%12===0:(metaBroken||!hasMeta||tickN%8===0),true)},2500);
 const EMO=['🥩','🍗','🥓','🐟','🦐','🥚','🧀','🥛','🥬','🥕','🍅','🧅','🍄','🍎','🍋','🌶️','🧂','🫒','🍞','🥐','🍝','🍚','🥫','🍰','🍦','🍫','🥤','🍹','🍺','☕','🧴','🥡','🍢','🍔','🍕','🌯','🥗','🍲','🔥','📦'],emoH=a=>EMO.map(e=>`<button type="button" data-a="${a}" data-id="${e}" aria-label="${e}">${e}</button>`).join('');$('#gemo').innerHTML=emoH('emog');$('#cemo').innerHTML=emoH('emoc');
 fixDraftDate(true);syncDraft();rAll();setSt();placeInd();addEventListener('load',placeInd);addEventListener('resize',placeInd);addEventListener('orientationchange',()=>setTimeout(placeInd,200));detect().then(()=>{streams();flush();carryAll(true)});
 L.hold=(L.hold||[]).filter(o=>!o.at||Date.now()-o.at<3*864e5);if(L.hold.length){L.out.push(...L.hold.splice(0));saveL()}
 {const g=$('#dwho');if(g)g.addEventListener('cancel',e=>e.preventDefault());document.addEventListener('visibilitychange',()=>{if(document.hidden)whoHidAt=Date.now();else if(whoHidAt&&Date.now()-whoHidAt>30*6e4){try{sessionStorage.removeItem('vip3-who')}catch{}whoOpen()}});if(whoNeeded())whoOpen()}
-if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();ui();if(L.out.length){retryAt=0;flush()}}).catch(()=>{});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();liveCheck();if(tab==='order')rLive()}catch(e){}},6e4);
+if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();try{bkNag()}catch(e){}ui();if(L.out.length){retryAt=0;flush()}}).catch(()=>{});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();liveCheck();if(tab==='order')rLive()}catch(e){}},6e4);
+// ---- 9.4: резервная копия (напоминание, список узлов), журнал ошибок (вывод), уборка служебных отметок meta
+const BK_NODES=['team','catalog','orders','prep','prepMeta','prepLibrary','prepPins','prepCats','writeoffs','plan','sched','shifts','receipts','payroll'];
+const bkDays=()=>{const l=Number(LS.get('vip3-lastbk',0))||0;return l?Math.floor((Date.now()-l)/864e5):-1};
+const rBk=()=>{const e=$('#bkinfo'),s=$('#adsK'),t=$('#txinfo'),x=$('#errinfo');if(!e)return;const dd=bkDays(),old=dd<0||dd>7;
+e.textContent=(old?'⚠ ':'')+(dd<0?'Копия ещё не делалась':dd===0?'Последняя копия: сегодня':'Последняя копия: '+dd+' дн. назад')+'. Файл можно сохранить в «Файлы» или отправить себе в Telegram.';e.classList.toggle('bkw',old);
+if(s)s.textContent=old?'⚠ сделайте копию':'';
+if(t)t.textContent='Сегодня скачано примерно '+txFmt()+' (оценка до сжатия, только этот телефон). Бесплатный лимит Firebase — 10 ГБ в месяц на все телефоны вместе.';
+if(x)x.textContent='На этом телефоне записано ошибок: '+ERRS.length+'. Журнал всех телефонов — кнопка «Показать».'};
+const bkNag=()=>{if(!isAdmin())return;const dd=bkDays();if(dd>=0&&dd<=7)return;const td=txDay();if(LS.get('vip3-bkn','')===td)return;LS.set('vip3-bkn',td);setTimeout(()=>toast(dd<0?'💾 Сделайте первую резервную копию: Админ-панель → Данные и копия':'💾 Копия не делалась '+dd+' дн.: Админ-панель → Данные и копия'),3200)};
+const errFmt=d=>{const rows=[];Object.entries(d||{}).forEach(([dev,o])=>{if(o&&typeof o==='object')Object.values(o).forEach(x=>{if(x&&typeof x==='object'&&x.t)rows.push({dev,...x})})});rows.sort((a,b)=>b.t-a.t);if(!rows.length)return'Ошибок нет 👍';
+return rows.slice(0,60).map(x=>new Date(x.t).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · v'+(x.v||'?')+' · '+(x.k||'?')+' · '+(x.w||'?')+(x.n>1?' · ×'+x.n:'')+' · …'+String(x.dev).slice(-4)+'\n  '+x.m+(x.s?'  ('+x.s+')':'')).join('\n')};
+const pruneMeta=async()=>{if(DEMO||!DB||!navigator.onLine||document.hidden)return;const last=Number(LS.get('vip3-prune',0))||0;if(Date.now()-last<20*36e5)return;const meta=DATA.meta||{};if(!Object.keys(meta).length)return;
+const cut=dAdd(-45),now=Date.now(),del={};
+Object.keys(meta).forEach(k=>{const m=/^(?:prep|prepMeta|writeoffs|shifts)_(\d{4}-\d{2}-\d{2})$/.exec(k);if(m&&m[1]<cut)del[k]=null});
+const lv=meta.live;if(lv&&typeof lv==='object')Object.keys(lv).forEach(k=>{const v=lv[k];if(!v||typeof v!=='object'||now-(Number(v.t)||0)>864e5)del['live/'+k]=null});
+const ks=Object.keys(del);if(!ks.length){LS.set('vip3-prune',now);return}
+try{for(let i=0;i<ks.length;i+=100){const part={};ks.slice(i,i+100).forEach(k=>part[k]=null);await api('PATCH','meta',part)}
+ks.forEach(k=>{if(k.indexOf('live/')===0){if(DATA.meta&&DATA.meta.live)delete DATA.meta.live[k.slice(5)]}else if(DATA.meta)delete DATA.meta[k]});LS.set('vip3-prune',now)}catch(e){if(e&&[400,401,403,404].includes(e.status))LS.set('vip3-prune',now)}};
+setTimeout(pruneMeta,2e4+Math.random()*2e4);setInterval(pruneMeta,18e5);try{if(ERRS.length&&ERRS.some(x=>x.t>(Number(LS.get('vip3-errsent',0))||0)))errSoon()}catch(e){}
 // ---------- установка на главный экран ----------
 {const b=$('#instb');if(b){const UA=navigator.userAgent||'',iOS=/iphone|ipad|ipod/i.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),AND=/android/i.test(UA),
 safari=iOS&&/safari/i.test(UA)&&!/crios|fxios|edgios|opios|gsa\/|fban|fbav|instagram|line\/|telegram|yabrowser/i.test(UA),

@@ -182,6 +182,40 @@
       "$oid": {
         ".write": true
       }
+    },
+    "errlog": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+      "$dev": {
+        ".write": "$dev.length <= 40",
+        "$k": {
+          ".validate": "newData.hasChildren(['t', 'm']) && $k.length <= 20",
+          "t": {
+            ".validate": "newData.isNumber()"
+          },
+          "m": {
+            ".validate": "newData.isString() && newData.val().length <= 300"
+          },
+          "s": {
+            ".validate": "newData.isString() && newData.val().length <= 160"
+          },
+          "v": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "k": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "w": {
+            ".validate": "newData.isString() && newData.val().length <= 10"
+          },
+          "n": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
     }
   }
 }
