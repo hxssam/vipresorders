@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.5.0';
+const VER='9.6.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 // ---------- тема оформления: Авто / Светлая / Тёмная (для всех телефонов) ----------
@@ -48,7 +48,7 @@ const L=Object.assign({draft:blank(),me:null,lu:{},out:[],mt:[],hold:[]},LS.get(
 if(!L.mt)L.mt=[];if(!Array.isArray(L.hold))L.hold=[];
 if(!L.draft||!L.draft.items)L.draft=blank();
 let DV=0,DATA=LS.get('vip3-cache',{}),PC=null,PCC=null,cat='all',qs='',edit=0,pd=initPd(),tab='order',qg='main',want='',sm=iso(new Date()).slice(0,7),sf=L.sf||(L.me?L.me.id:'all'),se=0,wd=dAdd(0),wcat='all',wq='',woDraft=null;const ssel=new Set();
-let liveSoon=()=>{},CT={t:0,c:null,d:null,n:null,bad:'',busy:0},TGB=LS.get('vip3-tgbot','');const saveL=()=>{LS.set('vip3-local',L);liveSoon()};
+let liveSoon=()=>{},CT={t:0,c:null,d:null,n:null,bad:'',busy:0},TGB=LS.get('vip3-tgbot',''),TGW=LS.get('vip3-tgw',''),tgPk=0,tgPoke=()=>{if(!TGW||!navigator.onLine||Date.now()-tgPk<1500)return;tgPk=Date.now();try{fetch(TGW+'/poke',{method:'POST',mode:'no-cors',keepalive:true,cache:'no-store'}).catch(()=>{})}catch(e){}};const saveL=()=>{LS.set('vip3-local',L);liveSoon()};
 const base=[];BASE.forEach(([id])=>CAT[id].split(';').forEach(e=>{const[n,u]=e.split('|');base.push({id:'b:'+id+':'+n,n,c:id,u})}));
 const ek=s=>String(s).replace(/[.#$\[\]\/]/g,'_');
 let ac,cp,mg;
@@ -131,7 +131,7 @@ async function api(m,p,b){if(!DB)throw new Error('nodb');const t=await tokSoft()
 let fl=0,retryAt=0,failures=0;
 async function flush(){if(fl||DEMO||!L.out.length||Date.now()<retryAt)return;fl=1;let denied=0;
 try{do{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){if([400,404].includes(e.status)){ST.err=ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;L.out.shift();saveL();snd.warn();toast('Не сохранено (код '+e.status+'). Проверьте соединение и правила Firebase');setSt();continue}
-if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();continue}throw e}ST.err='';failures=0;retryAt=0;L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
+if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();continue}throw e}ST.err='';failures=0;retryAt=0;if(o.p.indexOf('orders/')===0&&o.b&&o.b.copied===true)tgPoke();L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
 if(denied){snd.warn();toast('Часть изменений требует входа руководителя — они сохранены и отправятся после входа')}}catch{failures++;retryAt=Date.now()+Math.min(60000,1000*Math.pow(2,Math.min(failures-1,6)))}fl=0;setSt()}
 function mut(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
 const ES={};
@@ -1305,8 +1305,8 @@ const tgLink=id=>TGB?`https://t.me/${TGB}?start=${id&&id!=='join'&&/^[A-Za-z0-9_
 const ctLoad=async force=>{if(!isAdmin()||DEMO||!DB||CT.busy)return;if(!force&&Date.now()-CT.t<15e3)return;CT.busy=1;const bad=[],g=async n=>{try{return(await jget(n,'',true))||{}}catch(e){bad.push(n+(e&&e.status?' '+e.status:''));return null}};
 let c=null,d=null,n=null;try{[c,d,n]=await Promise.all([g('contacts'),g('devices'),g('notify')])}catch(e){}CT.busy=0;CT.t=Date.now();CT.bad=bad.join(', ');if(c)CT.c=c;if(d)CT.d=d;if(n)CT.n=n;
 try{const inf=(CT.n&&CT.n.info)||{};if(inf.bot&&/^[A-Za-z0-9_]{3,40}$/.test(inf.bot)&&inf.bot!==TGB){TGB=inf.bot;LS.set('vip3-tgbot',TGB)}}catch(e){}rTg()};
-const tgBotLoad=async()=>{if(DEMO||!DB||!navigator.onLine)return;try{const i=await jget('notify/info');if(i&&/^[A-Za-z0-9_]{3,40}$/.test(String(i.bot||''))&&i.bot!==TGB){TGB=i.bot;LS.set('vip3-tgbot',TGB);try{rMeBox()}catch(e){}}}catch(e){}};
-const tgOut=async(to,x)=>{try{await api('PUT','notify/outbox/m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{to,x:String(x).slice(0,900),t:Date.now()});snd.ok();toast('✓ В очереди. Бот отправит в течение нескольких минут');return 1}catch(e){snd.warn();toast(e&&(e.status===401||e.status===403)?'Нет доступа: сначала опубликуйте новые правила Firebase':'Не удалось отправить. Проверьте интернет');return 0}};
+const tgBotLoad=async()=>{if(DEMO||!DB||!navigator.onLine)return;try{const i=await jget('notify/info');if(i&&/^[A-Za-z0-9_]{3,40}$/.test(String(i.bot||''))&&i.bot!==TGB){TGB=i.bot;LS.set('vip3-tgbot',TGB);try{rMeBox()}catch(e){}}if(i){const w=typeof i.w==='string'&&/^https:\/\/[A-Za-z0-9][A-Za-z0-9.-]{2,100}$/.test(i.w)?i.w:'';if(w!==TGW){TGW=w;LS.set('vip3-tgw',w)}}}catch(e){}};
+const tgOut=async(to,x)=>{try{await api('PUT','notify/outbox/m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{to,x:String(x).slice(0,900),t:Date.now()});tgPoke();snd.ok();toast(TGW?'✓ Отправляется в Telegram…':'✓ В очереди. Бот отправит в течение нескольких минут');return 1}catch(e){snd.warn();toast(e&&(e.status===401||e.status===403)?'Нет доступа: сначала опубликуйте новые правила Firebase':'Не удалось отправить. Проверьте интернет');return 0}};
 const rTg=()=>{const el=$('#tgbox'),st=$('#tgst'),sm=$('#adsG');if(!el)return;const fa=document.activeElement;if(fa&&el.contains(fa)&&/^(INPUT|TEXTAREA)$/.test(fa.tagName))return;
 const C=CT.c||{},N=CT.n||{},D=CT.d||{},info=N.info||{},cfg=N.cfg||{},chats=C.chats||{},phs=C.phones||{},grp=C.group,inb=C.inbox||{},k=team(),ids=new Set(k.map(x=>x.id));
 const dvs=Object.values(D).filter(v=>v&&typeof v==='object'&&v.t),dvOf=id=>dvs.filter(v=>v.c&&v.c.id===id).sort((x,y)=>y.t-x.t)[0],dvLine=v=>`📱 ${esc(v.u||'?')} · v${esc(v.v||'?')} · ${esc(agoD(v.t))}${v.v&&v.v!==VER?' · <b>⚠ старая версия</b>':''}${v.q>0?' · <b>⚠ не отправлено: '+(+v.q)+'</b>':''}`;
@@ -1322,7 +1322,7 @@ const oth=dvs.filter(v=>!(v.c&&ids.has(v.c.id))).sort((x,y)=>y.t-x.t).slice(0,8)
 const inbL=Object.entries(inb).filter(([,v])=>v&&v.x).map(([id,v])=>({id,...v})).sort((x,y)=>(y.t||0)-(x.t||0)).slice(0,15);
 const stale=info.t&&Date.now()-info.t>30*6e4;
 let s='';if(CT.bad)s+=`<div class="tgw">⚠ Не прочитано: ${esc(CT.bad)}. Если там 401 или 403 — опубликуйте новые правила (файл firebase-rules.json) и войдите заново.</div>`;
-s+=!info.t?'<div class="tgw">Бот ещё не запускался. Откройте файл BOT-AR.md и выполните шаги.</div>':`<div class="${stale?'tgw':'small'}">${stale?'⚠ ':''}✈️ @${esc(info.bot||'?')} · последний запуск ${esc(agoD(info.t))}${stale?'. Бот давно не запускался — проверьте GitHub → Actions.':''}</div>`;
+s+=!info.t?'<div class="tgw">Бот ещё не запускался. Откройте файл BOT-AR.md и выполните шаги.</div>':`<div class="${stale?'tgw':'small'}">${stale?'⚠ ':''}✈️ @${esc(info.bot||'?')} · последний запуск ${esc(agoD(info.t))}${info.w?' · ⚡ мгновенный режим':''}${stale?(info.w?'. Бот давно не отвечает — проверьте Cloudflare → Workers.':'. Бот давно не запускался — проверьте GitHub → Actions.'):''}</div>`;
 s+=grp&&grp.id?`<div class="small">👥 Группа: <b>${esc(grp.n||'подключена')}</b></div>`:'<div class="tgw">Группа не подключена: добавьте бота в группу и напишите там /group</div>';
 if(N.err&&N.err.m)s+=`<div class="tgw">Последняя ошибка бота (${esc(agoD(N.err.t))}): ${esc(String(N.err.m).slice(0,200))}</div>`;
 if(st)st.innerHTML=s;if(sm)sm.textContent=CT.c?(on+'/'+k.length+' в Telegram'):'';
