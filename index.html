@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="vip-ver" content="9.7.0">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -15,6 +16,13 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <title>ВИАЙПИ РЕСТОБАР КУХНЯ</title>
+<script>(function(){var W=window,K='vip3-heal';
+W.__vipHeal=function(why){try{var n=Date.now(),l=+localStorage.getItem(K)||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem(K,String(n))}catch(e){}
+fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;var P=[];
+try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}))}catch(e){}
+try{if(W.caches)P.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}))}catch(e){}
+return Promise.all(P.map(function(p){return p.catch(function(){})}))}).then(function(){return Promise.all(['./','app.js','styles.css','config.js'].map(function(f){return fetch(f,{cache:'reload'}).catch(function(){})}))}).then(function(){location.reload()},function(){if(why==='manual')location.reload()})};
+var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',function(){setTimeout(chk,6000)});setTimeout(chk,30000)})()</script>
 <script>addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e})</script>
 <link rel="stylesheet" href="styles.css">
 </head>
