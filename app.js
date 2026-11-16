@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.4.0';
+const VER='9.5.0';
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const BASE=[['meat','Мясо и птица','🥩'],['deli','Колбасы и деликатесы','🥓'],['seafood','Рыба и морепродукты','🐟'],['cheese','Сыры','🧀'],['dairy','Молочные продукты и мороженое','🥛'],['vegetables','Овощи и грибы','🥬'],['herbs','Зелень и травы','🌿'],['fruit','Фрукты','🍎'],['bakery','Хлеб','🍞'],['fry','Фритюр и полуфабрикаты','🍟'],['pasta','Макароны, крупы и рис','🍝'],['flour','Мука, выпечка и сладкое','🧁'],['nuts','Орехи и семена','🥜'],['sauces','Соусы и заправки','🥫'],['spices','Специи и приправы','🧂'],['oils','Масла','🛢️'],['preserves','Консервация и соленья','🥒']];
 // ---------- тема оформления: Авто / Светлая / Тёмная (для всех телефонов) ----------
@@ -48,7 +48,7 @@ const L=Object.assign({draft:blank(),me:null,lu:{},out:[],mt:[],hold:[]},LS.get(
 if(!L.mt)L.mt=[];if(!Array.isArray(L.hold))L.hold=[];
 if(!L.draft||!L.draft.items)L.draft=blank();
 let DV=0,DATA=LS.get('vip3-cache',{}),PC=null,PCC=null,cat='all',qs='',edit=0,pd=initPd(),tab='order',qg='main',want='',sm=iso(new Date()).slice(0,7),sf=L.sf||(L.me?L.me.id:'all'),se=0,wd=dAdd(0),wcat='all',wq='',woDraft=null;const ssel=new Set();
-let liveSoon=()=>{};const saveL=()=>{LS.set('vip3-local',L);liveSoon()};
+let liveSoon=()=>{},CT={t:0,c:null,d:null,n:null,bad:'',busy:0},TGB=LS.get('vip3-tgbot','');const saveL=()=>{LS.set('vip3-local',L);liveSoon()};
 const base=[];BASE.forEach(([id])=>CAT[id].split(';').forEach(e=>{const[n,u]=e.split('|');base.push({id:'b:'+id+':'+n,n,c:id,u})}));
 const ek=s=>String(s).replace(/[.#$\[\]\/]/g,'_');
 let ac,cp,mg;
@@ -155,7 +155,7 @@ const activeKeys=()=>{const keys=new Set(['team','cfg','prepMetaToday','prepMeta
 const atPath=p=>{let o=DATA;for(const k of String(p).split('/')){if(o==null||typeof o!=='object')return null;o=o[k]}return o===undefined?null:o};
 const sig=v=>JSON.stringify(v===undefined?null:v);
 const HEAVY={orders:1,receipts:1,sched:1,payroll:1},HV={},HEAVY_MS=12e4,metaOk=()=>!metaBroken&&Object.keys(DATA.meta||{}).length>0;
-function onMeta(force,soft){if(DEMO||!DB)return Promise.resolve();try{liveCheck()}catch(e){}const routes=routeMap(),meta=DATA.meta||{},jobs=[];if(tab==='cab'&&isAdmin()&&MV.cabinet!==meta.cabinet){MV.cabinet=meta.cabinet;loadIn()}
+function onMeta(force,soft){if(DEMO||!DB)return Promise.resolve();try{liveCheck();presCheck()}catch(e){}const routes=routeMap(),meta=DATA.meta||{},jobs=[];if(tab==='cab'&&isAdmin()&&MV.cabinet!==meta.cabinet){MV.cabinet=meta.cabinet;loadIn()}
 activeKeys().forEach(k=>{const r=routes[k];if(!r)return;const rg=r[3]==='range',mk=mkey(r[0]),want=r[0]+'|'+(r[1]||'')+'#'+(rg?rangeSig(meta):(meta[mk]||0)),pend=()=>rg?rangePend():pendingFor(mk);if(MV[k]===want&&(!force||(soft&&HEAVY[k]&&metaOk()&&Date.now()-(HV[k]||0)<HEAVY_MS)))return;if(pend())return;
 jobs.push(jget(r[0],r[1],r[2]).then(d=>{if(pend())return;MV[k]=want;HV[k]=Date.now();if(rg){mergeRange(r[0],d,dAdd(0),dAdd(BQ_SPAN));return}if(sig(atPath(r[0]))===sig(d))return;put('/'+r[0],d);dirty(r[0].split('/')[0])}).catch(e=>{if(r[2])return;throw e}))});
 return Promise.all(jobs)}
@@ -188,15 +188,15 @@ const unitSel=(id,u)=>{const us=UNITS.includes(u)?UNITS:[...UNITS,u];return `<se
 const ugBtn=(id,on)=>`<button class="ug${on?' on':''}" data-a="urg" data-id="${esc(id)}" aria-pressed="${on?'true':'false'}" aria-label="${on?'Срочно. Снять отметку':'Отметить как срочно'}">🚨</button>`;
 const stepper=it=>`<div class="st"><button data-a="dec" data-id="${esc(it.id)}">−</button><input inputmode="decimal" data-q="${esc(it.id)}" value="${fmtQ(it.qty)}" aria-label="Количество">${unitSel(it.id,it.u)}<button data-a="inc" data-id="${esc(it.id)}">+</button></div>`;
 // ---------- «живой» черновик заказа: что сейчас набирают другие повара (узел meta/live/<устройство>, правила менять не нужно) ----------
-const LIVE_TTL=4*36e5;let liveTm=0,liveSig='',liveAt=0,LVO=[],LVMAP=new Map(),LVSIG='';
+const LIVE_TTL=45*6e4;let liveTm=0,liveAct=Date.now(),liveSig='',liveAt=0,LVO=[],LVMAP=new Map(),LVSIG='';
 const liveSnap=()=>{const it=dI();if(!it.length)return null;const c=L.draft.cook||L.me,i={};it.forEach(x=>{i[ek(x.id)]={n:x.n,q:x.qty,u:x.u,...(x.urg?{g:1}:{})}});return{c:c?{id:c.id,n:c.n}:null,d:L.draft.date,e:L.draft.editId?1:0,i}};
 const liveSend=async force=>{if(DEMO||!DB)return;const snap=liveSnap(),sg=snap?JSON.stringify(snap):'';if(sg===liveSig&&!force)return;
 try{if(snap)await api('PUT','meta/live/'+DEV,{...snap,t:Date.now()});else await api('DELETE','meta/live/'+DEV);liveSig=sg;liveAt=Date.now();
 const lv=((DATA.meta=DATA.meta||{}).live=DATA.meta.live||{});if(snap)lv[DEV]={...snap,t:liveAt};else delete lv[DEV]}catch(e){}};
 liveSoon=()=>{if(DEMO||!DB)return;clearTimeout(liveTm);liveTm=setTimeout(liveSend,450)};
-const liveBeat=()=>{if(document.hidden)return;if(liveSnap()&&Date.now()-liveAt>24e4)liveSend(true);else liveSoon()};
-const liveOthers=()=>{const lv=(DATA.meta||{}).live;if(!lv||typeof lv!=='object')return[];const now=Date.now();
-return Object.entries(lv).filter(([k,v])=>k!==DEV&&v&&typeof v==='object'&&v.i&&typeof v.i==='object'&&now-(Number(v.t)||0)<LIVE_TTL).map(([k,v])=>({k,t:Number(v.t)||0,c:v.c&&v.c.n?v.c:null,d:RXD.test(String(v.d||''))?v.d:'',items:Object.entries(v.i).filter(([,x])=>x&&typeof x==='object').map(([id,x])=>({id,n:String(x.n||''),q:Number(x.q)||0,u:String(x.u||''),g:!!x.g}))})).filter(x=>x.items.length).sort((a,b)=>b.t-a.t)};
+const liveBeat=()=>{if(document.hidden||Date.now()-liveAct>18e5)return;if(liveSnap()&&Date.now()-liveAt>24e4)liveSend(true);else liveSoon()};
+const liveOthers=()=>{const lv=(DATA.meta||{}).live;if(!lv||typeof lv!=='object')return[];const now=Date.now(),me=(L.draft.cook||L.me||{}).id;
+return Object.entries(lv).filter(([k,v])=>k!==DEV&&v&&!(me&&v.c&&v.c.id===me)&&typeof v==='object'&&v.i&&typeof v.i==='object'&&now-(Number(v.t)||0)<LIVE_TTL).map(([k,v])=>({k,t:Number(v.t)||0,c:v.c&&v.c.n?v.c:null,d:RXD.test(String(v.d||''))?v.d:'',items:Object.entries(v.i).filter(([,x])=>x&&typeof x==='object').map(([id,x])=>({id,n:String(x.n||''),q:Number(x.q)||0,u:String(x.u||''),g:!!x.g}))})).filter(x=>x.items.length).sort((a,b)=>b.t-a.t)};
 const liveName=x=>x.c?x.c.n:'Кто-то',liveCol=x=>x.c?cookColor(x.c.id):'var(--mu)';
 const livePills=id=>{const a=LVMAP.get(ek(id));if(!a)return'';return `<i class="lv" data-k="${a.map(z=>z.x.k+z.x.t).join(',')}">${a.map(z=>`<b style="--c:${liveCol(z.x)}">${esc(liveName(z.x))} · ${esc(fmtQ(z.i.q))} ${esc(z.i.u)}${z.i.g?' 🚨':''}</b>`).join('')}</i>`};
 const liveAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'только что':m<60?m+' мин назад':Math.floor(m/60)+' ч назад'};
@@ -204,8 +204,28 @@ const rLive=()=>{if(tab!=='order'||scrollY<4)return rLive0();const ref=[...docum
 const rLive0=()=>{const box=$('#livebox');if(!box)return;const o=LVO;
 if(!o.length){box.hidden=true;box.innerHTML='';box.dataset.k='';document.querySelectorAll('#list .it .n>i.lv').forEach(e=>e.remove());return}
 if(tab==='order'){const k=LVSIG+'|'+Math.floor(Date.now()/6e4);if(box.dataset.k!==k){const was=box.open;box.dataset.k=k;box.hidden=false;
-box.innerHTML=`<summary class="wrapt">👥 Сейчас набирают заказ: <b>${o.map(x=>esc(liveName(x))+' · '+x.items.length).join(' · ')}</b></summary><div class="lvl">`+o.map(x=>`<div class="lvw"><div class="lvh"><i class="lvd" style="--c:${liveCol(x)}"></i><b>${esc(liveName(x))}</b><small>${x.d?'поставка '+esc(day(x.d))+' · ':''}${esc(liveAgo(x.t))}</small></div>`+[...x.items].sort((a,b)=>COL.compare(a.n,b.n)).map(i=>`<div class="lvi${i.g?' urg':''}"><span>${i.g?'🚨 ':''}${esc(i.n)}</span><b>${esc(fmtQ(i.q))} ${esc(i.u)}</b></div>`).join('')+`</div>`).join('')+`</div>`;box.open=was}}
+box.innerHTML=`<summary class="wrapt">👥 Сейчас набирают заказ: <b>${o.map(x=>esc(liveName(x))+' · '+x.items.length).join(' · ')}</b></summary><div class="lvl">`+o.map(x=>`<div class="lvw"><div class="lvh"><i class="lvd" style="--c:${liveCol(x)}"></i><b>${esc(liveName(x))}</b><small>${x.d?'поставка '+esc(day(x.d))+' · ':''}${esc(liveAgo(x.t))}</small><button class="lvx" data-a="lvdel" data-id="${esc(x.k)}" aria-label="Убрать запись">✕</button></div>`+[...x.items].sort((a,b)=>COL.compare(a.n,b.n)).map(i=>`<div class="lvi${i.g?' urg':''}"><span>${i.g?'🚨 ':''}${esc(i.n)}</span><b>${esc(fmtQ(i.q))} ${esc(i.u)}</b></div>`).join('')+`</div>`).join('')+`</div>`;box.open=was}}
 document.querySelectorAll('#list .it[data-r]').forEach(r=>{const h=livePills(r.dataset.r),cur=r.querySelector('.n>i.lv');if(!h){if(cur)cur.remove();return}const m=/data-k="([^"]*)"/.exec(h);if(cur){if(cur.dataset.k!==(m?m[1]:''))cur.outerHTML=h}else{const n=r.querySelector('.n');if(n)n.insertAdjacentHTML('beforeend',h)}})};
+// ---------- присутствие (9.5): кто сейчас в приложении; не раскрываем кабинет и админку ----------
+const PRES_TTL=15e4,PNAME={order:'Заказ',prep:'Заготовки',sched:'График',writeoff:'Списание',recv:'Приёмка'};let presTm=0,presSig='',presAt=0,PRO=[],PRSIG='';
+const presMe=()=>{const c=L.draft.cook||L.me;return c&&c.id?{id:String(c.id),n:String(c.n||'')}:null};
+const presSnap=()=>({c:presMe(),p:PNAME[tab]||'',v:VER});
+const presSend=async force=>{if(DEMO||!DB||!navigator.onLine)return;const s=presSnap(),sg=JSON.stringify(s);if(sg===presSig&&!force)return;try{await api('PUT','meta/pres/'+DEV,{...s,t:Date.now()});presSig=sg;presAt=Date.now()}catch(e){}};
+const presSoon=()=>{if(DEMO||!DB)return;clearTimeout(presTm);presTm=setTimeout(presSend,600)};
+const presClean=async()=>{const now=Date.now(),dl={};for(const[key,lim]of[['pres',36e5],['live',72e5]]){const o=(DATA.meta||{})[key];if(o&&typeof o==='object')Object.keys(o).forEach(k=>{const v=o[k];if(k!==DEV&&(!v||typeof v!=='object'||now-(Number(v.t)||0)>lim))dl[key+'/'+k]=null})}const ks=Object.keys(dl).slice(0,40);if(!ks.length)return;try{const p={};ks.forEach(k=>p[k]=null);await api('PATCH','meta',p);ks.forEach(k=>{const[a,b]=k.split('/');if(DATA.meta&&DATA.meta[a])delete DATA.meta[a][b]})}catch(e){}};
+const presBeat=()=>{if(document.hidden||Date.now()-liveAct>6e5)return;if(Date.now()-presAt>5e4){presSend(true);presClean()}else presSoon()};
+const presOthers=()=>{const pr=(DATA.meta||{}).pres;if(!pr||typeof pr!=='object')return[];const now=Date.now(),me=(L.draft.cook||L.me||{}).id,m=new Map(),names=Object.values(PNAME);
+Object.entries(pr).forEach(([k,v])=>{if(k===DEV||!v||typeof v!=='object'||now-(Number(v.t)||0)>PRES_TTL)return;const c=v.c&&v.c.id&&v.c.n?{id:String(v.c.id),n:String(v.c.n)}:null;if(c&&c.id===me)return;const key=c?c.id:'?'+k,o=m.get(key),t=Number(v.t)||0;if(!o||t>o.t)m.set(key,{k,c,p:names.includes(v.p)?String(v.p):'',t})});
+return[...m.values()].sort((a,b)=>b.t-a.t)};
+const rPres=()=>{const b=$('#presb');if(!b)return;const o=PRO;if(!o.length){b.hidden=true;b.innerHTML='';b.dataset.k='';return}
+if(b.dataset.k===PRSIG&&!b.hidden)return;b.dataset.k=PRSIG;const was=b.open,nm=x=>x.c?x.c.n:'Кто-то',col=x=>x.c?cookColor(x.c.id):'var(--mu)';b.hidden=false;
+b.innerHTML=`<summary class="wrapt"><i class="prd" aria-hidden="true"></i>В сети: <b>${o.slice(0,3).map(x=>esc(nm(x))).join(' · ')}${o.length>3?' +'+(o.length-3):''}</b></summary><div class="prl">`+o.map(x=>`<div class="prw"><i class="lvd" style="--c:${col(x)}"></i><b>${esc(nm(x))}</b><small>${x.p?esc(x.p):'в приложении'}</small></div>`).join('')+`</div>`;b.open=was};
+const presCheck=()=>{const o=presOthers(),sg=JSON.stringify(o.map(x=>[x.k,x.p,x.c&&x.c.n]));if(sg===PRSIG&&PRO.length===o.length)return;PRSIG=sg;PRO=o;rPres()};
+{const act=()=>{const n=Date.now(),was=liveAct;if(n-was<1500)return;liveAct=n;if(n-was>18e5){try{liveSoon();presSoon()}catch(e){}}};['pointerdown','keydown','touchstart','scroll'].forEach(ev=>addEventListener(ev,act,{passive:true,capture:true}));addEventListener('visibilitychange',()=>{if(!document.hidden){liveAct=Math.max(liveAct,Date.now()-1);try{presSoon();liveSoon()}catch(e){}}})}
+// реестр устройств: devices/<DEV> — читает только шеф (последний вход, версия, неотправленное)
+const uaShort=()=>{const u=navigator.userAgent||'',os=/iPhone|iPad|iPod/.test(u)?'iOS':/Android/.test(u)?'Android':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':'?';let st='';try{st=(navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'PWA':'браузер'}catch(e){}return(os+' · '+st+(/Telegram/i.test(u)?' · Telegram':'')).slice(0,40)};
+const devSend=async()=>{if(DEMO||!DB||!navigator.onLine||document.hidden)return;const now=Date.now(),last=Number(LS.get('vip3-dv',0))||0;if(now-last<6e5)return;try{await api('PUT','devices/'+DEV,{t:now,v:VER,...(presMe()?{c:presMe()}:{}),q:L.out.length+((L.hold&&L.hold.length)||0),u:uaShort()});LS.set('vip3-dv',now)}catch(e){if(e&&[400,401,403,404].includes(e.status))LS.set('vip3-dv',now)}};
+
 const liveCheck=()=>{const mine=((DATA.meta||{}).live||{})[DEV];if(mine&&!liveSnap()&&!liveSig&&DB&&!DEMO){liveSig='x';liveSend(true).then(()=>{liveSig=''})}
 const o=liveOthers(),sg=JSON.stringify(o.map(x=>[x.k,x.t]));if(sg===LVSIG)return;LVSIG=sg;LVO=o;LVMAP=new Map();o.forEach(x=>x.items.forEach(i=>{const a=LVMAP.get(i.id)||[];a.push({x,i});LVMAP.set(i.id,a)}));if(tab==='order')rLive()};
 const row=p=>{const it=L.draft.items[p.id],i=esc(p.id);return `<div class="it${it?' on':''}${it&&it.urg?' urg':''}" data-r="${i}"><div class="n">${esc(p.n)}${ugBtn(p.id,it&&it.urg)}${livePills(p.id)}</div>${it?stepper(it):`<button data-a="add" data-id="${i}" aria-label="Добавить">＋ ${esc(L.lu[p.id]||p.u)}</button>`}${ed()?`<button class="x" data-a="editp" data-id="${i}" aria-label="Изменить">✎</button><button class="x" data-a="delp" data-id="${i}" aria-label="Удалить товар">✕</button>`:''}</div>`};
@@ -800,7 +820,7 @@ if(ses&&acctData){const draw=()=>{box.innerHTML=`<div class="acc-bar"><b>👤 ${
 if(cabPick){const c=k.find(x=>x.id===cabPick);if(!c){cabPick=null;rCab();return}box.innerHTML=`<div class="acc-bar"><b>${esc(c.n)}</b><button class="g" data-a="cabback">Назад</button></div><div class="small" style="margin:0 0 8px">Введите пароль, который выдал вам шеф.</div><input type="password" id="cabpw" placeholder="Пароль" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="acts"><button class="p" data-a="cablogin">Войти</button></div>`;return}
 box.innerHTML=`<div class="lbl">Выберите своё имя</div><div class="chips wrap">${k.map(c=>`<button class="chip cook-chip" style="--cook:${cookColor(c.id)}" data-a="cabpick" data-id="${esc(c.id)}"><i class="cook-dot"></i>${esc(c.n)}<small>${esc(c.r)}</small></button>`).join('')||'<span class="small">Повара не добавлены.</span>'}</div><div class="small" style="margin-top:10px">🔒 Кабинет защищён паролем. Каждый видит только свой счёт.</div>`};
 const rGseg=()=>{const s=$('#gseg');if(!s)return;const on=tab==='sched'||tab==='cab';s.hidden=!on;if(!on)return;[['sched','#gsch'],['cab','#gcab']].forEach(([k,q])=>{const e=$(q);if(e)e.classList.toggle('on',k===tab)});const g=$('#gcab');if(g)g.textContent=isAdmin()?'💼 Зарплаты':'👤 Мой кабинет'};
-const rMeBox=()=>{const b=$('#mebox');if(!b)return;const k=team().find(x=>x.id===sf);b.innerHTML=k?`<button class="p" data-a="cabgo">💼 Мой кабинет: ${esc(k.n)}</button>`:'<div class="small">Выберите своё имя выше, чтобы открыть личный кабинет (часы и зарплата).</div>'};
+const rMeBox=()=>{const b=$('#mebox');if(!b)return;const k=team().find(x=>x.id===sf);b.innerHTML=k?`<button class="p" data-a="cabgo">💼 Мой кабинет: ${esc(k.n)}</button>${TGB?`<a class="tgl" href="${esc(tgLink(k.id))}" target="_blank" rel="noopener">✈️ Подключить Telegram: уведомления о смене</a>`:''}`:'<div class="small">Выберите своё имя выше, чтобы открыть личный кабинет (часы и зарплата).</div>'};
 async function cabW(sub,id,val){if(!ses||!DB)return{ok:0,st:0};try{const u=`${DB}/acct/${ses.key}/${sub}/${id}.json`,r=await fetchFast(u,val===null?{method:'DELETE'}:{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)},9000);if(!r.ok)return{ok:0,st:r.status};fetchFast(`${DB}/meta/cabinet.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(Date.now())},6000).catch(()=>{});return{ok:1,st:200}}catch(e){return{ok:0,st:0}}}
 let shd=null;
 const shPrev=()=>{const el=$('#dshm');if(!el||!shd)return;const h=Number(String($('#dshh').value).replace(',','.'));el.textContent=h>0&&shd.rate>0?`≈ ${mny(h*shd.rate,shd.cu)} · ставка ${mny(shd.rate,shd.cu)} / час`:(h>0&&!shd.adm?'Ставка пока не указана — сумма появится, когда шеф её задаст.':'')};
@@ -874,9 +894,17 @@ const open=id=>{rRev();$(id).showModal()};
 const need=()=>{snd.warn();toast('Нужен вход в админ-панель');ACT.admin()};
 const rep=id=>{const p=prods().find(x=>x.id===id),r=document.querySelector(`[data-r="${cssEsc(id)}"]`);if(p&&r)r.outerHTML=row(p);rBar();if(dialogOpen('#dr'))rRev()};
 const ui=()=>{rFil();rCats();rList();rAdm();rShifts();rGseg();if(tab==='sched')rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
-const afterLogin=()=>{ensureTeamColors();try{bkNag()}catch(e){}if(L.hold&&L.hold.length){L.out.push(...L.hold.splice(0));saveL();flush()}ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();rDs();$('#dt').showModal()}};
+const afterLogin=()=>{ensureTeamColors();try{bkNag()}catch(e){}if(L.hold&&L.hold.length){L.out.push(...L.hold.splice(0));saveL();flush()}ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();rDs();rTg();$('#dt').showModal();ctLoad()}};
 const authErr=m=>/TOO_MANY/.test(m)?'Google временно ограничил вход. Подождите и повторите':/CREDENTIAL_TOO_OLD/.test(m)?'Войдите заново и повторите':'Неверный пароль';
 const ACT={
+async tgref(){toast('Обновляю…');ctLoad(true)},
+tgev(id){if(!isAdmin())return need();if(!TGEV.some(x=>x[0]===id))return;const n=CT.n||(CT.n={}),cf=n.cfg||(n.cfg={}),nv=cf[id]===0?1:0;cf[id]=nv;rTg();snd.tap();api('PUT','notify/cfg/'+id,nv).catch(()=>{cf[id]=nv?0:1;rTg();snd.warn();toast('Не удалось сохранить')})},
+async tgcopy(){const l=tgLink('join');if(l&&await clip(l)){snd.ok();toast('✓ Ссылка скопирована')}},
+async tgsend(){if(!isAdmin())return need();const t=($('#tgmsg').value||'').trim();if(!t){snd.warn();toast('Напишите текст');return}if(await tgOut('group',t))$('#tgmsg').value=''},
+async tgtest(){if(!isAdmin())return need();await tgOut('group','✅ Тест: бот ВИАЙПИ работает')},
+async tgunlink(id){if(!isAdmin())return need();if(!/^\d{1,20}$/.test(id||''))return;const v=((CT.c||{}).chats||{})[id];if(!await ask('Отвязать Telegram?',`<p>${esc(v&&v.n||'Аккаунт')}${v&&v.u?' (@'+esc(v.u)+')':''} перестанет получать личные сообщения от бота. Человек сможет подключиться заново.</p>`,'Да, отвязать','Нет'))return;try{await api('DELETE','contacts/chats/'+id);if(CT.c&&CT.c.chats)delete CT.c.chats[id];rTg();snd.ok()}catch(e){snd.warn();toast('Не удалось отвязать')}},
+async tgclr(){if(!isAdmin())return need();if(!await ask('Очистить сообщения?','<p>Все сохранённые сообщения от поваров будут удалены.</p>','Да, очистить','Нет'))return;try{await api('DELETE','contacts/inbox');if(CT.c)delete CT.c.inbox;rTg();snd.ok()}catch(e){snd.warn();toast('Не удалось очистить')}},
+async lvdel(k){if(!/^[\w-]{1,40}$/.test(k||'')||k===DEV)return;const x=LVO.find(z=>z.k===k);if(!await ask('Убрать запись?',`<p>${esc(x?liveName(x):'Кто-то')} · ${x?x.items.length:0} поз. ${x?'('+esc(liveAgo(x.t))+')':''}. Если человек всё ещё набирает заказ, запись появится снова.</p>`,'Да, убрать','Нет'))return;try{await api('DELETE','meta/live/'+k);if(DATA.meta&&DATA.meta.live)delete DATA.meta.live[k];liveCheck();rLive();snd.ok()}catch(e){snd.warn();toast('Не удалось убрать. Проверьте интернет')}},
 whopick(id){const k=team().find(x=>x.id===id);if(!k)return;L.me=k;if(!cnt()||!L.draft.cook)L.draft.cook=k;saveL();whoDone();$('#dwho').close();snd.ok();vib(25);rCooks();rPCooks();rShifts();if(tab==='sched')rSched();toast('Здравствуйте, '+k.n+' 👋')},
 whoskip(){whoDone();$('#dwho').close();snd.tap()},
 syncnow(){retryAt=0;failures=0;tokFail=0;if(L.hold&&L.hold.length)L.out.push(...L.hold.splice(0));saveL();snd.tap();toast('Отправляю…');flush();setSt()},
@@ -889,10 +917,10 @@ try{const t=await tok();const r=await fetchFast('https://identitytoolkit.googlea
 if(!r.ok){snd.warn();toast(authErr(j.error&&j.error.message||''));return}
 AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};LS.set('vip3-rt',AU.rt);$('#npw').value='';snd.ok();toast('✓ Пароль изменён')}catch{snd.warn();toast('Не удалось. Проверьте сеть')}},
 logout(){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');edit=0;$('#dt').close();ui();snd.tap()},
-admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adT'});$('#dt').showModal();$('#dt').scrollTop=0}else{$('#ap').value='';$('#da').showModal();$('#ap').focus()}},
+admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();rTg();document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adT'});$('#dt').showModal();$('#dt').scrollTop=0;ctLoad()}else{$('#ap').value='';$('#da').showModal();$('#ap').focus()}},
 toggled(){edit=!edit;ui();snd.tap()},
 unhide(){if(!isAdmin())return need();mut('DELETE','catalog/hidden');snd.ok()},
-tab(id){if(id==='plan')id='prep';const was=tab;if(id==='prep'||id==='writeoff')carryAll();if((was==='cab'||was==='sched')&&id!=='cab'&&id!=='sched'&&(ses||cabPick))cabLogout(false);tab=id;snd.tap();if(id==='order'){try{liveCheck();rLive()}catch(e){}}
+tab(id){if(id==='plan')id='prep';const was=tab;if(id==='prep'||id==='writeoff')carryAll();if((was==='cab'||was==='sched')&&id!=='cab'&&id!=='sched'&&(ses||cabPick))cabLogout(false);tab=id;snd.tap();try{presSoon()}catch(e){}if(id==='order'){try{liveCheck();rLive()}catch(e){}}
 [['order','#vOrder'],['prep','#vPrep'],['sched','#vSched'],['cab','#vCab'],['writeoff','#vWriteoff'],['recv','#vRecv']].forEach(([k,s])=>{const e=$(s);e.hidden=id!==k;if(id===k&&was!==k){e.classList.remove('vin');void e.offsetWidth;e.classList.add('vin')}});
 $('#bar').hidden=id!=='order';const navId=id==='cab'?'sched':id;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.id===navId));rGseg();requestAnimationFrame(placeInd);
 if(id==='order'){rShifts();refreshRoster();try{rBack()}catch(e){console.error('rBack',e)}}if(id==='prep'){rPrep();rPlan();rLibrary();rBqAlert()}if(id==='sched')rSched();if(id==='cab'){rCab();loadIn()}if(id==='writeoff')rWriteoff();if(id==='recv')rRecv();streams()},
@@ -1059,7 +1087,7 @@ out.acct={};for(const k of keys){try{const v=await jget('acct/'+k,'',true);if(v)
 if(bad.includes('payroll (auth)')||!out.team){toast('Не удалось прочитать данные. Войдите как руководитель заново');return}
 const txt=JSON.stringify({app:'vip-restobar',ver:VER,at:new Date().toISOString(),notread:bad,data:out}),d=new Date(),p2=n=>String(n).padStart(2,'0'),nm=`vip-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`;
 const r=await sendFile(new Blob([txt],{type:'application/json'}),nm,'Резервная копия ВИАЙПИ');
-if(r==='shared'||r==='download'){LS.set('vip3-lastbk',Date.now());toast('✓ Копия сохранена · '+(txt.length/1048576).toFixed(2)+' МБ'+(bad.length?' · не прочитано: '+bad.length:''));rBk()}else if(r==='cancel')toast('Отменено')}
+if(r==='shared'||r==='download'){LS.set('vip3-lastbk',Date.now());api('PUT','plan/cfg/bk',Date.now()).catch(()=>{});toast('✓ Копия сохранена · '+(txt.length/1048576).toFixed(2)+' МБ'+(bad.length?' · не прочитано: '+bad.length:''));rBk()}else if(r==='cancel')toast('Отменено')}
 catch(e){toast('Не удалось сделать копию. Проверьте связь')}finally{if(b){delete b.dataset.busy;b.disabled=false}}},
 async errshow(){snd.tap();const x=$('#errbox');x.hidden=false;x.textContent='Загрузка…';const mine=Object.fromEntries(ERRS.map((e,i)=>['l'+i,e]));let d={},note='';try{d=(await jget('errlog'))||{}}catch(e){note='\n\n⚠ Журнал других телефонов не прочитан. Если правила Firebase ещё не обновлены (новый узел errlog), опубликуйте firebase-rules.json.'}d[DEV]=mine;x.textContent=errFmt(d)+note},
 async errcopy(){snd.tap();const x=$('#errbox');const t=x.hidden?errFmt({[DEV]:Object.fromEntries(ERRS.map((e,i)=>[i,e]))}):x.textContent;toast(await clip(t)?'✓ Скопировано':'Не удалось скопировать')},
@@ -1266,10 +1294,46 @@ const EMO=['🥩','🍗','🥓','🐟','🦐','🥚','🧀','🥛','🥬','🥕'
 fixDraftDate(true);syncDraft();rAll();setSt();placeInd();addEventListener('load',placeInd);addEventListener('resize',placeInd);addEventListener('orientationchange',()=>setTimeout(placeInd,200));detect().then(()=>{streams();flush();carryAll(true)});
 L.hold=(L.hold||[]).filter(o=>!o.at||Date.now()-o.at<3*864e5);if(L.hold.length){L.out.push(...L.hold.splice(0));saveL()}
 {const g=$('#dwho');if(g)g.addEventListener('cancel',e=>e.preventDefault());document.addEventListener('visibilitychange',()=>{if(document.hidden)whoHidAt=Date.now();else if(whoHidAt&&Date.now()-whoHidAt>30*6e4){try{sessionStorage.removeItem('vip3-who')}catch{}whoOpen()}});if(whoNeeded())whoOpen()}
-if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();try{bkNag()}catch(e){}ui();if(L.out.length){retryAt=0;flush()}}).catch(()=>{});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();liveCheck();if(tab==='order')rLive()}catch(e){}},6e4);
+if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();try{bkNag()}catch(e){}ui();if(L.out.length){retryAt=0;flush()}}).catch(()=>{});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();presBeat();devSend();liveCheck();presCheck();if(tab==='order')rLive()}catch(e){}},6e4);setInterval(()=>{try{presCheck()}catch(e){}},2e4);setTimeout(()=>{try{presSend(true);devSend();tgBotLoad()}catch(e){}},7e3);setInterval(()=>{try{tgBotLoad();if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open)ctLoad()}catch(e){}},216e5);setInterval(()=>{try{if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open&&!document.hidden)ctLoad()}catch(e){}},3e4);{const g=$('#adG');if(g)g.addEventListener('toggle',()=>{if(g.open)ctLoad(true)})}{const b=$('#tgbox');if(b)b.addEventListener('change',async e=>{const t=e.target;if(!t||!t.classList||!t.classList.contains('tgph')||!isAdmin())return;const id=t.dataset.id,v=t.value.trim();if(!/^[\w-]{1,60}$/.test(id||''))return;if(v&&!PHRE.test(v)){snd.warn();toast('Телефон, например: +7 900 123-45-67');return}try{if(v)await api('PUT','contacts/phones/'+id,v);else await api('DELETE','contacts/phones/'+id);const c=CT.c||(CT.c={}),p=c.phones||(c.phones={});if(v)p[id]=v;else delete p[id];snd.ok();toast(v?'✓ Телефон сохранён':'Телефон удалён');rTg()}catch(er){snd.warn();toast('Не удалось сохранить телефон')}})}
 // ---- 9.4: резервная копия (напоминание, список узлов), журнал ошибок (вывод), уборка служебных отметок meta
 const BK_NODES=['team','catalog','orders','prep','prepMeta','prepLibrary','prepPins','prepCats','writeoffs','plan','sched','shifts','receipts','payroll'];
 const bkDays=()=>{const l=Number(LS.get('vip3-lastbk',0))||0;return l?Math.floor((Date.now()-l)/864e5):-1};
+// ---------- Телефоны и Telegram (9.5): contacts/notify/devices читают только шеф и бот ----------
+const agoD=t=>{const m=Math.round((Date.now()-(Number(t)||0))/6e4);return m<1?'только что':m<60?m+' мин назад':m<1440?Math.floor(m/60)+' ч назад':Math.floor(m/1440)+' дн. назад'};
+const PHRE=/^\+?[0-9 ()\-]{5,20}$/,TGEV=[['sh','⏰ Смена на завтра'],['bq','🎉 Банкет'],['od','🧾 Новый заказ'],['al','⚠ Для шефа']];
+const tgLink=id=>TGB?`https://t.me/${TGB}?start=${id&&id!=='join'&&/^[A-Za-z0-9_-]{1,60}$/.test(id)?'c_'+id:'join'}`:'';
+const ctLoad=async force=>{if(!isAdmin()||DEMO||!DB||CT.busy)return;if(!force&&Date.now()-CT.t<15e3)return;CT.busy=1;const bad=[],g=async n=>{try{return(await jget(n,'',true))||{}}catch(e){bad.push(n+(e&&e.status?' '+e.status:''));return null}};
+let c=null,d=null,n=null;try{[c,d,n]=await Promise.all([g('contacts'),g('devices'),g('notify')])}catch(e){}CT.busy=0;CT.t=Date.now();CT.bad=bad.join(', ');if(c)CT.c=c;if(d)CT.d=d;if(n)CT.n=n;
+try{const inf=(CT.n&&CT.n.info)||{};if(inf.bot&&/^[A-Za-z0-9_]{3,40}$/.test(inf.bot)&&inf.bot!==TGB){TGB=inf.bot;LS.set('vip3-tgbot',TGB)}}catch(e){}rTg()};
+const tgBotLoad=async()=>{if(DEMO||!DB||!navigator.onLine)return;try{const i=await jget('notify/info');if(i&&/^[A-Za-z0-9_]{3,40}$/.test(String(i.bot||''))&&i.bot!==TGB){TGB=i.bot;LS.set('vip3-tgbot',TGB);try{rMeBox()}catch(e){}}}catch(e){}};
+const tgOut=async(to,x)=>{try{await api('PUT','notify/outbox/m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{to,x:String(x).slice(0,900),t:Date.now()});snd.ok();toast('✓ В очереди. Бот отправит в течение нескольких минут');return 1}catch(e){snd.warn();toast(e&&(e.status===401||e.status===403)?'Нет доступа: сначала опубликуйте новые правила Firebase':'Не удалось отправить. Проверьте интернет');return 0}};
+const rTg=()=>{const el=$('#tgbox'),st=$('#tgst'),sm=$('#adsG');if(!el)return;const fa=document.activeElement;if(fa&&el.contains(fa)&&/^(INPUT|TEXTAREA)$/.test(fa.tagName))return;
+const C=CT.c||{},N=CT.n||{},D=CT.d||{},info=N.info||{},cfg=N.cfg||{},chats=C.chats||{},phs=C.phones||{},grp=C.group,inb=C.inbox||{},k=team(),ids=new Set(k.map(x=>x.id));
+const dvs=Object.values(D).filter(v=>v&&typeof v==='object'&&v.t),dvOf=id=>dvs.filter(v=>v.c&&v.c.id===id).sort((x,y)=>y.t-x.t)[0],dvLine=v=>`📱 ${esc(v.u||'?')} · v${esc(v.v||'?')} · ${esc(agoD(v.t))}${v.v&&v.v!==VER?' · <b>⚠ старая версия</b>':''}${v.q>0?' · <b>⚠ не отправлено: '+(+v.q)+'</b>':''}`;
+const chOf=id=>Object.entries(chats).filter(([,v])=>v&&v.k===id).map(([tid,v])=>({tid,...v}));
+let on=0;
+const rows=k.map(c=>{const ch=chOf(c.id),ph=String(phs[c.id]||''),dv=dvOf(c.id);if(ch.length)on++;
+return `<div class="tgc"><div class="tgh"><i class="lvd" style="--c:${cookColor(c.id)}"></i><b>${esc(c.n)}</b><small>${esc(c.r)}</small><span class="tgs ${ch.length?'ok':'no'}">${ch.length?'✈️ '+(ch[0].u?'@'+esc(ch[0].u):esc(ch[0].n||'подключён')):'Telegram не подключён'}</span></div>`+
+`<input class="tgph" type="tel" inputmode="tel" data-id="${esc(c.id)}" value="${esc(ph)}" placeholder="Телефон: +7 900 123-45-67" autocomplete="off" aria-label="Телефон: ${esc(c.n)}">`+
+`<div class="acts" style="margin-top:6px">${ph&&PHRE.test(ph)?`<a class="tgl" href="tel:${esc(ph.replace(/[^\d+]/g,''))}">📞 Позвонить</a>`:''}${ch.map(z=>`<button class="g" data-a="tgunlink" data-id="${esc(z.tid)}">Отвязать Telegram</button>`).join('')}</div>`+
+`<div class="small">${dv?dvLine(dv):'Телефон пока не заходил в версию 9.5'}</div></div>`}).join('');
+const free=Object.entries(chats).filter(([,v])=>v&&!ids.has(v.k)).map(([tid,v])=>`<div class="tgc"><div class="tgh"><b>${esc(v.n||'?')}</b>${v.u?'<small>@'+esc(v.u)+'</small>':''}<span class="tgs no">без привязки</span></div><div class="acts" style="margin-top:0"><button class="g" data-a="tgunlink" data-id="${esc(tid)}">Убрать</button></div></div>`).join('');
+const oth=dvs.filter(v=>!(v.c&&ids.has(v.c.id))).sort((x,y)=>y.t-x.t).slice(0,8).map(v=>`<div class="small" style="margin:4px 0">${dvLine(v)}${v.c&&v.c.n?' · '+esc(v.c.n):''}</div>`).join('');
+const inbL=Object.entries(inb).filter(([,v])=>v&&v.x).map(([id,v])=>({id,...v})).sort((x,y)=>(y.t||0)-(x.t||0)).slice(0,15);
+const stale=info.t&&Date.now()-info.t>30*6e4;
+let s='';if(CT.bad)s+=`<div class="tgw">⚠ Не прочитано: ${esc(CT.bad)}. Если там 401 или 403 — опубликуйте новые правила (файл firebase-rules.json) и войдите заново.</div>`;
+s+=!info.t?'<div class="tgw">Бот ещё не запускался. Откройте файл BOT-AR.md и выполните шаги.</div>':`<div class="${stale?'tgw':'small'}">${stale?'⚠ ':''}✈️ @${esc(info.bot||'?')} · последний запуск ${esc(agoD(info.t))}${stale?'. Бот давно не запускался — проверьте GitHub → Actions.':''}</div>`;
+s+=grp&&grp.id?`<div class="small">👥 Группа: <b>${esc(grp.n||'подключена')}</b></div>`:'<div class="tgw">Группа не подключена: добавьте бота в группу и напишите там /group</div>';
+if(N.err&&N.err.m)s+=`<div class="tgw">Последняя ошибка бота (${esc(agoD(N.err.t))}): ${esc(String(N.err.m).slice(0,200))}</div>`;
+if(st)st.innerHTML=s;if(sm)sm.textContent=CT.c?(on+'/'+k.length+' в Telegram'):'';
+const keep=($('#tgmsg')||{}).value||'';
+el.innerHTML=`<div class="lbl f">Что присылать</div><div class="chips wrap">${TGEV.map(([id,t])=>`<button class="chip tgx${cfg[id]===0?'':' on'}" data-a="tgev" data-id="${id}" aria-pressed="${cfg[id]===0?'false':'true'}">${t}</button>`).join('')}</div>`+
+(TGB?`<div class="lbl f">Ссылка для команды</div><div class="small" style="word-break:break-all">${esc(tgLink('join'))}</div><div class="acts" style="margin-top:6px"><button data-a="tgcopy">Скопировать ссылку</button></div>`:'')+
+`<div class="lbl f">Повара</div>${rows||'<div class="small">Повара не добавлены.</div>'}${free?`<div class="lbl f">Telegram без привязки к повару</div>${free}`:''}${oth?`<div class="lbl f">Другие устройства</div>${oth}`:''}`+
+`<div class="lbl f">Сообщение команде</div><textarea id="tgmsg" rows="2" maxlength="900" placeholder="Текст для группы в Telegram"></textarea><div class="acts"><button class="p" data-a="tgsend">📣 Отправить в группу</button><button data-a="tgtest">Тест</button></div>`+
+`<div class="lbl f">Сообщения от поваров</div>${inbL.length?inbL.map(m=>`<div class="tgm"><div class="tgmh"><b>${esc(m.n||'?')}</b><small>${esc(agoD(m.t))}</small></div><div>${esc(m.x)}</div></div>`).join('')+'<div class="acts"><button class="d" data-a="tgclr">Очистить сообщения</button></div>':'<div class="small">Повара могут писать боту в личку — сообщения сохранятся здесь и придут вам в Telegram.</div>'}`+
+`<div class="acts"><button data-a="tgref">↻ Обновить</button></div>`;
+const m2=$('#tgmsg');if(m2&&keep)m2.value=keep};
 const rBk=()=>{const e=$('#bkinfo'),s=$('#adsK'),t=$('#txinfo'),x=$('#errinfo');if(!e)return;const dd=bkDays(),old=dd<0||dd>7;
 e.textContent=(old?'⚠ ':'')+(dd<0?'Копия ещё не делалась':dd===0?'Последняя копия: сегодня':'Последняя копия: '+dd+' дн. назад')+'. Файл можно сохранить в «Файлы» или отправить себе в Telegram.';e.classList.toggle('bkw',old);
 if(s)s.textContent=old?'⚠ сделайте копию':'';
@@ -1281,10 +1345,10 @@ return rows.slice(0,60).map(x=>new Date(x.t).toLocaleString('ru-RU',{day:'2-digi
 const pruneMeta=async()=>{if(DEMO||!DB||!navigator.onLine||document.hidden)return;const last=Number(LS.get('vip3-prune',0))||0;if(Date.now()-last<20*36e5)return;const meta=DATA.meta||{};if(!Object.keys(meta).length)return;
 const cut=dAdd(-45),now=Date.now(),del={};
 Object.keys(meta).forEach(k=>{const m=/^(?:prep|prepMeta|writeoffs|shifts)_(\d{4}-\d{2}-\d{2})$/.exec(k);if(m&&m[1]<cut)del[k]=null});
-const lv=meta.live;if(lv&&typeof lv==='object')Object.keys(lv).forEach(k=>{const v=lv[k];if(!v||typeof v!=='object'||now-(Number(v.t)||0)>864e5)del['live/'+k]=null});
+for(const key of['live','pres']){const lv=meta[key];if(lv&&typeof lv==='object')Object.keys(lv).forEach(k=>{const v=lv[k];if(!v||typeof v!=='object'||now-(Number(v.t)||0)>864e5)del[key+'/'+k]=null})}
 const ks=Object.keys(del);if(!ks.length){LS.set('vip3-prune',now);return}
 try{for(let i=0;i<ks.length;i+=100){const part={};ks.slice(i,i+100).forEach(k=>part[k]=null);await api('PATCH','meta',part)}
-ks.forEach(k=>{if(k.indexOf('live/')===0){if(DATA.meta&&DATA.meta.live)delete DATA.meta.live[k.slice(5)]}else if(DATA.meta)delete DATA.meta[k]});LS.set('vip3-prune',now)}catch(e){if(e&&[400,401,403,404].includes(e.status))LS.set('vip3-prune',now)}};
+ks.forEach(k=>{const m=/^(live|pres)\/(.+)$/.exec(k);if(m){if(DATA.meta&&DATA.meta[m[1]])delete DATA.meta[m[1]][m[2]]}else if(DATA.meta)delete DATA.meta[k]});LS.set('vip3-prune',now)}catch(e){if(e&&[400,401,403,404].includes(e.status))LS.set('vip3-prune',now)}};
 setTimeout(pruneMeta,2e4+Math.random()*2e4);setInterval(pruneMeta,18e5);try{if(ERRS.length&&ERRS.some(x=>x.t>(Number(LS.get('vip3-errsent',0))||0)))errSoon()}catch(e){}
 // ---------- установка на главный экран ----------
 {const b=$('#instb');if(b){const UA=navigator.userAgent||'',iOS=/iphone|ipad|ipod/i.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),AND=/android/i.test(UA),

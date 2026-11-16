@@ -26,6 +26,7 @@
 
 <nav class="tabs" aria-label="Разделы"><i class="tabind" aria-hidden="true"></i><button class="tab on" data-a="tab" data-id="order" aria-label="Заказ"><span class="ti">🧾</span><span class="tl">Заказ</span></button><button class="tab" data-a="tab" data-id="prep" aria-label="Заготовки"><span class="ti">✅</span><span class="tl">Заготовки</span></button><button class="tab" data-a="tab" data-id="sched" aria-label="График"><span class="ti">📅</span><span class="tl">График</span></button><button class="tab" data-a="tab" data-id="writeoff" aria-label="Списание"><span class="ti">🗑️</span><span class="tl">Списание</span></button><button class="tab" data-a="tab" data-id="recv" aria-label="Приёмка товара"><span class="ti">📦</span><span class="tl">Приёмка</span></button></nav>
 <div class="syncbar" id="syncbar" role="status" hidden></div>
+<details class="card presb" id="presb" hidden></details>
 <section id="vOrder">
 <div class="card">
 <div class="chips" id="cooks" aria-label="Кто заказывает"></div>
@@ -139,6 +140,9 @@
 <div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
 <input id="tu" placeholder="Username в Telegram, например ali_cook (необязательно)" maxlength="40" style="margin-top:8px" autocapitalize="off" autocomplete="off">
 <div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div></div></details>
+<details class="adm" id="adG"><summary><span class="ai" aria-hidden="true">📱</span><b>Телефоны и Telegram</b><small id="adsG"></small></summary><div class="adb">
+<div id="tgst"></div>
+<div id="tgbox"></div></div></details>
 <details class="adm" id="adC"><summary><span class="ai" aria-hidden="true">📦</span><b>Каталог товаров</b><small id="adsC"></small></summary><div class="adb">
 <div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
 <p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p></div></details>
