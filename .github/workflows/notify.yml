@@ -1,0 +1,28 @@
+# Скопируйте этот файл в репозиторий как .github/workflows/notify.yml (инструкция — BOT-AR.md).
+name: Telegram-уведомления
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # раз в 5 минут (GitHub может запускать с задержкой)
+  workflow_dispatch: {}      # кнопка «Run workflow» для ручного запуска
+concurrency:
+  group: vip-notify
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node bot/notify.mjs
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
+          CHIEF_USERNAME: ${{ vars.CHIEF_USERNAME }}
+          TZ_NAME: ${{ vars.TZ_NAME }}
+          SHIFT_HOUR: ${{ vars.SHIFT_HOUR }}
+          MORNING_HOUR: ${{ vars.MORNING_HOUR }}
