@@ -288,6 +288,10 @@
       "ep": {
         ".write": "auth != null && auth.token.email == 'admin@vip.local'",
         ".validate": "newData.isNumber()"
+      },
+      "w": {
+        ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+        ".validate": "newData.isString() && newData.val().matches(/^https:\\/\\/[A-Za-z0-9.-]+$/)"
       }
     },
     "proposals": {

@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.1"}
+:root{--vip-ver:"9.9.2"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -947,3 +947,24 @@ a.tgl{display:flex;align-items:center;justify-content:center;min-height:44px;mar
 
 /* 9.9.1: кнопки «Назад / Далее» всегда видны внизу панели */
 .sendp .acts{position:sticky;bottom:-18px;z-index:2;background:var(--bg);padding:10px 0 calc(6px + env(safe-area-inset-bottom));margin-top:6px;box-shadow:0 -10px 14px -10px #0006}
+
+.pn2{display:inline-block;font-size:12px;color:var(--mu);margin:0 0 0 6px;font-style:italic;overflow-wrap:anywhere}
+
+/* 9.9.2: приготовлено частично */
+.qpill.act{cursor:pointer;box-shadow:inset 0 0 0 1.5px var(--ac)}
+.qpill.part{cursor:pointer;background:var(--ac);color:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .qpill.part{color:#0b0d17}}
+.pm .dqr{font-size:12px;font-weight:800;color:var(--wa)}
+.pm .dqb{display:block;flex:0 0 100%;height:5px;border-radius:3px;background:var(--ln);overflow:hidden}
+.pm .dqb i{display:block;height:100%;background:var(--ok);border-radius:3px}
+#ddq .tkrow{display:flex;align-items:center;gap:10px}
+#ddq .st input{width:96px;text-align:center;font-size:26px;font-weight:800;height:52px}
+#ddq .st button{width:52px;height:52px}
+#ddq #dqu{font-size:18px}
+.dqbar{height:10px;border-radius:6px;background:var(--ln);overflow:hidden;margin-top:14px}
+.dqbar i{display:block;height:100%;width:0;background:var(--ok);border-radius:6px;transition:width .15s}
+.dqrem{margin-top:8px;font-size:15px;color:var(--mu);min-height:22px}
+.dqrem b{color:var(--tx)}
+
+#ddq .chip{min-height:40px;min-width:44px}
+@media(max-width:380px){#ddq .st button{min-width:40px;min-height:40px}}

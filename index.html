@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.1">
+<meta name="vip-ver" content="9.9.2">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -216,6 +216,12 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div id="tkbqb" hidden><div class="lbl" style="margin:10px 0 4px">Какой банкет</div><select id="tkbq" aria-label="Банкет"></select></div>
 <div id="tksvb" hidden><div class="lbl" style="margin:10px 0 4px">🕐 Время подачи</div><input id="tksv" data-tm inputmode="numeric" maxlength="5" placeholder="19:30" autocomplete="off" enterkeyhint="done" aria-label="Время подачи"></div>
 <div class="acts"><button class="p" data-a="tksave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="tkdel">Удалить</button></div></dialog>
+<dialog id="ddq" aria-label="Сколько приготовлено"><h2 id="dqh">Сколько приготовлено?</h2>
+<div class="small" id="dqn"></div>
+<div class="tkrow" style="margin-top:10px"><div class="st"><button data-a="dqdec" aria-label="Меньше">−</button><input id="dqv" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Приготовлено"><button data-a="dqinc" aria-label="Больше">+</button></div><b id="dqu"></b></div>
+<div class="dqbar"><i id="dqfill"></i></div><div class="dqrem" id="dqr"></div>
+<div class="chips wrap" id="dqch" style="margin-top:10px"></div>
+<div class="acts"><button class="p" data-a="dqsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="g" data-a="dqedit">✎ Заготовка</button></div></dialog>
 <dialog id="dpk" aria-label="Выбор даты"><h2 id="dph">Выберите дату</h2>
 <div class="dpk-n"><button type="button" class="g" data-a="dpmon" data-id="-12" aria-label="Год назад">«</button><button type="button" class="g" data-a="dpmon" data-id="-1" aria-label="Предыдущий месяц">‹</button><b id="dpt" aria-live="polite"></b><button type="button" class="g" data-a="dpmon" data-id="1" aria-label="Следующий месяц">›</button><button type="button" class="g" data-a="dpmon" data-id="12" aria-label="Год вперёд">»</button></div>
 <div class="dpk-w" aria-hidden="true"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span class="we">сб</span><span class="we">вс</span></div>
