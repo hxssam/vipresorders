@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.3">
+<meta name="vip-ver" content="9.9.4">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
+<script>try{var d=document.documentElement,g=localStorage.getItem("vip3-gate"),r=localStorage.getItem("vip3-rt");if(g!=="\"2\""||!r||r==="\"\"")d.className+=" locked"}catch(e){document.documentElement.className+=" locked"}</script>
 <script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -27,6 +28,23 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gt">
+<main class="gcard">
+<picture class="glogo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="52" height="68" alt="ВИАЙПИ" decoding="async"></picture>
+<h1 id="gt">ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1>
+<p class="gsub">Вход для сотрудников</p>
+<form id="gf" autocomplete="on" novalidate>
+<label class="gl" for="gn">Имя</label>
+<input id="gn" name="username" type="text" autocomplete="username" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="60" placeholder="Ваше имя в команде">
+<label class="gl" for="gp">Пароль</label>
+<div class="gpw"><input id="gp" name="password" type="password" autocomplete="current-password" enterkeyhint="go" maxlength="100" placeholder="Личный пароль"><button type="button" class="gpeek" data-a="gpeek" aria-label="Показать пароль" aria-pressed="false">👁</button></div>
+<p id="ge" class="gerr" role="alert" aria-live="assertive"></p>
+<button id="gb" class="gbtn" type="submit"><span class="gbt">Войти</span><i class="gspin" aria-hidden="true"></i></button>
+</form>
+<p class="gfoot">🔒 Доступ выдаёт руководитель. Нет пароля — обратитесь к шефу.</p>
+<small id="gv" class="gver"></small>
+</main>
+</div>
 <div class="w">
 <div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
 <button id="obsbar" class="obsbar" data-a="obs" hidden></button>
@@ -194,11 +212,15 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl f">Ошибки устройств</div><div class="small" id="errinfo" style="margin:0 0 8px"></div>
 <div class="acts" style="margin-top:0"><button data-a="errshow">Показать</button><button data-a="errcopy">Копировать</button><button class="d" data-a="errclear">Очистить</button></div>
 <pre class="errbox" id="errbox" hidden></pre></div></details>
+<details class="adm" id="adS"><summary><span class="ai" aria-hidden="true">🛡</span><b>Сессии и доступ</b><small id="adsS"></small></summary><div class="adb">
+<p class="small">Каждый заходит со своим именем и личным паролем. Сотрудник без пароля не видит ничего. Пароль повару ставится в «Команда» кнопкой 🔑.</p>
+<div class="acts"><button class="d" data-a="geall">🚪 Выйти на всех телефонах</button></div>
+<p class="small">Все телефоны (включая этот) попросят войти заново. Используйте, если телефон потерян или сотрудник уволен.</p></div></details>
 <details class="adm" id="adW"><summary><span class="ai" aria-hidden="true">🔐</span><b>Пароль руководителя</b></summary><div class="adb">
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
-<dialog id="da"><form id="daf" autocomplete="on"><h2 id="dah">Вход для руководителя</h2><div class="seg" id="dar"><button type="button" class="on" data-a="loginrole" data-id="adm">Руководитель</button><button type="button" data-a="loginrole" data-id="obs">Наблюдатель</button></div><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
+<dialog id="da"><form id="daf" autocomplete="on"><div id="accs" class="accs" hidden></div><h2 id="dah">Вход для руководителя</h2><div class="seg" id="dar"><button type="button" class="on" data-a="loginrole" data-id="adm">Руководитель</button><button type="button" data-a="loginrole" data-id="obs">Наблюдатель</button></div><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
 <dialog id="dimg" class="dimg"><h2>Заказ — лист A4</h2><div class="imw"><img id="imgp" alt="Заказ на листе A4"></div><p class="small">Весь заказ на одной странице. «Поделиться» открывает WhatsApp, Telegram, VK и другие приложения.</p><div class="acts"><button class="p" data-a="imgshare">📤 Поделиться</button><button data-a="imgpdf">📄 PDF A4</button></div><div class="acts"><button data-a="imgsave">⬇ Скачать</button><button data-a="imgcopy">📋 Копировать</button><button class="g" data-a="imgclose">Закрыть</button></div></dialog>
 <dialog id="dobs"><h2>👁 Наблюдатель</h2><p class="small" id="obst"></p><div id="obsl"></div><div class="lbl f">Сменить пароль</div><input id="onp" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obspw">Сменить пароль</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
@@ -235,7 +257,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <dialog id="dsv"><h2>Время подачи</h2><div class="small" id="svn" style="margin:0 0 10px;font-weight:700"></div><input id="svt" data-tm inputmode="numeric" maxlength="5" placeholder="19:30" autocomplete="off" enterkeyhint="done" aria-label="Время подачи"><div class="lbl" style="margin:12px 0 6px">Быстрый выбор</div><div class="chips wrap" id="svq"></div><div class="acts"><button class="p" data-a="svsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="svclr">Убрать</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dpid" class="pidd" aria-labelledby="pidh"><h2 id="pidh">Пароль</h2><div class="small" style="margin:0 0 8px">Введите свой пароль. Он запомнится на этом телефоне — повторно вводить не придётся.</div><form id="pidf" autocomplete="on" onsubmit="return false"><input id="pidv" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Пароль" enterkeyhint="go"><div class="pide" id="pide" role="alert"></div><div class="acts"><button class="g" type="button" data-a="pidno">Отмена</button><button class="p" type="submit" id="pidgo" data-a="pidgo">Войти</button></div></form></dialog>
-<dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Этим паролем повар входит в приложение (экран «Кто вы?») и в личный кабинет со своими часами и зарплатой. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
+<dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Этим личным паролем повар входит в приложение (его имя + этот пароль) и в свой кабинет с часами и зарплатой. Минимум 6 символов. Запишите и передайте повару — без пароля он не увидит ничего.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
 <dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button data-i="go">📲 Установить на главный экран</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 

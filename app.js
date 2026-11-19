@@ -3,11 +3,14 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.3';
+const VER='9.9.4';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
 const LS={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+// 9.9.4: ВХОД ДЛЯ ВСЕХ. При первом запуске этой версии каждый телефон выходит из аккаунта и просит имя и пароль (прежние «открытые» сессии больше не действуют)
+const GATE_V='2';
+if(!DEMO&&LS.get('vip3-gate','')!==GATE_V){['vip3-rt','vip3-it','vip3-was','vip3-idk','vip3-aep','vip3-age'].forEach(k=>LS.set(k,''));LS.set('vip3-role','adm');LS.set('vip3-cache',{});{const lo=LS.get('vip3-local',{});if(lo&&typeof lo==='object'){lo.me=null;if(lo.draft&&typeof lo.draft==='object')lo.draft.cook=null;lo.hold=[];LS.set('vip3-local',lo)}}LS.set('vip3-gate',GATE_V)}
 // 9.7: адрес базы известен сразу (сохранённый или стандартный) — запуск не ждёт сеть; проверка идёт в фоне и только по ответу самой Firebase
 const DBRX=/^https:\/\/[a-z0-9-]+\.(firebaseio\.com|firebasedatabase\.app)$/,dbCanon=()=>`https://${CFG.projectId}-default-rtdb.firebaseio.com`;
 let DBV=0,lastDet=0,netErr=0;
@@ -125,12 +128,13 @@ let pendSince=0;const rSync=()=>{const b=document.getElementById('syncbar');if(!
 const showN=n>0&&Date.now()-pendSince>4000,show=showN||h>0;if(b.hidden===!show&&b.dataset.k===n+'|'+h)return;b.dataset.k=n+'|'+h;b.hidden=!show;if(!show){b.innerHTML='';return}
 b.innerHTML=(showN?`<span>⏳ Не отправлено другим: <b>${n}</b></span>`:`<span>🔒 Ждут входа руководителя: <b>${h}</b></span>`)+`<button class="g" data-a="syncnow">Отправить сейчас</button>`};
 let AU={t:'',rt:LS.get('vip3-rt',''),exp:0,ok:false};
+{const c=LS.get('vip3-it',null);if(AU.rt&&c&&typeof c.t==='string'&&c.t&&c.exp>Date.now()+6e4){AU.t=c.t;AU.exp=c.exp;AU.ok=true}}
 // 9.8.0: роли. Шеф (admin@vip.local) — всё как раньше. Наблюдатель (viewer@vip.local) — смотрит; его правки уходят шефу на утверждение (proposals), сам он ничего не меняет
 const VIEWER=String(CFG.viewerEmail||'viewer@vip.local').toLowerCase();
-let ROLE=LS.get('vip3-role','')==='obs'?'obs':'adm';
+let ROLE=(r=>r==='obs'||r==='cook'?r:'adm')(LS.get('vip3-role',''));
 const jwtEmail=t=>{try{const p=String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return String(JSON.parse(decodeURIComponent(escape(atob(p+'='.repeat((4-p.length%4)%4))))).email||'').toLowerCase()}catch{return''}};
-const roleSet=t=>{const e=jwtEmail(t);ROLE=e&&e===VIEWER?'obs':'adm';LS.set('vip3-role',ROLE)};
-const isObs=()=>AU.ok&&ROLE==='obs',isAdmin=()=>AU.ok&&ROLE!=='obs',ed=()=>edit&&isAdmin();
+const roleSet=t=>{const e=jwtEmail(t);ROLE=e&&e===VIEWER?'obs':(!e||e===String(CFG.adminEmail).toLowerCase())?'adm':'cook';LS.set('vip3-role',ROLE)};
+const isObs=()=>AU.ok&&ROLE==='obs',isAdmin=()=>AU.ok&&ROLE==='adm',ed=()=>edit&&isAdmin();
 const OBS_DIV=/^(?:prep|prepMeta|prepLibrary|prepPins|writeoffs|plan|orders|receipts|catalog|prepCats)\//,OBS_FREE=/^plan\/seen\//;
 const OBS={cfg:(c=>c&&typeof c==='object'?c:{})(LS.get('vip3-obscfg',{})),ls:(a=>Array.isArray(a)?a:[])(LS.get('vip3-myprop',[])),t:0,busy:0,last:0,vt:0,nt:0};
 let gestT=0,gG=null;
@@ -140,8 +144,8 @@ const persistAsk=()=>{try{if(navigator.storage&&navigator.storage.persist)naviga
 const fetchFast=(url,options={},limit=12000)=>{if(typeof AbortController==='undefined')return fetch(url,options);const c=new AbortController(),timer=setTimeout(()=>c.abort(),limit);return fetch(url,{...options,signal:c.signal}).then(r=>{clearTimeout(timer);return r},e=>{clearTimeout(timer);throw e})};
 async function tok(lim){if(!AU.rt)return'';if(AU.t&&Date.now()<AU.exp-6e4)return AU.t;
 const r=await fetchFast('https://securetoken.googleapis.com/v1/token?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(AU.rt)},lim||12000);
-const j=await r.json();if(!r.ok){if(r.status===400){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','')}throw new Error('auth')}
-AU={t:j.id_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);return AU.t}
+const j=await r.json();if(!r.ok){if(r.status===400){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');LS.set('vip3-it','');if(!DEMO)setTimeout(()=>gateOut('Сессия закончилась. Войдите снова'),0)}throw new Error('auth')}
+AU={t:j.id_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);LS.set('vip3-it',{t:AU.t,exp:AU.exp});return AU.t}
 const probe=async u=>{try{const r=await fetchFast(u+'/.json?shallow=true',{},8000),tx=await r.text();let j;try{j=JSON.parse(tx)}catch{return 0}if(r.status===200&&(j===null||typeof j==='object'))return 2;if((r.status===401||r.status===403)&&j&&typeof j.error==='string'&&/permission denied/i.test(j.error))return 1;return 0}catch{return 0}};
 let detP=null;
 // 9.7: проверяем сразу все адреса параллельно, берём первый настоящий ответ Firebase по порядку важности (стандартный адрес первым); страницы-заглушки Wi-Fi и чужие хосты не принимаются
@@ -151,28 +155,36 @@ detP=(async()=>{for(let i=0;i<list.length;i++){if(await pr[i]){okMark();if(DB!==
 const isHtml=r=>{try{return/text\/html/i.test(r.headers.get('content-type')||'')}catch{return false}},dbBad=()=>{if(!DEMO&&!CFG.dbUrl&&Date.now()-lastDet>15000){DBV=0;detect(true)}},netBad=()=>{if(++netErr>=4&&navigator.onLine!==false)dbBad()};
 // токен обновляется не дольше 5 с и не чаще раза в 30 с после неудачи; если не вышло — запись идёт без токена (открытые узлы всё равно примут), а узлы руководителя вернут 401 и подождут
 let tokP=null,tokFail=0;const tokSoft=()=>{if(!AU.rt)return Promise.resolve('');if(AU.t&&Date.now()<AU.exp-6e4)return Promise.resolve(AU.t);if(Date.now()-tokFail<3e4)return Promise.resolve('');if(!tokP)tokP=tok(5000).catch(()=>{tokFail=Date.now();return ''}).finally(()=>{tokP=null});return tokP};
-async function api(m,p,b){if(!DB)throw new Error('nodb');const t=await tokSoft();let r;try{r=await fetchFast(`${DB}/${p}.json${t?'?auth='+t:''}`,{method:m,headers:b!==undefined?{'Content-Type':'application/json'}:undefined,body:b!==undefined?JSON.stringify(b):undefined})}catch(er){netBad();throw er}if(!r.ok){if(r.status===404)dbBad();const e=new Error('http');e.status=r.status;throw e}if(isHtml(r)){dbBad();const e=new Error('http');e.status=0;throw e}okMark();return r}
+async function api(m,p,b){if(!DB)throw new Error('nodb');if(!DEMO&&!AU.rt){const e=new Error('locked');e.locked=1;e.status=0;throw e}const t=await tokSoft();if(!t&&!DEMO){const e=new Error('notoken');e.status=0;throw e}let r;try{r=await fetchFast(`${DB}/${p}.json${t?'?auth='+t:''}`,{method:m,headers:b!==undefined?{'Content-Type':'application/json'}:undefined,body:b!==undefined?JSON.stringify(b):undefined})}catch(er){netBad();throw er}if(!r.ok){if(r.status===404)dbBad();const e=new Error('http');e.status=r.status;throw e}if(isHtml(r)){dbBad();const e=new Error('http');e.status=0;throw e}okMark();return r}
 let fl=0,retryAt=0,failures=0;
-async function flush(){if(fl||DEMO||!L.out.length||Date.now()<retryAt)return;fl=1;let denied=0;
+async function flush(){if(fl||DEMO||!AU.rt||!L.out.length||Date.now()<retryAt)return;fl=1;let denied=0;
 try{do{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){if([400,404,405,409,410,412,413,414,422].includes(e.status)){ST.err=ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;L.out.shift();saveL();snd.warn();toast('Не сохранено (код '+e.status+'). Проверьте соединение и правила Firebase');setSt();continue}
-if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();continue}throw e}ST.err='';failures=0;retryAt=0;if(o.p.indexOf('orders/')===0&&o.b&&o.b.copied===true)tgPoke();L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
+if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();sessCheck();continue}throw e}ST.err='';failures=0;retryAt=0;if(o.p.indexOf('orders/')===0&&o.b&&o.b.copied===true)tgPoke();L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
 if(denied){snd.warn();toast('Часть изменений требует входа руководителя — они сохранены и отправятся после входа')}}catch{failures++;retryAt=Date.now()+Math.min(60000,1000*Math.pow(2,Math.min(failures-1,6)))}fl=0;setSt()}
 function mut(m,p,v){if(isObs()&&OBS_DIV.test(p)&&!OBS_FREE.test(p))return propose(m,p,v);try{trashCap(m,p,v)}catch(e){}return mut0(m,p,v)}
 function mut0(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken&&p.indexOf('trash/')!==0){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
 const ES={};
-function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
-const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);es.__route=route;ST.open[key]=false;
-es.__seen=0;const on=(t,m)=>es.addEventListener(t,e=>{es.__seen=ST.seen[key]=Date.now();txAdd((e.data||'').length);try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);if(key==='meta')onMeta().catch(()=>{});else dirty(prefix.split('/')[0])}catch{}});
+function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource||!AU.rt)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
+const ph={__route:route,readyState:0,close(){this.__x=1;this.readyState=2}};ES[key]=ph;ST.open[key]=false;
+tokSoft().then(t=>{if(ES[key]!==ph||ph.__x)return;if(!t){setTimeout(()=>{if(ES[key]===ph){delete ES[key];listen(key,prefix,q)}},4000);return}
+const es=ES[key]=new EventSource(`${DB}/${prefix}.json?${[q,'auth='+t].filter(Boolean).join('&')}`);es.__route=route;
+es.__seen=0;const on=(ty,m)=>es.addEventListener(ty,e=>{es.__seen=ST.seen[key]=Date.now();txAdd((e.data||'').length);try{const d=JSON.parse(e.data);put('/'+prefix+d.path,d.data,m);if(key==='meta')onMeta().catch(()=>{});else dirty(prefix.split('/')[0])}catch{}});
 on('put',0);on('patch',1);es.addEventListener('keep-alive',()=>{es.__seen=ST.seen[key]=Date.now()});
+es.addEventListener('auth_revoked',()=>{AU.exp=0;try{es.close()}catch{}if(ES[key]===es){delete ES[key];ST.open[key]=false}setTimeout(()=>{if(AU.rt)listen(key,prefix,q)},600)});
 es.onopen=()=>{ST.open[key]=true;es.__seen=ST.seen[key]=Date.now();setSt();flush()};
-es.onerror=()=>{ST.open[key]=false;setSt();if(es.readyState===2&&ES[key]===es)setTimeout(()=>{if(ES[key]===es)listen(key,prefix,q)},4000)}}
+es.onerror=()=>{ST.open[key]=false;setSt();if(es.readyState===2&&ES[key]===es){sessCheck();setTimeout(()=>{if(ES[key]===es)listen(key,prefix,q)},4000)}}}).catch(()=>{if(ES[key]===ph)delete ES[key]})}
 // ---- «живая» связь: ОДИН поток по лёгкому узлу meta (мгновенно) + короткие запросы данных; если поток недоступен — быстрый опрос ----
 const mkey=p=>{const a=String(p).split('/');return(a[0]==='prep'||a[0]==='writeoffs'||a[0]==='shifts'||a[0]==='prepMeta')&&a[1]?a[0]+'_'+a[1]:a[0]};
 var JF;
 // 9.9.2: одинаковые запросы, летящие одновременно (при старте их несколько), делят ОДИН сетевой запрос; каждый вызов получает свою копию данных
-async function jget(p,q,auth){let t='';if(auth){t=await tok();if(!t)throw new Error('auth')}const qs=[q,t?'auth='+t:''].filter(Boolean).join('&'),url=`${DB}/${p}.json${qs?'?'+qs:''}`,F=JF||(JF=Object.create(null));let pr=F[url];
-if(!pr){pr=(async()=>{let r;try{r=await fetchFast(url,{},9000)}catch(er){netBad();throw er}if(!r.ok){if(r.status===404)dbBad();const e=new Error('http');e.status=r.status;throw e}const tx=await r.text();txAdd(tx.length);return tx})();F[url]=pr;const done=()=>{if(F[url]===pr)delete F[url]};pr.then(done,done)}
+// 9.9.4: без входа сеть закрыта (кроме списка логинов lk/ и адреса Worker); все остальные запросы идут с токеном человека
+const PUBP=/^(lk\/[A-Za-z0-9]+|access\/w)$/;
+async function jget(p,q,auth){const pub=PUBP.test(p);if(!DEMO&&!pub&&!AU.rt){const e=new Error('locked');e.locked=1;e.status=0;throw e}let t='';if(auth){t=await tok();if(!t)throw new Error('auth')}else if(!pub&&!DEMO){t=await tokSoft();if(!t){const e=new Error('notoken');e.status=0;throw e}}
+const base=`${DB}/${p}.json${q?'?'+q:''}`,F=JF||(JF=Object.create(null));let pr=F[base];
+if(!pr){pr=(async()=>{let r;try{r=await fetchFast(base+(t?(q?'&':'?')+'auth='+t:''),{},9000)}catch(er){netBad();throw er}if(!r.ok){if(r.status===404)dbBad();if((r.status===401||r.status===403)&&t&&!auth)sessCheck();const e=new Error('http');e.status=r.status;throw e}const tx=await r.text();txAdd(tx.length);return tx})();F[base]=pr;const done=()=>{if(F[base]===pr)delete F[base]};pr.then(done,done)}
 const tx=await pr;let j;try{j=JSON.parse(tx)}catch{dbBad();const e=new Error('http');e.status=0;throw e}okMark();return j}
+// 9.9.4: если сервер отвечает «нет доступа» на обычные данные — проверяем сессию; закрыли доступ — выходим на экран входа
+let scAt=0;function sessCheck(){if(DEMO||!AU.rt||Date.now()-scAt<2e4)return;scAt=Date.now();tok().then(t=>fetchFast(`${DB}/meta.json?shallow=true&auth=${encodeURIComponent(t)}`,{},8000)).then(r=>{if(r.status===401||r.status===403)gateOut('Доступ закрыт руководителем. Войдите снова')}).catch(()=>{})}
 const MV={},RF={},INF={};let metaBroken=0,pollBusy=0,tickN=0;
 const pendingFor=mk=>L.out.some(o=>mkey(o.p)===mk)||(L.hold||[]).some(o=>mkey(o.p)===mk&&o.at&&Date.now()-o.at<72e5);
 const BQ_SPAN=150,bqRq=()=>'orderBy=%22%24key%22&startAt=%22'+dAdd(0)+'%22&endAt=%22'+dAdd(BQ_SPAN)+'%22';let bqRangeOk=0;
@@ -199,7 +211,7 @@ async function bumpMeta(){while(L.mt&&L.mt.length&&!metaBroken){const k=L.mt.shi
 const cat0=()=>DATA.catalog||{};
 const prods=()=>PC||(PC=[...base.filter(p=>!(cat0().hidden||{})[ek(p.id)]).map(p=>{const e=(cat0().edits||{})[ek(p.id)];return e?{...p,n:e.n||p.n,u:e.u||p.u}:p}),...Object.entries(cat0().custom||{}).map(([k,v])=>({id:'c:'+k,k,n:v.n,c:v.c,u:v.u}))].sort((a,b)=>COL.compare(a.n,b.n)));
 const cats=()=>[...BASE.map(([id,n,e])=>({id,n,e})),...Object.entries(cat0().groups||{}).map(([k,v])=>({id:k,n:v.n,e:v.e||'📦',g:1}))];
-const teamBuild=()=>{const isC=c=>c.n.trim().toLowerCase()==='хоссам',a=Object.entries(DATA.team||{}).map(([id,v])=>({id,n:String(v.n||''),r:String(v.r||''),color:String(v.color||''),u:String(v.u||'').replace(/^@+/,''),pw:v.pw?1:0}));if(!a.some(isC))a.push({id:'chef-hossam',n:'Хоссам',r:'Шеф',u:'',virtual:true});a.forEach(c=>{c.ch=isC(c)});return a.sort((x,y)=>x.ch===y.ch?COL.compare(x.n,y.n):x.ch?-1:1)};
+const teamBuild=()=>{const isC=c=>c.n.trim().toLowerCase()==='хоссам',a=Object.entries(DATA.team||{}).map(([id,v])=>({id,n:String(v.n||''),r:String(v.r||''),color:String(v.color||''),u:String(v.u||'').replace(/^@+/,''),pw:v.pw?1:0,ac:v.al?1:0}));if(!a.some(isC))a.push({id:'chef-hossam',n:'Хоссам',r:'Шеф',u:'',virtual:true});a.forEach(c=>{c.ch=isC(c)});return a.sort((x,y)=>x.ch===y.ch?COL.compare(x.n,y.n):x.ch?-1:1)};
 let TM_S=null,TM_V=null;
 const team=()=>{const s=JSON.stringify(DATA.team||null);if(s!==TM_S||!TM_V){TM_S=s;TM_V=teamBuild()}return TM_V.slice()};
 const PALETTE=['#b91c1c','#c2410c','#a16207','#4d7c0f','#15803d','#0f766e','#0369a1','#1d4ed8','#6d28d9','#a21caf','#be123c','#475569'];
@@ -271,13 +283,13 @@ const rBar=()=>{$('#cnt').textContent=cnt()?cnt()+' поз.':'пусто';setDp(
 function fitNote(){const n=$('#note');if(!n||!n.scrollHeight)return;n.style.height='auto';n.style.height=Math.min(n.scrollHeight+2,260)+'px'}
 const rRev=()=>{const it=dI(),c=L.draft.cook;$('#rc').innerHTML=c?esc(c.n)+' — '+esc(c.r):'<span style="color:var(--rd)">не выбран</span>';
 $('#rb').innerHTML=it.length?it.sort((a,b)=>COL.compare(a.n,b.n)).map(i=>`<div class="it on${i.urg?' urg':''}"><div class="n">${esc(i.n)}${ugBtn(i.id,i.urg)}</div>${stepper(i)}<button class="x" data-a="rm" data-id="${esc(i.id)}">✕</button></div>`).join(''):'<div class="em">Список пуст</div>'};
-const rTeam=()=>{try{pwMig()}catch(e){}{const e=$('#adsT');if(e)e.textContent=team().length?String(team().length):''}$('#tl').innerHTML=team().length?team().map(k=>`<div class="it"><div class="n">${esc(k.n)}<i>${esc(k.r)}${k.u?' · @'+esc(k.u):''}${k.pw?' · 🔒 пароль':''}</i></div>${k.virtual?'':`<button class="x" data-a="paypw" data-id="${esc(k.id)}" aria-label="Пароль" title="Пароль повара">🔑</button>`}<button class="x" data-a="cuser" data-id="${esc(k.id)}" aria-label="Username" title="Username">@</button>${k.virtual?'':`<button class="x" data-a="delc" data-id="${esc(k.id)}">✕</button>`}</div>`).join(''):'<div class="em">Добавьте поваров с должностями</div>'};
+const rTeam=()=>{try{pwMig()}catch(e){}{const e=$('#adsT');if(e)e.textContent=team().length?String(team().length):''}$('#tl').innerHTML=team().length?team().map(k=>`<div class="it"><div class="n">${esc(k.n)}<i>${esc(k.r)}${k.u?' · @'+esc(k.u):''}${k.virtual?'':k.ac?' · ✅ может войти':' · ⛔ нет доступа — задайте 🔑'}</i></div>${k.virtual?'':`<button class="x" data-a="paypw" data-id="${esc(k.id)}" aria-label="Пароль" title="Пароль повара">🔑</button>`}<button class="x" data-a="cuser" data-id="${esc(k.id)}" aria-label="Username" title="Username">@</button>${k.virtual?'':`<button class="x" data-a="delc" data-id="${esc(k.id)}">✕</button>`}</div>`).join(''):'<div class="em">Добавьте поваров с должностями</div>'};
 const rAdm=()=>{rDs();try{rBk()}catch(e){}{const e=$('#adsC');if(e){const h2=Object.keys(cat0().hidden||{}).length;e.textContent=ed()?'правка ВКЛ':(h2?'скрыто: '+h2:'')}}const b=$('#edb');b.textContent='Режим правки товаров: '+(ed()?'ВКЛ':'выкл');b.className=ed()?'d':'';const h=Object.keys(cat0().hidden||{}).length,u=$('#unh');u.textContent='Вернуть скрытые ('+h+')';u.disabled=!h};
 const nt=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();let qb=0,tk=null;
 const PU=['порц','кг','г','л','мл','шт','уп','кор','пак','бан','бут','пуч'];
 const PCATS0=[['cut','🔪','Нарезка'],['sauce','🥫','Соусы'],['hot','🍲','Горячее'],['cold','🥗','Холодное'],['meat','🥩','Мясо и рыба'],['side','🍚','Гарниры'],['dess','🍰','Десерты'],['bake','🥖','Выпечка и тесто'],['other','📦','Другое']];
 let lf='all',CL=null,psec=LS.get('vip3-psec','main'),bqt=(v=>v==='prep'||v==='info'?v:'')(LS.get('vip3-bqt','')),svd=null,pc=null,acctData=null,ses=null,cabPick=null,idleT=0,hideT=0,inBusy=0;
-const seenRows=new Set(),justDone=new Set(),justSrv=new Set(),canServe=()=>isAdmin()||!!AU.rt,isSv=t=>!!(t&&t.sd),isPrepd=t=>!!(t&&(t.done||t.sd));
+const seenRows=new Set(),justDone=new Set(),justSrv=new Set(),canServe=()=>isAdmin()||(!!AU.rt&&ROLE==='obs'),isSv=t=>!!(t&&t.sd),isPrepd=t=>!!(t&&(t.done||t.sd));
 const pcats=()=>PCC||(PCC=[...PCATS0.slice(0,-1),...Object.entries(DATA.prepCats||{}).filter(([k,v])=>v&&v.n).sort((a,b)=>(a[1].o||0)-(b[1].o||0)).map(([k,v])=>[k,v.e||'🏷️',v.n]),PCATS0[PCATS0.length-1]]);
 const catById=k=>pcats().find(c=>c[0]===k);
 const pk=i=>{const k=(i&&i.k)||'other';return catById(k)?k:'other'},pcIcon=k=>(catById(k)||PCATS0[PCATS0.length-1])[1];
@@ -534,7 +546,7 @@ const rBqDlg=()=>{const b=$('#dbtb');if(b)b.innerHTML=bqTotHtml(true)};
 const bqSelRefresh=()=>{rBqUp();if(dialogOpen('#dbt'))rBqDlg();if(psec==='banq')rPrep()};
 // ---------- «Кто вы?» при открытии приложения ----------
 let whoHidAt=0,whoWait=false,whoWT=0;
-const whoNeeded=()=>{try{return sessionStorage.getItem('vip3-who')!=='1'}catch{return true}};
+const whoNeeded=()=>{if(!DEMO)return false;try{return sessionStorage.getItem('vip3-who')!=='1'}catch{return true}};
 const whoDone=()=>{try{sessionStorage.setItem('vip3-who','1')}catch{}};
 const rWho=()=>{const el=$('#whol');if(!el)return;const k=team(),me=L.me&&k.find(x=>x.id===L.me.id);
 if(whoWait&&!Object.keys(DATA.team||{}).length){el.innerHTML='<div class="who-wait" role="status">Загружаю список поваров…</div>';return}
@@ -874,7 +886,7 @@ if(cabPick){const c=k.find(x=>x.id===cabPick);if(!c){cabPick=null;rCab();return}
 box.innerHTML=`<div class="lbl">Выберите своё имя</div><div class="chips wrap">${k.map(c=>`<button class="chip cook-chip" style="--cook:${cookColor(c.id)}" data-a="cabpick" data-id="${esc(c.id)}"><i class="cook-dot"></i>${esc(c.n)}<small>${esc(c.r)}</small></button>`).join('')||'<span class="small">Повара не добавлены.</span>'}</div><div class="small" style="margin-top:10px">🔒 Кабинет защищён паролем. Каждый видит только свой счёт.</div>`};
 const rGseg=()=>{const s=$('#gseg');if(!s)return;const on=tab==='sched'||tab==='cab';s.hidden=!on;if(!on)return;[['sched','#gsch'],['cab','#gcab']].forEach(([k,q])=>{const e=$(q);if(e)e.classList.toggle('on',k===tab)});const g=$('#gcab');if(g)g.textContent=isAdmin()?'💼 Зарплаты':'👤 Мой кабинет'};
 const rMeBox=()=>{const b=$('#mebox');if(!b)return;const k=team().find(x=>x.id===sf);b.innerHTML=k?`<button class="p" data-a="cabgo">💼 Мой кабинет: ${esc(k.n)}</button>${TGB?`<a class="tgl" href="${esc(tgLink(k.id))}" target="_blank" rel="noopener">✈️ Подключить Telegram: уведомления о смене</a>`:''}`:'<div class="small">Выберите своё имя выше, чтобы открыть личный кабинет (часы и зарплата).</div>'};
-async function cabW(sub,id,val){if(!ses||!DB)return{ok:0,st:0};try{const u=`${DB}/acct/${ses.key}/${sub}/${id}.json`,r=await fetchFast(u,val===null?{method:'DELETE'}:{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)},9000);if(!r.ok)return{ok:0,st:r.status};fetchFast(`${DB}/meta/cabinet.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(Date.now())},6000).catch(()=>{});return{ok:1,st:200}}catch(e){return{ok:0,st:0}}}
+async function cabW(sub,id,val){if(!ses||!DB)return{ok:0,st:0};try{const tk=await tokSoft(),au=tk?'?auth='+encodeURIComponent(tk):'',u=`${DB}/acct/${ses.key}/${sub}/${id}.json${au}`,r=await fetchFast(u,val===null?{method:'DELETE'}:{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)},9000);if(!r.ok)return{ok:0,st:r.status};fetchFast(`${DB}/meta/cabinet.json${au}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(Date.now())},6000).catch(()=>{});return{ok:1,st:200}}catch(e){return{ok:0,st:0}}}
 let shd=null;
 const shPrev=()=>{const el=$('#dshm');if(!el||!shd)return;const h=Number(String($('#dshh').value).replace(',','.'));el.textContent=h>0&&shd.rate>0?`≈ ${mny(h*shd.rate,shd.cu)} · ставка ${mny(shd.rate,shd.cu)} / час`:(h>0&&!shd.adm?'Ставка пока не указана — сумма появится, когда шеф её задаст.':'')};
 // мгновенная запись в кабинет: сначала показываем, потом отправляем; при ошибке возвращаем как было
@@ -908,7 +920,7 @@ const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filt
 $('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc([...o.items].sort((a,b)=>(b.urg?1:0)-(a.urg?1:0)).slice(0,5).map(i=>(i.urg?'🚨 ':'')+i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="rcgo" data-id="${o.id}">📦 Принять</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button data-a="himg" data-id="${o.id}">🖼 Лист A4</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em"><i aria-hidden="true">🕘</i><b>История пока пуста</b>Отправленные заказы появятся здесь.</div>'};
 function render(){raf=0;const d={...D};for(const k in D)delete D[k];if(d.plan)applyDs();
 if(d.team&&dialogOpen('#dwho'))rWho();
-if(d.team){if(isAdmin())ensureTeamColors();rCooks();rPCooks();rShifts();if(tab==='prep'){rPrep();rPlan()}if(tab==='sched')rSched();if(dialogOpen('#dt'))rTeam()}
+if(d.team){if(isAdmin()){ensureTeamColors();lkSoon()}rCooks();rPCooks();rShifts();if(tab==='prep'){rPrep();rPlan()}if(tab==='sched')rSched();if(dialogOpen('#dt'))rTeam()}
 if((d.sched||d.prepPins)&&tab==='sched')rSched();
 if(d.shifts||d.sched||d.shiftsLast||d.plan)rShifts();if(d.payroll&&tab==='cab'&&isAdmin())loadIn();if((d.payroll||d.acctU)&&tab==='cab')rPayAdm();if(d.team&&tab==='cab')rCab();
 if(d.prepCats){rFil();if(tab==='prep'){rPrep();rPlan();rLibrary()}if(dialogOpen('#dcat'))rCatMgr()}
@@ -974,14 +986,16 @@ async login0(){const pw=$('#ap').value,role=(($('#dar .on')||{}).dataset||{}).id
 if(!pw){snd.warn();toast('Введите пароль');return}
 try{const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw,returnSecureToken:true})});const j=await r.json();
 if(!r.ok){snd.warn();vib(120);toast(authErr(j.error&&j.error.message||''));return}
-AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);LS.set('vip3-was',ROLE);credStore(em,pw);persistAsk();epSync();$('#ap').value='';$('#da').close();snd.ok();
+AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);LS.set('vip3-it',{t:AU.t,exp:AU.exp});LS.set('vip3-gate',GATE_V);LS.set('vip3-was',ROLE);geSync();credStore(em,pw);persistAsk();epSync();$('#ap').value='';$('#da').close();snd.ok();
 if(ROLE==='obs'){edit=0;ui();obsTick(true);toast('✓ Вход: наблюдатель')}else{afterLogin();apLoad(true)}}catch{snd.warn();toast('Нет интернета')}},
 async setpw(){const v=$('#npw').value;if(v.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}if(DEMO){toast('В демо-режиме пароля нет');return}
 try{const t=await tok();const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:update?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:t,password:v,returnSecureToken:true})});const j=await r.json();
 if(!r.ok){snd.warn();toast(authErr(j.error&&j.error.message||''));return}
 AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);$('#npw').value='';snd.ok();toast('✓ Пароль изменён')}catch{snd.warn();toast('Не удалось. Проверьте сеть')}},
-logout(){const cr=isAdmin()&&!DEMO&&DB?{t:AU.t,rt:AU.rt,exp:AU.exp}:null;AU={t:'',rt:'',exp:0,ok:false};if(cr)epBump(cr);LS.set('vip3-rt','');LS.set('vip3-was','');ROLE='adm';LS.set('vip3-role','adm');edit=0;AP.g=[];AP.n=0;AP.mx=-1;$('#dt').close();$('#dobs').close();ui();rAp();snd.tap()},
-admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();rAp();apLoad(true);try{rTg()}catch(e){errAdd(e&&e.message,'rTg')}document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adA'?AP.n>0:(x.id==='adT'&&!AP.n)});$('#dt').showModal();$('#dt').scrollTop=0;ctLoad()}else{if(isObs()){rObs();snd.tap();$('#dobs').showModal();return}$('#ap').value='';ACT.loginrole(LS.get('vip3-was','')==='obs'?'obs':'adm');$('#da').showModal();$('#ap').focus()}},
+logout(){const cr=isAdmin()&&!DEMO&&DB?{t:AU.t,rt:AU.rt,exp:AU.exp}:null;if(DEMO){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');LS.set('vip3-was','');ROLE='adm';LS.set('vip3-role','adm');edit=0;AP.g=[];AP.n=0;AP.mx=-1;try{$('#dt').close();$('#dobs').close()}catch(e){}ui();rAp();snd.tap();return}snd.tap();if(cr)epBump(cr).then(()=>gateOut(''),()=>gateOut(''));else gateOut('')},
+gout(){snd.tap();gateOut('')},
+async geall(){if(!isAdmin())return need();if(!await ask('Выйти на всех телефонах?','<p>Все повара и наблюдатель будут выведены из приложения. Войти снова можно только со своим именем и паролем. Вы останетесь в системе на этом телефоне.</p>','Да, выйти везде','Отмена'))return;try{const v=Date.now();await api('PUT','access/ge',v);LS.set('vip3-age',v);snd.ok();toast('✓ Все остальные телефоны выйдут в течение минуты')}catch(e){snd.warn();toast('Нет связи: выйти на других телефонах не удалось')}},
+admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();rAp();apLoad(true);try{rTg()}catch(e){errAdd(e&&e.message,'rTg')}document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adA'?AP.n>0:(x.id==='adT'&&!AP.n)});$('#dt').showModal();$('#dt').scrollTop=0;ctLoad()}else{if(isObs()){rObs();snd.tap();$('#dobs').showModal();return}rAccStrip();$('#ap').value='';ACT.loginrole(LS.get('vip3-was','')==='obs'?'obs':'adm');$('#da').showModal();$('#ap').focus()}},
 toggled(){edit=!edit;ui();snd.tap()},
 unhide(){if(!isAdmin())return need();mut('DELETE','catalog/hidden');snd.ok()},
 tab(id){if(id==='plan')id='prep';const was=tab;if(id==='prep'||id==='writeoff')carryAll();if((was==='cab'||was==='sched')&&id!=='cab'&&id!=='sched'&&(ses||cabPick))cabLogout(false);tab=id;snd.tap();try{presSoon()}catch(e){}if(id==='order'){try{liveCheck();rLive()}catch(e){}}
@@ -1013,7 +1027,7 @@ copy:copyOrder,sendopen:copyOrder,save:saveOrder,
 async clear(){if(!cnt())return;if(await ask('Очистить список?','<p>Все выбранные товары будут убраны из текущего заказа.</p>','Да, очистить','Нет, оставить')){L.draft=blank(L.draft.cook);saveL();rAll();rRev();snd.warn()}},
 hist(){snd.tap();rHist();$('#dh').showModal();streams()},
 addcook(){if(!isAdmin())return need();const n=$('#tn').value.trim(),r=$('#tr').value.trim(),u=$('#tu').value.trim().replace(/^@+/,'').replace(/\s+/g,'');if(!n||!r){snd.warn();toast('Укажите имя и должность');return}if(team().some(k=>k.n.trim().toLowerCase()===n.toLowerCase())){snd.warn();toast('Такой повар уже добавлен');return}const id=uid(),used=team().map(k=>PALETTE.includes(k.color)?k.color:hashColor(k.id)),color=PALETTE.find(c=>!used.includes(c))||hashColor(id);mut('PUT','team/'+id,Object.assign({n,r,color},u?{u}:{}));$('#tn').value=$('#tr').value=$('#tu').value='';snd.ok();$('#tn').focus();rTeam()},
-async delc(id){if(!isAdmin())return need();const k=team().find(x=>x.id===id);if(!k||!await ask('Удалить сотрудника?',`<p>${esc(k.n)} — ${esc(k.r)}</p>`,'Да, удалить','Нет'))return;mut('DELETE','team/'+id);mut('DELETE','sched/'+id);if(L.draft.cook&&L.draft.cook.id===id)L.draft.cook=null;saveL();rTeam();rCooks()},
+async delc(id){if(!isAdmin())return need();const k=team().find(x=>x.id===id);if(!k||!await ask('Удалить сотрудника?',`<p>${esc(k.n)} — ${esc(k.r)}</p>`,'Да, удалить','Нет'))return;{const raw=(DATA.team||{})[id];if(raw&&raw.uid)mut0('DELETE','ok/'+raw.uid)}mut('DELETE','team/'+id);mut('DELETE','sched/'+id);if(L.draft.cook&&L.draft.cook.id===id)L.draft.cook=null;saveL();rTeam();rCooks()},
 newp(){snd.tap();$('#pc').innerHTML=cats().map(c=>`<option value="${c.id}">${esc(c.n)}</option>`).join('');$('#pc').value=cat!=='all'&&cats().some(c=>c.id===cat)?cat:'sauces';$('#pu').innerHTML=UNITS.map(u=>`<option>${u}</option>`).join('');$('#pn').value='';$('#dp').showModal();$('#pn').focus()},
 addprod(){const n=$('#pn').value.trim().replace(/\s+/g,' ');if(!n){snd.warn();toast('Введите название');return}const c=$('#pc').value,u=$('#pu').value;if(prods().some(p=>p.c===c&&p.n.toLowerCase()===n.toLowerCase())){snd.warn();toast('Такой товар уже есть в этой группе');return}
 const k='p'+uid(),nm=n[0].toUpperCase()+n.slice(1);mut('PUT','catalog/custom/'+k,{n:nm,c,u});const id='c:'+k;L.draft.items[id]={id,n:nm,c,u,qty:1};saveL();$('#dp').close();cat=c;qs='';$('#q').value='';rAll();snd.ok();toast('✓ Добавлен для всех в «'+cats().find(x=>x.id===c).n+'»');setTimeout(()=>{const e=document.querySelector(`[data-r="${cssEsc(id)}"]`);e&&e.scrollIntoView({block:'center',behavior:'smooth'})},50)},
@@ -1159,8 +1173,8 @@ async errclear(){if(!isAdmin()){toast('Только для руководите�
 
 async dtest(){const out=[],log=s=>{out.push(s);$('#dlog').textContent=out.join('\n')};if(DEMO){log('Демо-режим: config.js не заполнен');return}
 if(!DB){await detect();log('Поиск базы: '+(DB||'не найдена'));if(!DB)return}log('База: '+DB);
-try{const r=await fetchFast(DB+'/.json?shallow=true',{},5000);log('Чтение: HTTP '+r.status)}catch(e){log('Чтение: нет связи')}
-const u=`${DB}/prep/_ping/${DEV}.json`;try{const r=await fetchFast(u,{method:'PUT',body:JSON.stringify({t:Date.now()})},5000);log('Запись: HTTP '+r.status);const g=await fetchFast(u,{},5000);log('Проверка записи: HTTP '+g.status);await fetchFast(u,{method:'DELETE'},5000)}catch(e){log('Запись: нет связи')}
+const dtk=await tokSoft().catch(()=>''),dau=dtk?'?auth='+encodeURIComponent(dtk):'';try{const r=await fetchFast(DB+'/meta.json?shallow=true'+(dtk?'&auth='+encodeURIComponent(dtk):''),{},5000);log('Чтение: HTTP '+r.status)}catch(e){log('Чтение: нет связи')}
+const u=`${DB}/prep/_ping/${DEV}.json${dau}`;try{const r=await fetchFast(u,{method:'PUT',body:JSON.stringify({t:Date.now()})},5000);log('Запись: HTTP '+r.status);const g=await fetchFast(u,{},5000);log('Проверка записи: HTTP '+g.status);await fetchFast(u,{method:'DELETE'},5000)}catch(e){log('Запись: нет связи')}
 log('Живая связь: '+(ST.open.meta&&!metaBroken?'мгновенная ✓':metaBroken?'опрос (правила)':'опрос'));log('Если оба кода 200 — всё работает.')},
 dre(){snd.tap();Object.keys(ES).forEach(k=>ES[k].close());for(const k in MV)delete MV[k];metaBroken=0;ST.err='';setSt();detect(true).then(()=>{streams();flush();setSt();setTimeout(rDiag,2000)})},
 async dclr(){if(!await ask('Сбросить кэш?','<p>Очистятся временные данные этого телефона и приложение перезагрузится. Данные в облаке не затрагиваются.</p>','Да, сбросить','Нет'))return;try{LS.set('vip3-cache',{});LS.set('vip3-db','');LS.set('vip3-dbv',null)}catch{}if(window.__vipHeal)window.__vipHeal('manual');else location.reload()},
@@ -1200,12 +1214,14 @@ cabadd(){if(!ses)return;const d=($('#cabd')||{}).value,raw=String(($('#cabh')||{
 paypick(id){pc=id;snd.tap();rPayAdm(true)},
 paypw(id){if(!isAdmin())return need();const k=team().find(x=>x.id===id);if(!k)return;$('#pwh').textContent='Пароль: '+k.n;$('#pwv').value='';$('#dpw').dataset.id=id;$('#pwdel').hidden=!(PAYROLL()[id]&&PAYROLL()[id].key);snd.tap();$('#dpw').showModal();setTimeout(()=>$('#pwv').focus(),60)},
 async pwsave(){if(!isAdmin())return need();const id=$('#dpw').dataset.id,pw=$('#pwv').value.trim();if(pw.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}if(!(window.crypto&&crypto.subtle)){toast('Браузер не поддерживает защищённый вход');return}
-const key=await acctKey(id,pw),old=(PAYROLL()[id]||{}).key;if(old&&old!==key){let u=null;try{u=await jget('acct/'+old)}catch(e){}if(u)['in','rt','pm'].forEach(s=>{if(u[s])mut('PUT','acct/'+key+'/'+s,u[s])});mut('DELETE','acct/'+old)}mut('PATCH','payroll/'+id,{key});mut('PATCH','team/'+id,{pw:1});publishAcct(id);$('#dpw').close();snd.ok();toast('✓ Пароль установлен. Сообщите его повару');rPayAdm(true)},
+const kk=team().find(x=>x.id===id);if(!kk||kk.virtual){snd.warn();toast('Выберите повара из списка');return}
+let acc;try{acc=await mkAccount(kk,pw)}catch(e){snd.warn();toast(e&&e.msg?e.msg:'Нужна связь с интернетом: аккаунт повара не создан');return}
+const key=await acctKey(id,pw),old=(PAYROLL()[id]||{}).key;if(old&&old!==key){let u=null;try{u=await jget('acct/'+old)}catch(e){}if(u)['in','rt','pm'].forEach(s=>{if(u[s])mut('PUT','acct/'+key+'/'+s,u[s])});mut('DELETE','acct/'+old)}mut('PATCH','payroll/'+id,{key});mut0('PUT','ok/'+acc.uid,{id,n:kk.n,r:kk.r||''});{const o=(DATA.team||{})[id]||{};if(o.uid&&o.uid!==acc.uid)mut0('DELETE','ok/'+o.uid)}mut('PATCH','team/'+id,{pw:1,al:acc.al,uid:acc.uid});publishAcct(id);lkSoon(1);$('#dpw').close();snd.ok();toast('✓ Пароль установлен. Сообщите повару имя «'+kk.n+'» и этот пароль');rPayAdm(true);rTeam()},
 async pwdel(){if(!isAdmin())return need();const id=$('#dpw').dataset.id,old=(PAYROLL()[id]||{}).key;if(old){let u=null;try{u=await jget('acct/'+old)}catch(e){toast('Нет связи — кабинет не отключён');return}u=u||{};
 Object.entries(u.in||{}).forEach(([d,v])=>{if(v&&Number(v.h)>=0&&!(((PAYROLL()[id]||{}).hours||{})[d]!==undefined))mut('PATCH',`payroll/${id}/hours`,{[d]:Number(v.h)})});
 Object.entries(u.rt||{}).forEach(([r,v])=>{if(v&&DRE.test(v.f||''))mut('PUT',`payroll/${id}/rates/${r}`,{f:v.f,r:Number(v.r)||0,t:v.t||0})});
 Object.entries(u.pm||{}).forEach(([r,v])=>{if(v&&Number(v.a)>0)mut('PUT',`payroll/${id}/pay/${r}`,{d:v.d,a:Number(v.a),t:v.t||'oth',m:v.m||String(v.d).slice(0,7),n:(v.n||'')+' (записал повар)'})});
-mut('DELETE','acct/'+old)}mut('PATCH','payroll/'+id,{key:null});mut('PATCH','team/'+id,{pw:null});$('#dpw').close();snd.warn();toast('Кабинет повара отключён. Всё, что он записал, сохранено у вас');if(DATA.acctU)delete DATA.acctU[id];rPayAdm(true)},
+mut('DELETE','acct/'+old)}mut('PATCH','payroll/'+id,{key:null});{const o=(DATA.team||{})[id]||{};if(o.uid)mut0('DELETE','ok/'+o.uid)}mut('PATCH','team/'+id,{pw:null,al:null,uid:null});lkSoon(1);$('#dpw').close();snd.warn();toast('Доступ и кабинет повара отключены. Всё, что он записал, сохранено у вас');rTeam();if(DATA.acctU)delete DATA.acctU[id];rPayAdm(true)},
 phadd(){if(!isAdmin()||!pc)return need();const d=$('#phd').value,h=Number(String($('#phh').value).replace(',','.'));if(!d||!(h>0)){snd.warn();toast('Укажите дату и часы');return}mut('PATCH','payroll/'+pc+'/hours',{[d]:h});publishAcct(pc);$('#phh').value='';snd.ok();rPayAdm(true)},
 payadd(){if(!isAdmin()||!pc)return need();const d=$('#pyd').value,a=Number(String($('#pya').value).replace(',','.')),t=$('#pyt').value,n=$('#pyn').value.trim();if(!d||!(a>0)){snd.warn();toast('Укажите дату и сумму');return}
 const m=t==='sal'?prevM(d.slice(0,7)):d.slice(0,7);mut('PUT',`payroll/${pc}/pay/${uid()}`,{d,a:Math.round(a*100)/100,t,m,n});publishAcct(pc);$('#pya').value=$('#pyn').value='';snd.ok();toast('✓ Выплата записана');rPayAdm(true)},
@@ -1355,7 +1371,7 @@ let hidAt=0;const wake=()=>{ST.wk=Date.now();for(const k in RF)delete RF[k];dayC
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hidAt=Date.now();return}if(!document.hidden){wake();try{navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})}catch{}}});
 addEventListener('pageshow',e=>{if(e.persisted)wake()});addEventListener('focus',()=>{if(!dayCheck())carryAll()});document.addEventListener('resume',wake);
 setInterval(dayCheck,15000);armDay();setInterval(()=>{if(tab==='order')refreshRoster()},60000);addEventListener('offline',()=>setSt());
-setInterval(()=>{if(!DEMO&&!document.hidden&&Date.now()-lastDet>60000&&(!DB||!DBV||Date.now()-(ST.okAt||0)>45000))detect(true).then(ok=>{if(ok){streams();refreshRoster()}setSt()});if(AU.rt&&L.hold&&L.hold.length&&!L.out.length){L.out.push(...L.hold.splice(0));saveL()}flush();if(!document.hidden&&Object.keys(ES).some(k=>ST.open[k]&&Date.now()-(ST.seen[k]||0)>90000))restartStreams()},30000);
+setInterval(()=>{if(!DEMO&&!document.hidden&&Date.now()-lastDet>60000&&(!DB||!DBV||Date.now()-(ST.okAt||0)>45000))detect(true).then(ok=>{if(ok){streams();refreshRoster()}setSt()});if(isAdmin()&&L.hold&&L.hold.length&&!L.out.length){L.out.push(...L.hold.splice(0));saveL()}flush();if(!document.hidden&&Object.keys(ES).some(k=>ST.open[k]&&Date.now()-(ST.seen[k]||0)>90000))restartStreams()},30000);
 setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!metaBroken,hasMeta=Object.keys(DATA.meta||{}).length>0;if(sse&&hasMeta&&tickN%12)return;pollMeta(sse?tickN%12===0:(metaBroken||!hasMeta||tickN%8===0),true)},2500);
 // ---- 9.7.2: все объявления ниже стоят ДО первой отрисовки (rAll), иначе const ещё «не создан» (TDZ) ----
 let SNDK=0,PWSC=0,EPT=0,PREW=LS.get('vip3-pw',''),PRK=0;const PRA={};
@@ -1492,7 +1508,7 @@ login(){if(ACT.lgb)return;ACT.lgb=1;return ACT.login0().finally(()=>{ACT.lgb=0})
 async apok(g){await apDecide(g,true)},async apno(g){if(await ask('Отклонить правку?','<p>Изменение не будет применено.</p>','Отклонить'))await apDecide(g,false)},
 async apokall(){if(!AP.n)return;let k=0;for(const o of [...AP.g])k+=await apDecide(o.g,true,true);snd.ok();toast('✓ Утверждено: '+k)},
 async apnoall(){if(!AP.n)return;if(!await ask('Отклонить все правки?','<p>Ни одно из '+AP.n+' изменений не будет применено.</p>','Отклонить все'))return;let k=0;for(const o of [...AP.g])k+=await apDecide(o.g,false,true);snd.tap();toast('✕ Отклонено: '+k)},
-obssave(){if(!isAdmin())return need();const n=$('#obn').value.trim().slice(0,40),mode=$('#obm').value==='edit'?'edit':'view',on=$('#obo').checked?1:0;mut('PUT','access/obs',{n,mode,on});AP.cfg={n,mode,on};AP.dirty=0;snd.ok();toast('✓ Сохранено')},
+obssave(){if(!isAdmin())return need();const n=$('#obn').value.trim().slice(0,40),mode=$('#obm').value==='edit'?'edit':'view',on=$('#obo').checked?1:0;mut('PUT','access/obs',{n,mode,on});lkSoon(1);AP.cfg={n,mode,on};AP.dirty=0;snd.ok();toast('✓ Сохранено')},
 async obscreate(){if(!isAdmin())return need();const pw=$('#obp').value;if(pw.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}
 try{const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:VIEWER,password:pw,returnSecureToken:false})});const j=await r.json(),msg=(j.error&&j.error.message)||'';
 if(!r.ok){snd.warn();toast(/EMAIL_EXISTS/.test(msg)?'Аккаунт уже создан. Пароль меняет сам наблюдатель (или удалите его в Firebase → Authentication)':/OPERATION_NOT_ALLOWED/.test(msg)?'Создайте пользователя '+VIEWER+' в Firebase → Authentication':authErr(msg));return}
@@ -1511,7 +1527,7 @@ const agoD=t=>{const m=Math.round((Date.now()-(Number(t)||0))/6e4);return m<1?'�
 const PWM=new Set();async function pwScan(){if(PWSC||!isAdmin()||DEMO||!DB)return;PWSC=1;try{const d=await jget('payroll','',true);if(d&&typeof d==='object'){put('/payroll',d);dirty('payroll');pwMig()}}catch(e){PWSC=0}}
 function pwMig(){if(!isAdmin()||DEMO)return;const P=PAYROLL();if(!Object.keys(P).length){pwScan();return}team().forEach(k=>{if(k.virtual||k.pw||PWM.has(k.id))return;if(P[k.id]&&P[k.id].key){PWM.add(k.id);mut('PATCH','team/'+k.id,{pw:1})}})}
 const IDKS=()=>{const o=LS.get('vip3-idk',{});return o&&typeof o==='object'&&!Array.isArray(o)?o:{}};
-const needPw=id=>{if(DEMO||isAdmin())return false;const k=team().find(x=>x.id===id);return!!(k&&k.pw&&!k.virtual&&!IDKS()[id])};
+const needPw=id=>{if(!DEMO)return false;if(isAdmin())return false;const k=team().find(x=>x.id===id);return!!(k&&k.pw&&!k.virtual&&!IDKS()[id])};
 let PIDW=null,WHOOBS=(()=>{const c=LS.get('vip3-obsn',null);return c&&typeof c==='object'&&c.ok?c:null})(),WHOOBS_T=0,IDCK_T=0;
 const idAsk=id=>new Promise(res=>{const k=team().find(x=>x.id===id),d=$('#dpid');if(!k||!d){res(!k?false:true);return}
 if(PIDW){const r=PIDW.res;PIDW=null;r(false)}
@@ -1528,14 +1544,15 @@ if(chiefOut()){toast('Имя шефа — только по паролю рук�
 // ---------- 9.9.1: выход шефа = выход со всех телефонов; имя шефа защищено ----------
 // Шеф при выходе пишет в access/ep новое число. Каждый телефон помнит число, с которым вошёл (vip3-aep); увидел большее — сам выходит из режима руководителя и просит пароль заново.
 const AEP=()=>{const v=LS.get('vip3-aep',null);return typeof v==='number'?v:null};
+async function geSync(){if(DEMO||!DB)return;try{const g=await jget('access/ge');LS.set('vip3-age',typeof g==='number'?g:0)}catch(e){}}
 async function epSync(){if(DEMO||!DB)return;try{const v=await jget('access/ep');LS.set('vip3-aep',typeof v==='number'?v:0)}catch(e){}}
 async function epBump(cr){let t=cr.t;try{if(!t||Date.now()>=cr.exp-6e4){const r=await fetchFast('https://securetoken.googleapis.com/v1/token?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(cr.rt)},9000);const j=await r.json();if(!r.ok||!j.id_token)throw 0;t=j.id_token}
 const v=Date.now(),r=await fetchFast(`${DB}/access/ep.json?auth=${encodeURIComponent(t)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:String(v)},9000);if(!r.ok)throw 0;LS.set('vip3-aep',v);toast('✓ Выход выполнен на всех телефонах')}catch(e){toast('⚠ Нет связи: с других телефонов выйти не удалось — выйдите ещё раз при сети')}}
 function chiefOut(){try{const me=L.me;if(me&&!isAdmin()&&!DEMO){const k=team().find(x=>x.id===me.id);if(k&&k.ch){L.me=null;if(L.draft.cook&&L.draft.cook.id===me.id)L.draft.cook=null;saveL();try{rCooks();rPCooks();rShifts()}catch(e){}return true}}}catch(e){}return false}
-function epDrop(){const adm=ROLE==='adm'&&!!AU.rt;if(adm){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');LS.set('vip3-was','');edit=0;AP.g=[];AP.n=0;AP.mx=-1;try{$('#dt').close()}catch(e){}ui();try{rAp()}catch(e){}}
-const c=chiefOut();if(adm||c){snd.warn();toast('Шеф вышел из приложения — для входа нужен пароль')}}
+function epDrop(){if(ROLE==='adm'&&AU.rt){gateOut('Руководитель вышел на другом телефоне. Войдите снова');return}if(chiefOut()){snd.warn();toast('Шеф вышел из приложения — для входа нужен пароль')}}
 async function epCheck(force){if(DEMO||!DB)return;if(chiefOut())toast('Имя шефа — только по паролю руководителя');if(!navigator.onLine||(!force&&Date.now()-EPT<15e3))return;EPT=Date.now();
-try{const v=await jget('access/ep'),ep=typeof v==='number'?v:0,mine=AEP();if(mine===null){LS.set('vip3-aep',ep);return}if(ep>mine){LS.set('vip3-aep',ep);epDrop()}}catch(e){}}
+try{const v=await jget('access/ep'),ep=typeof v==='number'?v:0,mine=AEP();if(mine===null)LS.set('vip3-aep',ep);else if(ep>mine){LS.set('vip3-aep',ep);epDrop()}}catch(e){}
+if(AU.rt)try{const g=await jget('access/ge'),ge=typeof g==='number'?g:0,m=LS.get('vip3-age',null);if(typeof m!=='number')LS.set('vip3-age',ge);else if(ge>m)gateOut('Руководитель завершил все сессии. Войдите снова')}catch(e){}}
 setInterval(()=>{if(!document.hidden)epCheck()},2e4);document.addEventListener('visibilitychange',()=>{if(!document.hidden)epCheck(1)});setTimeout(()=>epCheck(1),2500);
 // корзина: каждое удаление (по нажатию человека) 60 дней лежит в trash/, шеф возвращает его в админке
 const TR={list:[],t:0,busy:0,err:'',parsed:[]};
@@ -1749,6 +1766,54 @@ if(a==='x'){LS.set('vip-inst-x',Date.now());b.hidden=true}
 else if(a==='copy')copyLink();
 else if(a==='go'){if(standalone()){toast('Приложение уже установлено ✓');return}if(dp){const d=dp;dp=null;window.__dp=null;try{d.prompt();Promise.resolve(d.userChoice).then(r=>{if(r&&r.outcome==='accepted')b.hidden=true;else show()}).catch(()=>show())}catch(err){openInst()}}else openInst()}});
 show()}}
+
+// ---------- 9.9.4: ВХОД ДЛЯ ВСЕХ ----------
+// Экран входа закрывает всё приложение; данные не загружаются, пока человек не вошёл со своим именем и паролем. Каждый повар — отдельный аккаунт Firebase; база сама отклоняет запросы без входа (firebase-rules.json).
+const normName=v=>String(v||'').trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ');
+async function lkHash(name){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('vip-lk:'+normName(name)));return Array.from(new Uint8Array(d)).slice(0,12).map(b=>b.toString(16).padStart(2,'0')).join('')}
+const jwtUid=t=>{try{const p=String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');const o=JSON.parse(decodeURIComponent(escape(atob(p+'='.repeat((4-p.length%4)%4)))));return String(o.user_id||o.sub||'')}catch{return''}};
+const GT={busy:0,fails:0,until:0};
+const gateLock=on=>{document.documentElement.classList.toggle('locked',!!on)};
+function gateOut(why){if(DEMO)return;AU={t:'',rt:'',exp:0,ok:false};['vip3-rt','vip3-it','vip3-was'].forEach(k=>LS.set(k,''));LS.set('vip3-role','adm');LS.set('vip3-age',null);LS.set('vip3-aep',null);LS.set('vip3-cache',{});L.me=null;if(L.draft)L.draft.cook=null;L.hold=[];try{saveL()}catch(e){}try{sessionStorage.setItem('vip3-gmsg',why||'')}catch(e){}gateLock(true);try{location.reload()}catch(e){}}
+const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
+const gateErr=(m,shake)=>{const e=$('#ge');if(e)e.textContent=m||'';if(shake){const c=document.querySelector('.gcard');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}try{vib(90)}catch(x){}}};
+async function gateLogin(){if(GT.busy)return;const nm=$('#gn').value,pw=$('#gp').value,btn=$('#gb'),BAD='Неверное имя или пароль';
+if(!normName(nm)){gateErr('Введите имя',1);$('#gn').focus();return}if(!pw){gateErr('Введите пароль',1);$('#gp').focus();return}
+if(Date.now()<GT.until){gateErr('Подождите '+Math.ceil((GT.until-Date.now())/1000)+' с и повторите',1);return}
+if(!navigator.onLine){gateErr('Нет связи с интернетом',1);return}
+GT.busy=1;btn.disabled=true;btn.classList.add('busy');gateErr('');
+const fail=m=>{GT.fails++;GT.until=Date.now()+Math.min(15000,600*Math.pow(2,Math.min(GT.fails,5)));gateErr(m,1);$('#gp').select()};
+try{const n=normName(nm);let email;
+if(n.indexOf('@')>0)email=n;else if(/^(admin|шеф|руководитель)$/.test(n))email=String(CFG.adminEmail).toLowerCase();
+else{const h=await lkHash(n),r=await fetchFast(`${DB}/lk/${h}.json`,{},9000);if(!r.ok)throw new Error('net');const al=await r.json();if(typeof al!=='string'||!/^[a-z0-9]{3,40}$/.test(al)){await sleepMs(500+Math.random()*400);fail(BAD);return}email=al==='admin'?String(CFG.adminEmail).toLowerCase():al==='viewer'?VIEWER:al+'@vip.local'}
+const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,returnSecureToken:true})},12000),j=await r.json();
+if(!r.ok){const c=(j.error&&j.error.message)||'';fail(/TOO_MANY/.test(c)?'Слишком много попыток. Подождите минуту':/USER_DISABLED/.test(c)?'Аккаунт отключён. Обратитесь к руководителю':BAD);return}
+const prev=AU;AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);
+let me=null;
+if(ROLE==='cook'){let o=null,ne=0;try{o=await jget('ok/'+jwtUid(AU.t))}catch(e){ne=1}
+if(!o||!o.id){AU={t:'',rt:'',exp:0,ok:false};ROLE='adm';LS.set('vip3-role','adm');if(ne)gateErr('Нет связи. Проверьте интернет и повторите',1);else{gateErr('Доступ не выдан. Обратитесь к руководителю',1);GT.fails++}return}me={id:String(o.id),n:String(o.n||nm),r:String(o.r||'')}}
+else if(ROLE==='adm'){const c=team().find(x=>x.ch);me={id:c?c.id:'chef-hossam',n:c?c.n:'Хоссам',r:'Шеф'}}
+let ge=null;try{const g=await jget('access/ge');ge=typeof g==='number'?g:0}catch(e){}
+LS.set('vip3-rt',AU.rt);LS.set('vip3-it',{t:AU.t,exp:AU.exp});LS.set('vip3-was',ROLE);LS.set('vip3-age',ge);LS.set('vip3-gate',GATE_V);LS.set('vip3-lastname',nm.trim());
+if(ROLE==='adm')await epSync();
+L.me=me;if(me&&L.draft)L.draft.cook=me;L.hold=[];saveL();credStore(nm.trim(),pw);persistAsk();try{sessionStorage.setItem('vip3-gmsg','')}catch(e){}
+$('#gp').value='';location.reload()}
+catch(e){fail('Нет связи. Проверьте интернет и повторите')}
+finally{GT.busy=0;btn.disabled=false;btn.classList.remove('busy')}}
+// Аккаунт повара: имя-ключ (lk) → случайный логин в Firebase; список допущенных (ok/<uid>) пишет только руководитель
+const rnd36=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a).map(b=>'abcdefghijklmnopqrstuvwxyz0123456789'[b%36]).join('')};
+async function mkAccount(k,pw){for(let i=0;i<4;i++){const al='c'+rnd36(13);let r,j;try{r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:al+'@vip.local',password:pw,returnSecureToken:true})},12000);j=await r.json()}catch(e){throw{msg:'Нужна связь с интернетом: аккаунт повара не создан'}}
+if(r.ok&&j.localId)return{al,uid:j.localId};const m=(j.error&&j.error.message)||'';if(/EMAIL_EXISTS/.test(m))continue;if(/OPERATION_NOT_ALLOWED/.test(m))throw{msg:'В Firebase выключен вход по Email/паролю: Authentication → Sign-in method'};if(/WEAK_PASSWORD/.test(m))throw{msg:'Пароль слишком простой — минимум 6 символов'};throw{msg:'Не удалось создать аккаунт ('+m.slice(0,40)+')'}}throw{msg:'Не удалось создать аккаунт. Повторите'}}
+let lkBusy=0,lkTm=0,lkDue=0,lkAgain=0;const lkSoon=now=>{const at=Date.now()+(now?300:4000);if(lkTm&&lkDue<=at)return;clearTimeout(lkTm);lkDue=at;lkTm=setTimeout(()=>{lkTm=0;lkSync()},at-Date.now())};
+async function lkSync(){if(DEMO||!isAdmin()||!navigator.onLine)return;if(lkBusy){lkAgain=1;return}lkBusy=1;try{const want={},add=async(name,al)=>{if(normName(name)&&al)want[await lkHash(name)]=al};
+for(const k of team()){const raw=(DATA.team||{})[k.id];if(raw&&raw.al)await add(k.n,raw.al)}
+const ch=team().find(x=>x.ch);if(ch)await add(ch.n,'admin');let ob=null;try{ob=await jget('access/obs')}catch(e){}if(ob&&ob.on!==0&&ob.n)await add(ob.n,'viewer');
+const cur=(await jget('lk'))||{};for(const[h,a]of Object.entries(want))if(cur[h]!==a)mut0('PUT','lk/'+h,a);for(const h of Object.keys(cur))if(!(h in want))mut0('DELETE','lk/'+h)}catch(e){try{errAdd(e&&e.message||String(e),'lkSync')}catch(x){}}lkBusy=0;if(lkAgain){lkAgain=0;lkSoon(1)}}
+const accLabel=()=>ROLE==='adm'?'Руководитель':ROLE==='obs'?'Наблюдатель':(L.me&&L.me.n)||'Повар';
+const rAccStrip=()=>{const e=$('#accs');if(!e)return;if(DEMO||!AU.rt){e.hidden=true;e.innerHTML='';return}e.hidden=false;e.innerHTML=`<span class="accn"><i aria-hidden="true">👤</i><span class="acct"><b>${esc(accLabel())}</b><small>${ROLE==='adm'?'руководитель':ROLE==='obs'?'наблюдатель':esc((L.me&&L.me.r)||'повар')}</small></span><button type="button" class="d" data-a="gout">Выйти</button></span>`};
+Object.assign(ACT,{gpeek(){const i=$('#gp'),b=document.querySelector('.gpeek');if(!i)return;const sh=i.type==='password';i.type=sh?'text':'password';if(b){b.setAttribute('aria-pressed',String(sh));b.textContent=sh?'🙈':'👁'}try{i.focus()}catch(e){}}});
+{const gf=$('#gf');if(gf)gf.addEventListener('submit',e=>{e.preventDefault();gateLogin()});const gv=$('#gv');if(gv)gv.textContent='Версия '+VER;
+if(DEMO||!$('#gate'))gateLock(false);else if(!AU.rt){gateLock(true);let m='';try{m=sessionStorage.getItem('vip3-gmsg')||'';sessionStorage.removeItem('vip3-gmsg')}catch(e){}if(m)gateErr(m,0);const ln=LS.get('vip3-lastname','');if(ln&&$('#gn')){$('#gn').value=String(ln)}setTimeout(()=>{try{($('#gn').value?$('#gp'):$('#gn')).focus()}catch(e){}},120)}else gateLock(false)}
 
 window.__vipBoot=1;
 })();
