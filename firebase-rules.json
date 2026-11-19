@@ -284,6 +284,10 @@
         "$other": {
           ".validate": false
         }
+      },
+      "ep": {
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+        ".validate": "newData.isNumber()"
       }
     },
     "proposals": {
@@ -317,6 +321,37 @@
         },
         "dt": {
           ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "trash": {
+      ".read": "auth != null && auth.token.email == 'admin@vip.local'",
+      ".indexOn": [
+        "t"
+      ],
+      "$id": {
+        ".write": "!data.exists() || (auth != null && auth.token.email == 'admin@vip.local')",
+        ".validate": "newData.hasChildren(['p','t','v'])",
+        "p": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "t": {
+          ".validate": "newData.isNumber()"
+        },
+        "v": {
+          ".validate": "newData.isString() && newData.val().length <= 100000"
+        },
+        "d": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "by": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "g": {
+          ".validate": "newData.isString() && newData.val().length <= 60"
         },
         "$other": {
           ".validate": false
