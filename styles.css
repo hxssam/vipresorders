@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.2"}
+:root{--vip-ver:"9.9.3"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -968,3 +968,14 @@ a.tgl{display:flex;align-items:center;justify-content:center;min-height:44px;mar
 
 #ddq .chip{min-height:40px;min-width:44px}
 @media(max-width:380px){#ddq .st button{min-width:40px;min-height:40px}}
+
+/* 9.9.2b: кнопка количества в «Заготовках» — аккуратная «таблетка» вместо узкой рамки */
+#vPrep .pm .qpill.act,#vPrep .pm .qpill.part{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 12px 0 13px;margin:5px 0 3px;border-radius:999px;font-size:14px;font-weight:800;letter-spacing:.1px;line-height:1;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,background-color .15s ease,box-shadow .15s ease}
+#vPrep .pm .qpill.act{color:var(--ac);background:var(--ac2);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 38%,transparent)}
+#vPrep .pm .qpill.act::after,#vPrep .pm .qpill.part::after{content:"";flex:none;width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);opacity:.7;margin-left:1px}
+#vPrep .pm .qpill.part{color:#fff;background:var(--ac);box-shadow:none}
+#vPrep .pm .qpill.act:active,#vPrep .pm .qpill.part:active{transform:scale(.96)}
+#vPrep .pm .dqr{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;margin:0;border-radius:999px;background:color-mix(in srgb,var(--wa) 16%,transparent);font-size:12.5px}
+#vPrep .pm .dqb{height:6px;margin:3px 0 5px;max-width:240px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) #vPrep .pm .qpill.part{color:#0b0d17}}
+:root[data-theme=dark] #vPrep .pm .qpill.part{color:#0b0d17}
