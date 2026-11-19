@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.8.0"}
+:root{--vip-ver:"9.9.0"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -909,3 +909,38 @@ a.tgl{display:flex;align-items:center;justify-content:center;min-height:44px;mar
 .prebox{border:1px solid var(--line,#8884);border-left:4px solid #2563eb;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:15px}
 .prebox small{display:block;opacity:.7;margin:2px 0 6px}
 .prebox pre{white-space:pre-wrap;margin:0;font:inherit;max-height:30dvh;overflow:auto}
+
+/* ---- 9.9.0: панель «Что отправить», личные пароли, корзина ---- */
+.bar .barw{display:flex;gap:8px;max-width:760px;margin:0 auto;align-items:stretch}
+.bar .barw button{margin:0;max-width:none}
+.bar .barw #rv{flex:1 1 auto;width:auto;min-width:0}
+.bar .barw #sbt{flex:0 0 58px;width:58px;padding:0;justify-content:center;font-size:24px}
+.sendp .sdh{margin:0 0 10px}
+.sdk{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.sdk .lbl{margin:0;flex:none}
+.sdk select{flex:1;min-width:0;font-size:16px;min-height:44px}
+.sdl{display:grid;gap:6px;margin-bottom:8px}
+.sdr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--sf);border:1.5px solid var(--ln);color:var(--tx);padding:8px 12px;min-height:54px;border-radius:14px}
+.sdr .ck{width:28px;height:28px;border-radius:50%;font-size:16px;font-weight:800;display:grid;place-items:center;flex:none}
+.sdr .sdn{display:flex;flex-direction:column;min-width:0}
+.sdr .sdn b{font-size:16px}
+.sdr .sdn small{color:var(--mu);font-size:13px;font-weight:600}
+.sdr.on{background:var(--ac2);border-color:var(--ac)}
+.sdr.on .ck{background:var(--ac);border-color:var(--ac);color:#fff}
+.sdr.dis{opacity:.5}
+.sdc{margin:4px 0 10px}
+.sdt{font-weight:800;margin:6px 0}
+.clg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.clg .cl{min-height:46px;padding:6px 8px;margin:0;font-size:14px;gap:8px;line-height:1.2}
+.clg .cl .ck{width:26px;height:26px;border-radius:50%;font-size:15px;display:grid;place-items:center;flex:none}
+@media(max-width:340px){.clg{grid-template-columns:1fr}}
+.pidd #pidv{font-size:16px;width:100%}
+.pide{color:var(--rd);min-height:22px;font-weight:700;margin:6px 0}
+.who-ld{border-style:dashed}
+.who-ld .cook-dot{background:var(--ac)}
+.trg{border:1px solid var(--ln);border-radius:14px;padding:8px 10px;margin:8px 0;background:var(--sf)}
+.trg b{display:block;font-size:15px}
+.trg small{color:var(--mu);display:block;margin:2px 0 6px}
+.trg .acts{margin:6px 0 0;gap:6px}
+.trg .acts button{min-height:40px;padding:6px 12px;font-size:14px}
+.prebox .prb{margin-top:8px;width:100%}

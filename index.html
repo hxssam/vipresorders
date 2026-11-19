@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.8.0">
+<meta name="vip-ver" content="9.9.0">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -114,12 +114,12 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 </section>
 </div>
 
-<div class="bar" id="bar"><button class="p" id="rv" data-a="review"><span>Проверить заказ</span><span id="cnt">0</span></button></div>
+<div class="bar" id="bar"><div class="barw"><button class="g sendb" id="sbt" data-a="sendopen" aria-label="Отправить: заказ, заготовки, банкет, списания">📤</button><button class="p" id="rv" data-a="review"><span>Проверить заказ</span><span id="cnt">0</span></button></div></div>
 
 <dialog id="dr"><h2>Проверка заказа</h2><div id="rb"></div><div class="lbl" style="margin-top:12px">Повар</div><div id="rc" style="font-weight:700"></div>
 <div class="acts"><button class="p" data-a="copy">Копировать заказ</button><button data-a="save">Сохранить</button><button class="g" data-a="close">Закрыть</button><button class="d" data-a="clear">Очистить</button></div></dialog>
 
-<dialog id="dcl"><h2>Закрытие кухни</h2><div class="small" style="margin:0 0 10px">Перед отправкой отметьте каждый пункт: <b id="cprog"></b></div><div id="clist"></div><div class="acts"><button class="g" data-a="clno">Назад</button><button class="p" id="cgo" data-a="clgo" disabled>Всё проверено — продолжить</button></div></dialog>
+<dialog id="dcl" class="sendp"><h2>Что отправить?</h2><div class="small sdh">Отметьте, что войдёт в сообщение и в картинку A4. Выбор запоминается на сегодня.</div><div class="sdk"><label class="lbl" for="sdck">👨‍🍳 Повар</label><select id="sdck" data-a="sdcook" aria-label="Повар"></select></div><div id="sdl" class="sdl"></div><div id="sdc" class="sdc" hidden><div class="sdt">🔒 Закрытие кухни · <b id="cprog"></b></div><div id="clist" class="clg"></div></div><div class="acts"><button class="g" data-a="clno">Назад</button><button class="p" id="cgo" data-a="clgo" disabled>Далее — проверить сообщение</button></div></dialog>
 
 <dialog id="di"><h2 id="dih">Добавить на главный экран</h2><div id="dib"></div><div class="acts"><button class="p" data-a="close">Понятно</button></div></dialog>
 
@@ -132,7 +132,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl f">Примечание</div><input id="dxt" maxlength="120" placeholder="Вес или примечание (необязательно)" autocomplete="off">
 <div class="acts"><button class="p" data-a="xsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div>
 <div class="acts" id="dxd" hidden><button class="d" data-a="xdel">🗑 Удалить позицию</button></div></dialog>
-<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button><button class="g" data-a="admin">🔐 Руководитель / наблюдатель</button></div></dialog>
+<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button></div></dialog>
 <dialog id="dbt"><h2>🎉 Банкеты вместе</h2><div id="dbtb"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="drs"><h2>Лист приёмки</h2><div id="drsb"></div><div class="acts rc-share"><button class="p" data-a="rcpdf">📄 PDF</button><button data-a="rccsv">📊 Excel</button><button data-a="rctext">📋 Копировать</button><button id="rcsend" data-a="rcsend" hidden>↗ Отправить текст</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="dth"><h2>Тема оформления</h2><div class="thopts" role="radiogroup" aria-label="Тема оформления">
@@ -145,6 +145,17 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
 <dialog id="dt"><h2>Админ-панель</h2>
+<details class="adm" id="adR"><summary><span class="ai" aria-hidden="true">♻️</span><b>Корзина и восстановление</b><small id="adsR"></small></summary><div class="adb">
+<div class="small">Всё, что удаляют в приложении, лежит здесь 60 дней: заказы, заготовки, банкеты, списания. Нажмите «Вернуть», и запись появится на прежнем месте.</div>
+<div id="trl"></div>
+<div class="acts"><button class="g" data-a="trload">↻ Обновить</button></div>
+<div class="lbl f">Удалили раньше? Вернуть заказ из сообщения</div>
+<div class="small">Вставьте текст заказа из Telegram или WhatsApp («🧾 Заказ на …»). Можно сразу несколько сообщений.</div>
+<textarea id="trmsg" rows="4" placeholder="🧾 Заказ на пт, 20.11 …" autocomplete="off"></textarea>
+<div id="trpv"></div>
+<div class="acts"><button class="p" data-a="trparse">Проверить текст</button><button class="g" data-a="trfile">📂 Из файла копии…</button></div>
+<input type="file" id="trfi" accept=".json,application/json" hidden>
+</div></details>
 <details class="adm" id="adA"><summary><span class="ai" aria-hidden="true">🔔</span><b>Наблюдатель и правки</b><small id="adsA"></small></summary><div class="adb">
 <div id="apl"></div>
 <div class="lbl f">Пользователь-наблюдатель</div><div id="obcfg"><input id="obn" maxlength="40" placeholder="Имя наблюдателя (видно в правках)" autocomplete="off">
@@ -217,7 +228,8 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="acts"><button class="p" id="dshp" data-a="shsave">Записать смену</button><button class="d" id="dshd" data-a="shdel">Удалить смену</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dsv"><h2>Время подачи</h2><div class="small" id="svn" style="margin:0 0 10px;font-weight:700"></div><input id="svt" data-tm inputmode="numeric" maxlength="5" placeholder="19:30" autocomplete="off" enterkeyhint="done" aria-label="Время подачи"><div class="lbl" style="margin:12px 0 6px">Быстрый выбор</div><div class="chips wrap" id="svq"></div><div class="acts"><button class="p" data-a="svsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" data-a="svclr">Убрать</button></div></dialog>
 <dialog id="dgs"><h2>Сколько гостей?</h2><input id="gsn" inputmode="numeric" placeholder="например, 80" autocomplete="off"><div class="small">Все заготовки «по числу гостей» в этот день пересчитаются автоматически.</div><div class="acts"><button class="p" data-a="gstsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
-<dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Повар вводит его, чтобы увидеть только свои часы и зарплату. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
+<dialog id="dpid" class="pidd" aria-labelledby="pidh"><h2 id="pidh">Пароль</h2><div class="small" style="margin:0 0 8px">Введите свой пароль. Он запомнится на этом телефоне — повторно вводить не придётся.</div><form id="pidf" autocomplete="on" onsubmit="return false"><input id="pidv" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Пароль" enterkeyhint="go"><div class="pide" id="pide" role="alert"></div><div class="acts"><button class="g" type="button" data-a="pidno">Отмена</button><button class="p" type="submit" id="pidgo" data-a="pidgo">Войти</button></div></form></dialog>
+<dialog id="dpw"><h2 id="pwh">Пароль кабинета</h2><div class="small" style="margin:0 0 8px">Этим паролем повар входит в приложение (экран «Кто вы?») и в личный кабинет со своими часами и зарплатой. Минимум 6 символов. Запишите и передайте повару.</div><input id="pwv" autocomplete="off" autocapitalize="off" placeholder="Новый пароль"><div class="acts"><button class="p" data-a="pwsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="d" id="pwdel" data-a="pwdel">Отключить доступ</button></div></dialog>
 <dialog id="dd"><h2>Связь и диагностика</h2><pre class="msg" id="dinfo"></pre><pre class="msg" id="dlog" style="margin-top:8px"></pre><div class="acts"><button class="p" data-a="dtest">Проверить связь</button><button data-a="dre">Переподключить</button></div><div class="acts"><button data-i="go">📲 Установить на главный экран</button></div><div class="acts"><button class="d" data-a="dclr">Сбросить кэш</button><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="de"><h2>Изменить товар</h2><div class="lbl">Название</div><input id="en" maxlength="90"><div class="lbl f">Единица по умолчанию</div><select id="eu"></select><p class="small">Изменение увидят все повара.</p><div class="acts"><button class="p" data-a="saveprod">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 

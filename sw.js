@@ -1,7 +1,7 @@
 'use strict';
 // 9.7: ВСЕ файлы приложения хранятся одним набором одной версии. Новая версия ставится только если index.html, app.js, styles.css и sw.js одной версии
 // (иначе установка отменяется и остаётся прежняя рабочая): так не бывает «половина старая, половина новая».
-const VERSION = '9.8.0';
+const VERSION = '9.9.0';
 const CACHE = 'vip-restobar-' + VERSION;
 const FILES = ['./index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest', './logo.png', './logo-ink.png', './icons/icon-192.png', './icons/icon-512.png'];
 const OFFLINE = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Нет связи</title><body style="font:18px system-ui;padding:32px;text-align:center"><h2>Нет интернета</h2><p>Приложение откроется, когда появится связь.</p><button style="font:inherit;padding:12px 24px" onclick="location.reload()">Обновить</button>';
