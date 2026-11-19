@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.7.2';
+const VER='9.8.0';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -125,12 +125,23 @@ let pendSince=0;const rSync=()=>{const b=document.getElementById('syncbar');if(!
 const showN=n>0&&Date.now()-pendSince>4000,show=showN||h>0;if(b.hidden===!show&&b.dataset.k===n+'|'+h)return;b.dataset.k=n+'|'+h;b.hidden=!show;if(!show){b.innerHTML='';return}
 b.innerHTML=(showN?`<span>⏳ Не отправлено другим: <b>${n}</b></span>`:`<span>🔒 Ждут входа руководителя: <b>${h}</b></span>`)+`<button class="g" data-a="syncnow">Отправить сейчас</button>`};
 let AU={t:'',rt:LS.get('vip3-rt',''),exp:0,ok:false};
-const isAdmin=()=>AU.ok,ed=()=>edit&&AU.ok;
+// 9.8.0: роли. Шеф (admin@vip.local) — всё как раньше. Наблюдатель (viewer@vip.local) — смотрит; его правки уходят шефу на утверждение (proposals), сам он ничего не меняет
+const VIEWER=String(CFG.viewerEmail||'viewer@vip.local').toLowerCase();
+let ROLE=LS.get('vip3-role','')==='obs'?'obs':'adm';
+const jwtEmail=t=>{try{const p=String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return String(JSON.parse(decodeURIComponent(escape(atob(p+'='.repeat((4-p.length%4)%4))))).email||'').toLowerCase()}catch{return''}};
+const roleSet=t=>{const e=jwtEmail(t);ROLE=e&&e===VIEWER?'obs':'adm';LS.set('vip3-role',ROLE)};
+const isObs=()=>AU.ok&&ROLE==='obs',isAdmin=()=>AU.ok&&ROLE!=='obs',ed=()=>edit&&isAdmin();
+const OBS_DIV=/^(?:prep|prepMeta|prepLibrary|prepPins|writeoffs|plan|orders|receipts|catalog|prepCats)\//,OBS_FREE=/^plan\/seen\//;
+const OBS={cfg:(c=>c&&typeof c==='object'?c:{})(LS.get('vip3-obscfg',{})),ls:(a=>Array.isArray(a)?a:[])(LS.get('vip3-myprop',[])),t:0,busy:0,last:0,vt:0,nt:0};
+let gestT=0,gG=null;
+['pointerdown','keydown','click','change','submit','touchend'].forEach(ev=>addEventListener(ev,e=>{if(e.isTrusted)gestT=Date.now()},true));
+const credStore=(id,pw)=>{try{if(window.PasswordCredential&&navigator.credentials&&navigator.credentials.store)navigator.credentials.store(new PasswordCredential({id,password:pw,name:id})).catch(()=>{})}catch(e){}};
+const persistAsk=()=>{try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}};
 const fetchFast=(url,options={},limit=12000)=>{if(typeof AbortController==='undefined')return fetch(url,options);const c=new AbortController(),timer=setTimeout(()=>c.abort(),limit);return fetch(url,{...options,signal:c.signal}).then(r=>{clearTimeout(timer);return r},e=>{clearTimeout(timer);throw e})};
 async function tok(lim){if(!AU.rt)return'';if(AU.t&&Date.now()<AU.exp-6e4)return AU.t;
 const r=await fetchFast('https://securetoken.googleapis.com/v1/token?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(AU.rt)},lim||12000);
 const j=await r.json();if(!r.ok){if(r.status===400){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','')}throw new Error('auth')}
-AU={t:j.id_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000,ok:true};LS.set('vip3-rt',AU.rt);return AU.t}
+AU={t:j.id_token,rt:j.refresh_token,exp:Date.now()+j.expires_in*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);return AU.t}
 const probe=async u=>{try{const r=await fetchFast(u+'/.json?shallow=true',{},8000),tx=await r.text();let j;try{j=JSON.parse(tx)}catch{return 0}if(r.status===200&&(j===null||typeof j==='object'))return 2;if((r.status===401||r.status===403)&&j&&typeof j.error==='string'&&/permission denied/i.test(j.error))return 1;return 0}catch{return 0}};
 let detP=null;
 // 9.7: проверяем сразу все адреса параллельно, берём первый настоящий ответ Firebase по порядку важности (стандартный адрес первым); страницы-заглушки Wi-Fi и чужие хосты не принимаются
@@ -146,7 +157,8 @@ async function flush(){if(fl||DEMO||!L.out.length||Date.now()<retryAt)return;fl=
 try{do{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){if([400,404,405,409,410,412,413,414,422].includes(e.status)){ST.err=ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;L.out.shift();saveL();snd.warn();toast('Не сохранено (код '+e.status+'). Проверьте соединение и правила Firebase');setSt();continue}
 if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();continue}throw e}ST.err='';failures=0;retryAt=0;if(o.p.indexOf('orders/')===0&&o.b&&o.b.copied===true)tgPoke();L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
 if(denied){snd.warn();toast('Часть изменений требует входа руководителя — они сохранены и отправятся после входа')}}catch{failures++;retryAt=Date.now()+Math.min(60000,1000*Math.pow(2,Math.min(failures-1,6)))}fl=0;setSt()}
-function mut(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
+function mut(m,p,v){if(isObs()&&OBS_DIV.test(p)&&!OBS_FREE.test(p))return propose(m,p,v);return mut0(m,p,v)}
+function mut0(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
 const ES={};
 function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
 const es=ES[key]=new EventSource(`${DB}/${prefix}.json${q?'?'+q:''}`);es.__route=route;ST.open[key]=false;
@@ -189,7 +201,7 @@ const team=()=>{const s=JSON.stringify(DATA.team||null);if(s!==TM_S||!TM_V){TM_S
 const PALETTE=['#b91c1c','#c2410c','#a16207','#4d7c0f','#15803d','#0f766e','#0369a1','#1d4ed8','#6d28d9','#a21caf','#be123c','#475569'];
 const hashColor=id=>{let h=2166136261,s=String(id);for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return PALETTE[h%PALETTE.length]};
 const cookColor=id=>{const c=team().find(x=>x.id===id);return c&&PALETTE.includes(c.color)?c.color:hashColor(id)};
-const ensureTeamColors=()=>{const used=[];team().forEach(k=>{if(k.virtual){used.push(hashColor(k.id));return}let c=PALETTE.includes(k.color)&&!used.includes(k.color)?k.color:'';if(!c)c=PALETTE.find(x=>!used.includes(x))||hashColor(k.id);used.push(c);if(k.color!==c)mut('PATCH','team/'+k.id,{color:c})})};
+const ensureTeamColors=()=>{if(isObs())return;const used=[];team().forEach(k=>{if(k.virtual){used.push(hashColor(k.id));return}let c=PALETTE.includes(k.color)&&!used.includes(k.color)?k.color:'';if(!c)c=PALETTE.find(x=>!used.includes(x))||hashColor(k.id);used.push(c);if(k.color!==c)mut('PATCH','team/'+k.id,{color:c})})};
 const isWork=s=>s===true||s==='Р'||!!(s&&(s.work||s.r==='Р'||s.f||s.t));
 const workLabel=s=>s&&s.f&&s.t?`${s.f}–${s.t}`:(s&&s.r?s.r:'Р');
 const norm=o=>({...o,items:Array.isArray(o.items)?o.items:Object.values(o.items||{}),note:o.note||''});
@@ -305,7 +317,7 @@ if(+h>23||+m>59)return'';const o=h.padStart(2,'0')+':'+m;return okTm(o)?o:''};
 const rupl=(n,a)=>a[n%10===1&&n%100!==11?0:n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?1:2];
 const bqOf=t=>String((t&&t.bq)||'0');
 const bqCalc=(m,ds)=>{m=m&&typeof m==='object'?m:{};ds=ds&&typeof ds==='object'?ds:{};
-const gn=v=>{const g=Math.round(Number(v));return g>0&&g<=100000?g:0},mk=(id,v,o)=>({id,title:String(v.title||''),guests:gn(v.guests),time:okTm(v.time)?v.time:'',place:String(v.place||''),note:String(v.note||''),o:Number(o!==undefined?o:v.o)||0}),out=[],seen=new Set(),dishes=Object.values(ds).filter(t=>t&&t.t&&t.g==='banq');
+const gn=v=>{const g=Math.round(Number(v));return g>0&&g<=100000?g:0},mk=(id,v,o)=>({id,title:String(v.title||''),guests:gn(v.guests),time:okTm(v.time)?v.time:'',place:String(v.place||''),note:String(v.note||''),src:v.src==='pre'?'pre':'',pi:String(v.pi||''),o:Number(o!==undefined?o:v.o)||0}),out=[],seen=new Set(),dishes=Object.values(ds).filter(t=>t&&t.t&&t.g==='banq');
 if(['title','time','place','note'].some(k=>m[k])||dishes.some(t=>!t.bq)){out.push(mk('0',m,0));seen.add('0')}
 Object.entries(m.b&&typeof m.b==='object'?m.b:{}).forEach(([id,v])=>{if(v&&typeof v==='object'&&!seen.has(id)){out.push(mk(id,v));seen.add(id)}});
 dishes.forEach(t=>{const id=bqOf(t);if(!seen.has(id)){seen.add(id);out.push(mk(id,{},t.c||0))}});
@@ -382,7 +394,7 @@ const libFind=(t,g)=>libItems().find(i=>nt(i.t)===nt(t)&&((i.g==='banq')===(g===
 const libId=(t,g)=>hashText(nt(t)+(g==='banq'?'|b':''));
 const hashText=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return 'l'+h.toString(36)};
 const libItems=()=>Object.entries(DATA.prepLibrary||{}).map(([id,v])=>({id,...v})).filter(v=>v&&v.t);
-const rememberPrep=(t,w)=>{if(!t||!t.t||!w)return;const old=libFind(t.t,t.g),id=old?old.id:libId(t.t,t.g);mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),by:{id:w.id,n:w.n},usedAt:Date.now()})};
+const rememberPrep=(t,w)=>{if(!t||!t.t||!w||isObs())return;const old=libFind(t.t,t.g),id=old?old.id:libId(t.t,t.g);mut('PUT','prepLibrary/'+id,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.pg?{pg:t.pg,pu:t.pu}:{}),by:{id:w.id,n:w.n},usedAt:Date.now()})};
 const rLibrary=()=>{const q=nt($('#libq').value),items=libItems().filter(i=>matchF(i)&&(!q||nt(i.t).includes(q))).sort((a,b)=>(b.usedAt||0)-(a.usedAt||0));$('#libcount').textContent=`${items.length} сохранено`;$('#liblist').innerHTML=items.length?items.map(i=>`<article class="libitem"><div class="libname">${pcIcon(pk(i))} ${esc(i.t)}</div><div class="libmeta">${i.pg?`👥 ${esc(fmtQ(i.pg))} ${esc(i.pu||'')}/гость · `:i.q?`${esc(i.q)} · `:''}${i.g&&i.g!=='main'?`${esc(gname(i.g))} · `:''}${i.by?`Готовил: ${esc(i.by.n)} · `:'Запись в архиве · '}${i.usedAt?new Date(i.usedAt).toLocaleDateString('ru',{day:'2-digit',month:'2-digit',year:'numeric'}):'Ранее'}</div><div class="lib-actions"><button class="p" data-a="libadd" data-id="${esc(i.id)}">＋ В день</button><button data-a="libedit" data-id="${esc(i.id)}">✎ Изменить</button><button class="d" data-a="libdelete" data-id="${esc(i.id)}">Удалить</button></div></article>`).join(''):'<div class="em">История пока пуста. Добавьте заготовку или отметьте её выполненной.</div>'};
 const rCatMgr=()=>{const cs=Object.entries(DATA.prepCats||{}).filter(([k,v])=>v&&v.n).sort((a,b)=>(a[1].o||0)-(b[1].o||0));$('#catl').innerHTML=cs.length?cs.map(([k,v])=>`<div class="catrow"><input class="ce" data-ce="${esc(k)}" value="${esc(v.e||'')}" maxlength="4" aria-label="Значок"><input data-cn="${esc(k)}" value="${esc(v.n)}" maxlength="30" aria-label="Название"><button class="x" data-a="catdel" data-id="${esc(k)}" aria-label="Удалить">✕</button></div>`).join(''):'<div class="small">Своих категорий пока нет. Базовые: '+PCATS0.map(c=>c[1]+' '+c[2]).join(', ')+'.</div>'};
 const catEdit=(t,d)=>{if(!isAdmin())return;const id=d.ce||d.cn;if(!(DATA.prepCats||{})[id])return;if(d.cn){const n=t.value.trim().replace(/\s+/g,' ').slice(0,30);if(!n){rCatMgr();return}mut('PATCH','prepCats/'+id,{n})}else{mut('PATCH','prepCats/'+id,{e:Array.from(t.value.trim()||'🏷️').slice(0,2).join('')})}snd.tap()};
@@ -390,7 +402,7 @@ const libraryDialog=item=>{const groups=pgroups();$('#lltitle').textContent=item
 const dm=()=>(DATA.prep||{})[pd]||{},dayTasks=()=>Object.values(dm());
 const pgroups=()=>[{id:'main',n:'Основные'},{id:'banq',n:'Банкет'},...Object.entries((DATA.plan||{}).groups||{}).map(([id,v])=>({id,n:v.n}))];
 const gname=g=>(pgroups().find(x=>x.id===g)||{n:'Другое'}).n;
-const WO_REASONS=[['spoiled_v2','Порча продукта'],['damaged_v2','Повреждение товара'],['expired','Истёк срок годности'],['storage','Нарушение условий хранения'],['trim','Обрезки'],['other','Другая причина']];
+const WO_REASONS=[['spoiled_v2','Порча продукта'],['damaged_v2','Повреждение товара'],['expired','Истёк срок годности'],['storage','Нарушение условий хранения'],['trim','Обрезки'],['staff','Персонал'],['other','Другая причина']];
 const woReason=id=>id==='spoiled'?'Старый вариант: порча или повреждение':(WO_REASONS.find(x=>x[0]===id)||WO_REASONS.find(x=>x[0]==='other'))[1];
 const ruCount=(n,one,two,five)=>{const a=n%100,b=n%10;return a>=11&&a<=14?five:b===1?one:b>=2&&b<=4?two:five};
 const woRows=date=>Object.entries(((DATA.writeoffs||{})[date])||{}).map(([id,v])=>({id,...(v||{}),c:(v&&v.c)||(prods().find(p=>p.id===v?.pid)||{}).c||''})).filter(v=>v&&v.name&&!v.carried);
@@ -399,7 +411,7 @@ const planItems=()=>Object.entries((DATA.plan||{}).items||{}).map(([id,v])=>({id
 // ---------- перенос остатков: независимо от вкладки и отрисовки, всегда по свежим данным ----------
 const savePd=()=>LS.set('vip3-prep-date',{d:pd,t:dAdd(0)});
 let carryBusy=0,carryAt=0;const carryOK={};
-const carryPrep=async()=>{const today=dAdd(0),prev=dAdd(-1,today);if(carryOK[today])return;
+const carryPrep=async()=>{if(isObs())return;const today=dAdd(0),prev=dAdd(-1,today);if(carryOK[today])return;
 let src,dst,meta,pmeta;
 if(DEMO){src=(DATA.prep||{})[prev];dst=(DATA.prep||{})[today];meta=(DATA.prepMeta||{})[today];pmeta=(DATA.prepMeta||{})[prev]}
 else{if(!DB)return;[src,dst,meta,pmeta]=await Promise.all([jget('prep/'+prev),jget('prep/'+today),jget('prepMeta/'+today),jget('prepMeta/'+prev)])}
@@ -413,7 +425,7 @@ if(need.size){const pl=bqCalc(pmeta,src),have=meta.b||{};need.forEach(o=>{const 
 es.forEach(([id,t],i)=>mut('PUT',`prep/${today}/${id}`,{t:t.t,q:t.q||'',g:t.g||'main',k:t.k||'other',...(t.ks?{ks:t.ks}:{}),...(t.pg?{pg:t.pg,pu:t.pu}:{}),...(t.lid?{lid:t.lid}:{}),...(t.g==='banq'?{bq:tgt(bqOf(t)),...(okTm(t.sv)?{sv:t.sv}:{})}:{}),carryFrom:prev,c:Date.now()+i}))}
 mut('PUT',`prepMeta/${today}/cf`,prev);carryOK[today]=1;
 if(es.length)toast(`↩ Перенесено с ${day(prev)}: ${es.length}`)};
-const carryWo=async()=>{const today=dAdd(0),prev=dAdd(-1,today);let src,dst;
+const carryWo=async()=>{if(isObs())return;const today=dAdd(0),prev=dAdd(-1,today);let src,dst;
 if(DEMO){src=(DATA.writeoffs||{})[prev];dst=(DATA.writeoffs||{})[today]}else{if(!DB)return;[src,dst]=await Promise.all([jget('writeoffs/'+prev),jget('writeoffs/'+today)])}
 if(dAdd(0)!==today)return;src=src||{};dst=Object.assign({},dst||{},(DATA.writeoffs||{})[today]||{});let n=0;
 Object.entries(src).forEach(([id,v])=>{if(!v||!v.name||v.done||v.carried||dst[id])return;mut('PUT',`writeoffs/${today}/${id}`,{...v,carryFrom:prev,updated:Date.now()});mut('PATCH',`writeoffs/${prev}/${id}`,{carried:today});n++});if(n)toast(`↩ Перенесено в списание: ${n}`)};
@@ -444,8 +456,9 @@ const isB=psec==='banq',bl=isB?bqList(pd):[],cu=isB?bqCur():null,one=cu&&!cu.all
 $('#bqbar').hidden=!isB;$('#bqtabs').hidden=!one;$('#bqinfo').hidden=!info;$('#bqh').hidden=!one||info;$('#plist').hidden=info;$('#ydbox').hidden=info;$('#padd').hidden=isB&&(!one||info);$('#libbox').hidden=isB&&(!one||info);
 if(!isB)return;
 const bqd=b=>all.filter(t=>t.g==='banq'&&bqOf(t)===b.id),bch=(id,ti,sub,prog,on,col)=>`<button class="bqc${on?' on':''}${/🍽/.test(prog)?' wide':''}"${col?` style="--bq:${col}"`:''} data-a="bqsel" data-id="${esc(id)}" aria-pressed="${on?'true':'false'}"><b>${esc(ti)}</b>${sub?`<small>${sub}</small>`:''}${prog?`<i>${prog}</i>`:''}</button>`;
-$('#bqbar').innerHTML=(bl.length>1?bch('*','🗂 Все',bl.length+' '+rupl(bl.length,['банкет','банкета','банкетов']),'',!!(cu&&cu.all&&!cu.tot)):'')+((pool,sel)=>pool.length>=2||(cu&&cu.tot)?bch('#','Σ Итого',sel.length+' '+rupl(sel.length,['банкет','банкета','банкетов'])+' · '+bqMerge(sel).length+' '+rupl(bqMerge(sel).length,['блюдо','блюда','блюд']),'',!!(cu&&cu.tot)):'')(bqPool(),bqSel(bqPool()))+bl.map(b=>{const d=bqd(b),dd=d.filter(isPrepd).length,ds=d.filter(isSv).length,sub=[b.time&&'🕐 '+esc(b.time),b.guests&&'👥 '+b.guests].filter(Boolean).join(' · ');return bch(b.id,bqName(b,bl),sub,d.length?dd+'/'+d.length+(ds?' · 🍽'+ds:''):'',!!(one&&one.id===b.id),bqCol(pd,b))}).join('')+'<button class="bqc add" data-a="bqnew" aria-label="Добавить банкет">＋ Банкет</button>';
+$('#bqbar').innerHTML=(bl.length>1?bch('*','🗂 Все',bl.length+' '+rupl(bl.length,['банкет','банкета','банкетов']),'',!!(cu&&cu.all&&!cu.tot)):'')+((pool,sel)=>pool.length>=2||(cu&&cu.tot)?bch('#','Σ Итого',sel.length+' '+rupl(sel.length,['банкет','банкета','банкетов'])+' · '+bqMerge(sel).length+' '+rupl(bqMerge(sel).length,['блюдо','блюда','блюд']),'',!!(cu&&cu.tot)):'')(bqPool(),bqSel(bqPool()))+bl.map(b=>{const d=bqd(b),dd=d.filter(isPrepd).length,ds=d.filter(isSv).length,sub=[b.src==='pre'&&'🔗',b.time&&'🕐 '+esc(b.time),b.guests&&'👥 '+b.guests].filter(Boolean).join(' · ');return bch(b.id,bqName(b,bl),sub,d.length?dd+'/'+d.length+(ds?' · 🍽'+ds:''):'',!!(one&&one.id===b.id),bqCol(pd,b))}).join('')+'<button class="bqc add" data-a="bqnew" aria-label="Добавить банкет">＋ Банкет</button>';
 if(!one)return;
+{const pb=$('#prebox');if(pb){const pre=one.src==='pre';pb.hidden=!pre;if(pre)pb.innerHTML='<b>🔗 Из предзаказов гостей</b><small>Обновляется само при изменении на сайте предзаказов. Телефон и предоплата сюда не передаются.</small>'+(one.pi?'<pre>'+esc(one.pi)+'</pre>':'')}}
 document.querySelectorAll('#bqtabs button').forEach(b=>{const on=b.dataset.id===cur;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
 const bq=bqd(one),bn=bq.length,bd=bq.filter(isPrepd).length,bs=bq.filter(isSv).length,m=one;$('#pcq').textContent=bn?` ${bd}/${bn}${bs?' 🍽'+bs:''}`:'';
 if(info){const fv=(q,v)=>{const e=$(q);if(document.activeElement!==e){e.value=v;if(e.classList)e.classList.remove('bad')}};fv('#bqt',m.title);fv('#bqs',m.time);fv('#bqg',m.guests||'');fv('#bqp',m.place);fv('#bqn',m.note);setDp($('#bqdt'),pd);{const g=bqGuess(m.title+'\n'+m.note),hh=$('#bqhint');if(g&&g!==pd){hh.hidden=false;hh.innerHTML=`📅 В названии есть дата <b>${esc(day(g))}</b>, а банкет записан на <b>${esc(day(pd))}</b>. <button class="p" data-a="bqmove" data-id="${g}">Перенести на ${esc(day(g))}</button>`}else{hh.hidden=true;hh.innerHTML=''}}$('#bqday').textContent=day(pd)+(bl.length>1?' · '+bqName(m,bl):'');const f=bq.filter(t=>okTm(t.sv)).sort(svSort)[0];$('#bqsum').innerHTML=bn?`Заготовок: <b>${bn}</b> · готово <b>${bd}</b> · подано <b>${bs}</b>${f?` · первая подача <b>${f.sv}</b>`:''}`:'Заготовок пока нет. Откройте вкладку «Заготовки» и добавьте блюда.'}
@@ -865,7 +878,7 @@ if(d.ph){const n=v===''?null:Number(v.replace(',','.'));if(n!==null&&!(n>=0))ret
 const rDiag=()=>{const o=Object.keys(ES).map(k=>k+':'+(ST.open[k]?'✓':'✗')).join('  ');
 $('#dinfo').textContent=[`Версия: ${VER}`,`Режим: ${DEMO?'ДЕМО (config.js не заполнен)':'облако'}`,`База: ${DB||'не найдена'}${DBV?' ✓':''}`,`Живая связь: ${ST.open.meta&&!metaBroken?'мгновенная (поток)':metaBroken?'быстрый опрос (обновите правила Firebase)':'быстрый опрос'}`,`В очереди на отправку: ${L.out.length}`,`Ответ базы: ${ST.okAt?Math.round((Date.now()-ST.okAt)/1e3)+' с назад':'нет'}`,`Последняя ошибка: ${ST.lastErr||'нет'}`,`Скачано сегодня: ${txFmt()}`,`Ошибок на телефоне: ${ERRS.length}`,`Телефон в сети: ${navigator.onLine?'да':'нет'}`,`Повара: ${team().length} · заказы: ${ords().length} · заготовок на день: ${Object.keys(dm()).length}`,`Устройство: ${DEV}`].join('\n');$('#dlog').textContent=''};
 const rHist=()=>{const q=$('#hq').value.trim().toLowerCase();const l=ords().filter(o=>!q||(o.cook.n+' '+o.date+' '+day(o.date)+' '+o.items.map(i=>i.n).join(' ')).toLowerCase().includes(q));
-$('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc([...o.items].sort((a,b)=>(b.urg?1:0)-(a.urg?1:0)).slice(0,5).map(i=>(i.urg?'🚨 ':'')+i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="rcgo" data-id="${o.id}">📦 Принять</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em"><i aria-hidden="true">🕘</i><b>История пока пуста</b>Отправленные заказы появятся здесь.</div>'};
+$('#hl').innerHTML=l.length?l.map(o=>`<div class="hc"><b>${esc(day(o.date))} · ${esc(o.cook.n)}</b><small>${esc(o.cook.r)} · ${o.items.length} поз. · ${new Date(o.created).toLocaleDateString('ru')} ${tm(o.created)}${o.copied?' · ✓ скопирован':' · не скопирован'}</small><div style="font-size:13px;margin-top:4px">${esc([...o.items].sort((a,b)=>(b.urg?1:0)-(a.urg?1:0)).slice(0,5).map(i=>(i.urg?'🚨 ':'')+i.n).join(', '))}${o.items.length>5?'…':''}</div><div class="acts"><button data-a="open" data-id="${o.id}">Открыть и править</button><button data-a="rcgo" data-id="${o.id}">📦 Принять</button><button data-a="hcopy" data-id="${o.id}">Копировать</button><button data-a="himg" data-id="${o.id}">🖼 Лист A4</button><button class="d" data-a="hdel" data-id="${o.id}">Удалить</button></div></div>`).join(''):'<div class="em"><i aria-hidden="true">🕘</i><b>История пока пуста</b>Отправленные заказы появятся здесь.</div>'};
 function render(){raf=0;const d={...D};for(const k in D)delete D[k];if(d.plan)applyDs();
 if(d.team&&dialogOpen('#dwho'))rWho();
 if(d.team){if(isAdmin())ensureTeamColors();rCooks();rPCooks();rShifts();if(tab==='prep'){rPrep();rPlan()}if(tab==='sched')rSched();if(dialogOpen('#dt'))rTeam()}
@@ -899,14 +912,14 @@ const valid=()=>{if(!cnt()){snd.warn();vib(80);toast('Добавьте хотя 
 const upsert=o=>mut('PUT','orders/'+o.id,o);
 const ask=(t,h,y='Да',n='Нет, вернуться')=>new Promise(res=>{const d=$('#dc');$('#ct').textContent=t;$('#cb').innerHTML=h;$('#cy').textContent=y;$('#cn').textContent=n;snd.ask();vib(40);const f=v=>()=>{d.close();res(v)};$('#cy').onclick=f(true);$('#cn').onclick=f(false);d.oncancel=()=>res(false);d.showModal()});
 const clip=async t=>{try{await navigator.clipboard.writeText(t);return 1}catch{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch{return 0}}};
-const copyOrder=async()=>{if(!valid())return;if(!await closingCheck())return;try{await onMeta(true)}catch{}const o=snap();o.closed=true;const build=()=>msg(o,o.date===dAdd(1));LIVE.msg=()=>{const pre=document.querySelector('#cb pre.msg'),m=build();if(pre&&pre.textContent!==m)pre.textContent=m;return m};const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(build())}</pre><div class="small live">🔄 Данные обновляются онлайн, пока окно открыто</div>`,'Да, копировать','Нет, вернуться');LIVE.msg=null;if(!yes)return;const message=build();
+const copyOrder=async()=>{if(!valid())return;if(!await closingCheck())return;try{await onMeta(true)}catch{}const o=snap();o.closed=true;const build=()=>msg(o,o.date===dAdd(1));ORDCUR={o};$('#cx').hidden=false;LIVE.msg=()=>{const pre=document.querySelector('#cb pre.msg'),m=build();if(pre&&pre.textContent!==m)pre.textContent=m;return m};const yes=await ask('Вы уверены?',`<p style="margin:0 0 10px;color:var(--mu)">Проверьте сообщение. Если что-то не так — вернитесь и исправьте.</p><pre class="msg">${esc(build())}</pre><div class="small live">🔄 Данные обновляются онлайн, пока окно открыто</div>`,'Да, копировать','Нет, вернуться');LIVE.msg=null;ORDCUR=null;$('#cx').hidden=true;if(!yes)return;const message=build();
 if(!await clip(message)){snd.warn();toast('Не удалось скопировать. Разрешите доступ к буферу');return}
 o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();$('#dr').close();rAll();snd.ok();vib([60,40,60]);toast(message.length>4000?`✓ Скопировано (${message.length} симв.). Telegram режет сообщения длиннее 4096 символов`:'✓ Скопировано и сохранено в истории')};
 const saveOrder=()=>{if(!valid())return;const o=snap();upsert(o);L.draft.editId=o.id;saveL();snd.ok();toast('✓ Сохранено для всех. Можно редактировать')};
 const open=id=>{rRev();$(id).showModal()};
-const need=()=>{snd.warn();toast('Нужен вход в админ-панель');ACT.admin()};
+const need=()=>{snd.warn();if(isObs()){toast('Это может только руководитель');return}toast('Нужен вход в админ-панель');ACT.admin()};
 const rep=id=>{const p=prods().find(x=>x.id===id),r=document.querySelector(`[data-r="${cssEsc(id)}"]`);if(p&&r)r.outerHTML=row(p);rBar();if(dialogOpen('#dr'))rRev()};
-const ui=()=>{rFil();rCats();rList();rAdm();rShifts();rGseg();if(tab==='sched')rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
+const ui=()=>{rObs();rFil();rCats();rList();rAdm();rShifts();rGseg();if(tab==='sched')rSched();if(tab==='writeoff')rWriteoff();if(tab==='recv')rRecv()};
 const afterLogin=()=>{ensureTeamColors();try{bkNag()}catch(e){}if(L.hold&&L.hold.length){L.out.push(...L.hold.splice(0));saveL();flush()}ui();if(want){const w=want;want='';if(w==='sedit'){ACT.tab('sched');se=1;rSched()}else ACT.tab(w)}else{rTeam();rAdm();rDs();try{rTg()}catch(e){errAdd(e&&e.message,'rTg')}$('#dt').showModal();ctLoad()}};
 const authErr=m=>/TOO_MANY/.test(m)?'Google временно ограничил вход. Подождите и повторите':/CREDENTIAL_TOO_OLD/.test(m)?'Войдите заново и повторите':'Неверный пароль';
 const ACT={
@@ -921,16 +934,19 @@ async lvdel(k){if(!/^[\w-]{1,40}$/.test(k||'')||k===DEV)return;const x=LVO.find(
 whopick(id){const k=team().find(x=>x.id===id);if(!k)return;L.me=k;if(!cnt()||!L.draft.cook)L.draft.cook=k;saveL();whoDone();$('#dwho').close();snd.ok();vib(25);rCooks();rPCooks();rShifts();if(tab==='sched')rSched();toast('Здравствуйте, '+k.n+' 👋')},
 whoskip(){whoDone();$('#dwho').close();snd.tap()},
 syncnow(){retryAt=0;failures=0;tokFail=0;if(L.hold&&L.hold.length)L.out.push(...L.hold.splice(0));saveL();snd.tap();toast('Отправляю…');flush();setSt()},
-async login(){const pw=$('#ap').value;if(DEMO){AU.ok=true;$('#da').close();afterLogin();toast('Демо-режим: облако не настроено');return}
-try{const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:CFG.adminEmail,password:pw,returnSecureToken:true})});const j=await r.json();
+loginrole(id){const o=id==='obs';document.querySelectorAll('#dar button').forEach(b=>b.classList.toggle('on',b.dataset.id===(o?'obs':'adm')));{const u=$('#au');if(u)u.value=o?VIEWER:CFG.adminEmail}{const hh=$('#dah');if(hh)hh.textContent=o?'Вход для наблюдателя':'Вход для руководителя'}snd.tap()},
+async login0(){const pw=$('#ap').value,role=(($('#dar .on')||{}).dataset||{}).id==='obs'?'obs':'adm',em=role==='obs'?VIEWER:CFG.adminEmail;if(DEMO){AU.ok=true;ROLE='adm';$('#da').close();afterLogin();toast('Демо-режим: облако не настроено');return}
+if(!pw){snd.warn();toast('Введите пароль');return}
+try{const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw,returnSecureToken:true})});const j=await r.json();
 if(!r.ok){snd.warn();vib(120);toast(authErr(j.error&&j.error.message||''));return}
-AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};LS.set('vip3-rt',AU.rt);$('#da').close();snd.ok();afterLogin()}catch{snd.warn();toast('Нет интернета')}},
+AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);LS.set('vip3-was',ROLE);credStore(em,pw);persistAsk();$('#ap').value='';$('#da').close();snd.ok();
+if(ROLE==='obs'){edit=0;ui();obsTick(true);toast('✓ Вход: наблюдатель')}else{afterLogin();apLoad(true)}}catch{snd.warn();toast('Нет интернета')}},
 async setpw(){const v=$('#npw').value;if(v.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}if(DEMO){toast('В демо-режиме пароля нет');return}
 try{const t=await tok();const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:update?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:t,password:v,returnSecureToken:true})});const j=await r.json();
 if(!r.ok){snd.warn();toast(authErr(j.error&&j.error.message||''));return}
-AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};LS.set('vip3-rt',AU.rt);$('#npw').value='';snd.ok();toast('✓ Пароль изменён')}catch{snd.warn();toast('Не удалось. Проверьте сеть')}},
-logout(){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');edit=0;$('#dt').close();ui();snd.tap()},
-admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();try{rTg()}catch(e){errAdd(e&&e.message,'rTg')}document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adT'});$('#dt').showModal();$('#dt').scrollTop=0;ctLoad()}else{$('#ap').value='';$('#da').showModal();$('#ap').focus()}},
+AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);$('#npw').value='';snd.ok();toast('✓ Пароль изменён')}catch{snd.warn();toast('Не удалось. Проверьте сеть')}},
+logout(){AU={t:'',rt:'',exp:0,ok:false};LS.set('vip3-rt','');LS.set('vip3-was','');ROLE='adm';LS.set('vip3-role','adm');edit=0;AP.g=[];AP.n=0;AP.mx=-1;$('#dt').close();$('#dobs').close();ui();rAp();snd.tap()},
+admin(){snd.tap();$('#dh').close();want='';if(isAdmin()){rTeam();rAdm();rDs();rAp();apLoad(true);try{rTg()}catch(e){errAdd(e&&e.message,'rTg')}document.querySelectorAll('#dt details.adm').forEach(x=>{x.open=x.id==='adA'?AP.n>0:(x.id==='adT'&&!AP.n)});$('#dt').showModal();$('#dt').scrollTop=0;ctLoad()}else{if(isObs()){rObs();snd.tap();$('#dobs').showModal();return}$('#ap').value='';ACT.loginrole(LS.get('vip3-was','')==='obs'?'obs':'adm');$('#da').showModal();$('#ap').focus()}},
 toggled(){edit=!edit;ui();snd.tap()},
 unhide(){if(!isAdmin())return need();mut('DELETE','catalog/hidden');snd.ok()},
 tab(id){if(id==='plan')id='prep';const was=tab;if(id==='prep'||id==='writeoff')carryAll();if((was==='cab'||was==='sched')&&id!=='cab'&&id!=='sched'&&(ses||cabPick))cabLogout(false);tab=id;snd.tap();try{presSoon()}catch(e){}if(id==='order'){try{liveCheck();rLive()}catch(e){}}
@@ -1187,7 +1203,7 @@ qgrp(id){qg=id;snd.tap();rPlan()},
 qnewg(){snd.tap();$('#qgn').value='';$('#dq').showModal();$('#qgn').focus()},
 qaddg(){const n=$('#qgn').value.trim();if(!n){snd.warn();toast('Введите название группы');return}if(pgroups().some(g=>nt(g.n)===nt(n))){snd.warn();toast('Такая группа уже есть');return}const k='q'+uid();mut('PUT','plan/groups/'+k,{n});qg=k;$('#dq').close();snd.ok();rPlan()},
 async qdelg(){const g=pgroups().find(x=>x.id===qg);if(!g||g.id==='main'||g.id==='banq')return;const its=planItems().filter(i=>(i.g||'main')===g.id);if(!await ask('Удалить группу?',`<p>«${esc(g.n)}»${its.length?` и заготовок в ней: ${its.length}`:''} будут удалены.</p>`,'Да, удалить','Нет'))return;its.forEach(i=>mut('DELETE','plan/items/'+i.id));mut('DELETE','plan/groups/'+g.id);qg='main';snd.warn();rPlan()},
-qadd(){const t=$('#qt').value.trim().replace(/\s+/g,' '),q=$('#qq').value.trim();if(!t){snd.warn();toast('Напишите, что приготовить');$('#qt').focus();return}
+qadd(){const t=$('#qt').value.trim().replace(/\s+/g,' '),qn=$('#qq').value.trim(),qu=($('#qu')||{}).value||'',q=qn&&qu&&/^\d+(?:[.,]\d+)?$/.test(qn)?qn+' '+qu:qn;if(!t){snd.warn();toast('Напишите, что приготовить');$('#qt').focus();return}
 const g=psec==='banq'?'banq':'main',cu=g==='banq'?bqCur():null,bid=g==='banq'?(cu&&!cu.all?cu.id:''):null;if(g==='banq'&&!bid){snd.warn();toast('Сначала выберите банкет');return}if(Object.values(dm()).some(x=>nt(x.t)===nt(t)&&((x.g==='banq')===(g==='banq'))&&(g!=='banq'||bqOf(x)===bid))){snd.warn();toast(g==='banq'?'Эта заготовка уже есть в этом банкете':'Эта заготовка уже есть на этот день');return}
 const old=libFind(t,g),cl=classify(t),ctx=curK();let k,ks;
 if(old&&old.ks==='user'&&old.k&&old.k!=='other'){k=old.k;ks='user'}else if(cl.k!=='other'){k=cl.k;ks='auto'}else if(ctx!=='other'){k=ctx;ks='ctx'}else{k='other';ks='?'}
@@ -1278,7 +1294,8 @@ const setPd=e=>{if(e.target.value){pd=e.target.value;savePd();streams();rPrep();
 on('#qt','keydown',e=>{if(e.key==='Enter')ACT.qadd()});
 on('#qq','keydown',e=>{if(e.key==='Enter')ACT.qadd()});
 on('#qgn','keydown',e=>{if(e.key==='Enter')ACT.qaddg()});
-on('#ap','keydown',e=>{if(e.key==='Enter')ACT.login()});
+on('#daf','submit',e=>{e.preventDefault();ACT.login()});on('#obcfg','input',()=>{AP.dirty=1});on('#obcfg','change',()=>{AP.dirty=1});
+setInterval(()=>{try{if(document.hidden)return;if(isAdmin()){const mp=(DATA.meta||{}).proposals||0;if(mp!==AP.mp){AP.mp=mp;apLoad(true)}else apLoad()}else if(isObs())obsTick()}catch(e){errAdd(e&&e.message,'ap')}},4000);
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#q').focus()}});
 addEventListener('online',()=>{retryAt=0;failures=0;ST.wk=Date.now();for(const k in RF)delete RF[k];if(!DBV)detect(true);streams();flush();refreshRoster();carryAll(true)});
 // ---------- смена кухонного дня: точный таймер + проверка при любом «пробуждении» приложения ----------
@@ -1304,6 +1321,147 @@ setInterval(dayCheck,15000);armDay();setInterval(()=>{if(tab==='order')refreshRo
 setInterval(()=>{if(!DEMO&&!document.hidden&&Date.now()-lastDet>60000&&(!DB||!DBV||Date.now()-(ST.okAt||0)>45000))detect(true).then(ok=>{if(ok){streams();refreshRoster()}setSt()});if(AU.rt&&L.hold&&L.hold.length&&!L.out.length){L.out.push(...L.hold.splice(0));saveL()}flush();if(!document.hidden&&Object.keys(ES).some(k=>ST.open[k]&&Date.now()-(ST.seen[k]||0)>90000))restartStreams()},30000);
 setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!metaBroken,hasMeta=Object.keys(DATA.meta||{}).length>0;if(sse&&hasMeta&&tickN%12)return;pollMeta(sse?tickN%12===0:(metaBroken||!hasMeta||tickN%8===0),true)},2500);
 // ---- 9.7.2: все объявления ниже стоят ДО первой отрисовки (rAll), иначе const ещё «не создан» (TDZ) ----
+// ---------- 9.8.0: заказ одним листом A4 (картинка / PDF) для WhatsApp, Telegram, VK ----------
+let ORDCUR=null;const IMG={blob:null,url:'',o:null,fresh:false,name:'',cv:null};
+const A4W=1654,A4H=2339;
+const ordGroups=o=>{const cs=[...BASE,...Object.entries(cat0().groups||{}).map(([k,v])=>[k,v.n,'📦'])],seen=new Set(),ug=(a,b)=>(b.urg?1:0)-(a.urg?1:0),G=[];
+for(const[id,n,e]of cs){const g=o.items.filter(i=>i.c===id);if(!g.length)continue;g.forEach(i=>seen.add(i.id));G.push({h:e+' '+n,rows:g.slice().sort((a,b)=>ug(a,b)||COL.compare(a.n,b.n))})}
+const r=o.items.filter(i=>!seen.has(i.id));if(r.length)G.push({h:'📦 Другое',rows:r.slice().sort(ug)});return G};
+const ordExtra=o=>{if(o.date!==dAdd(1))return'';const date=dAdd(0),rows=woRows(date),p=[];if(rows.length)p.push(writeoffMessage(date,rows));const tb=tomorrowBlock();if(tb)p.push(tb);return p.join('\n\n')};
+const loadImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src});
+const cvBlob=(cv,type,q)=>new Promise(res=>{try{cv.toBlob(b=>res(b),type,q)}catch(e){res(null)}});
+async function ordCanvas(o,extra){
+const W=A4W,H=A4H,M=84,FF='system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+const ink='#16130f',mu='#6b6258',red='#c81e1e',ln='#cfc6b8',band='#f1eadf';
+x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';x.textAlign='left';
+const logo=await loadImg('logo-ink.png');let hx=M;if(logo){const lh=118,lw=Math.round(logo.width*lh/logo.height);x.drawImage(logo,M,M-8,lw,lh);hx=M+lw+30}
+x.fillStyle=ink;x.font='800 56px '+FF;x.fillText('ЗАКАЗ · '+day(o.date).toUpperCase(),hx,M+52);
+x.fillStyle=mu;x.font='600 30px '+FF;x.fillText('ВИАЙПИ РЕСТОБАР КУХНЯ',hx,M+96);
+x.textAlign='right';x.fillStyle=ink;x.font='700 38px '+FF;x.fillText(String(o.cook&&o.cook.n||''),W-M,M+44);x.fillStyle=mu;x.font='500 28px '+FF;x.fillText((o.cook&&o.cook.r?o.cook.r+' · ':'')+'оформлен в '+tm(o.created),W-M,M+88);x.textAlign='left';
+x.fillStyle=ink;x.fillRect(M,M+128,W-2*M,5);const top=M+128+5+34;
+const wrap=(t,w)=>{const out=[];String(t).split('\n').forEach(par=>{if(!par.trim()){out.push('');return}let line='';par.split(/\s+/).forEach(wd=>{const tr=line?line+' '+wd:wd;if(x.measureText(tr).width>w&&line){out.push(line);line=wd}else line=tr});out.push(line)});return out};
+// низ листа: итог, комментарий, закрытие кухни
+const nu=o.items.filter(i=>i.urg).length;let foot=[];
+if(o.note){x.font='500 30px '+FF;foot=wrap('💬 '+o.note,W-2*M-40)}
+const footH=96+(foot.length?foot.length*40+30:0);
+// дополнительный блок (списания, заготовки на завтра) — тот же текст, что в сообщении
+let exL=[],exF=22,exH=0;
+if(extra){for(const f of [22,20,18,16,15]){exF=f;x.font='500 '+f+'px '+FF;exL=wrap(extra,W-2*M-44);exH=exL.length*Math.round(f*1.4)+54;if(exH<=H*.4)break}}
+const bottom=H-M-footH-(exH?exH+26:0),avail=bottom-top;
+const G=ordGroups(o);
+const flow=(fs,cols)=>{const lh=Math.round(fs*1.62),hh=Math.round(fs*2.0),cw=(W-2*M-(cols-1)*56)/cols,A=[[]];let y=0;
+for(const g of G){let first=true,started=false;for(const r of g.rows){if(y+(first?hh+lh:lh)>avail&&y>0){A.push([]);y=0;first=true;if(A.length>cols)return null}
+if(first){A[A.length-1].push({k:'h',t:g.h+(started?' (прод.)':''),y});y+=hh;first=false}A[A.length-1].push({k:'r',r,y});y+=lh;started=true}}
+if(y>avail&&A.length>=cols)return null;return{A,lh,hh,cw,fs}};
+let L2=null;for(let fs=46;fs>=12&&!L2;fs--)for(let cols=1;cols<=3&&!L2;cols++)L2=flow(fs,cols);
+if(!L2){const fs=12;L2=flow(fs,3)||{A:[[]],lh:20,hh:24,cw:(W-2*M-112)/3,fs}}
+const{A,lh,hh,cw,fs}=L2,bs=Math.round(fs*.74);
+A.forEach((col,ci)=>{const cx=M+ci*(cw+56);col.forEach(u=>{const y0=top+u.y;
+if(u.k==='h'){x.fillStyle=band;x.fillRect(cx,y0,cw,hh-6);x.fillStyle=ink;x.textAlign='left';let hf=Math.round(fs*.92),ht=u.t;const hw=cw-28;x.font='800 '+hf+'px '+FF;while(hf>Math.round(fs*.6)&&x.measureText(ht).width>hw){hf--;x.font='800 '+hf+'px '+FF}if(x.measureText(ht).width>hw){while(ht.length>2&&x.measureText(ht+'…').width>hw)ht=ht.slice(0,-1);ht+='…'}x.fillText(ht,cx+14,y0+Math.round(hh*.66));return}
+const r=u.r,base=y0+Math.round(lh*.7),qty=fmtQ(r.qty)+' '+(r.u||''),urg=!!r.urg;
+x.strokeStyle=urg?red:ink;x.lineWidth=3;x.strokeRect(cx+4,base-bs+3,bs,bs);
+x.font='800 '+fs+'px '+FF;x.textAlign='right';const qw=x.measureText(qty).width;x.fillStyle=urg?red:ink;x.fillText(qty,cx+cw,base);
+x.textAlign='left';x.font=(urg?'800 ':'600 ')+fs+'px '+FF;let nx=cx+bs+22;
+if(urg){x.fillStyle=red;x.beginPath();x.arc(nx+fs*.3,base-fs*.32,fs*.3,0,7);x.fill();x.fillStyle='#fff';x.font='900 '+Math.round(fs*.5)+'px '+FF;x.textAlign='center';x.fillText('!',nx+fs*.3,base-fs*.16);x.textAlign='left';x.font='800 '+fs+'px '+FF;nx+=fs*.8}
+let nm=String(r.n),mw=cw-(nx-cx)-qw-28;x.fillStyle=urg?red:ink;
+if(x.measureText(nm).width>mw){while(nm.length>1&&x.measureText(nm+'…').width>mw)nm=nm.slice(0,-1);nm+='…'}
+x.fillText(nm,nx,base);const ew=x.measureText(nm).width;
+x.strokeStyle=ln;x.lineWidth=2;x.setLineDash([2,8]);x.beginPath();x.moveTo(nx+ew+12,base-4);x.lineTo(cx+cw-qw-14,base-4);x.stroke();x.setLineDash([])})});
+// дополнительный блок
+let fy=bottom+26;
+if(exH){x.fillStyle='#faf6ef';x.fillRect(M,fy,W-2*M,exH);x.strokeStyle=ln;x.lineWidth=2;x.strokeRect(M,fy,W-2*M,exH);x.fillStyle=ink;x.font='500 '+exF+'px '+FF;exL.forEach((t,i)=>x.fillText(t,M+22,fy+34+i*Math.round(exF*1.4)));fy+=exH}
+// подвал
+const fb=H-M-footH+20;x.fillStyle=ink;x.fillRect(M,fb,W-2*M,3);x.font='800 40px '+FF;x.fillText('Всего: '+o.items.length+' поз.'+(nu?' · срочно: '+nu:''),M,fb+58);
+if(o.closed){x.textAlign='right';x.fillStyle=mu;x.font='600 28px '+FF;x.fillText('Кухня закрыта ✓ · проверил: '+(o.cook&&o.cook.n||''),W-M,fb+56);x.textAlign='left'}
+if(foot.length){x.fillStyle=ink;x.font='500 30px '+FF;foot.forEach((t,i)=>x.fillText(t,M,fb+104+i*40))}
+return cv}
+async function pdfFromCanvas(cv){const jb=await cvBlob(cv,'image/jpeg',.92);if(!jb)return null;const jpg=new Uint8Array(await jb.arrayBuffer()),enc=new TextEncoder(),parts=[],offs=[];let len=0;
+const add=u=>{parts.push(u);len+=u.length},addS=t=>add(enc.encode(t)),obj=(n,b)=>{offs[n]=len;addS(n+' 0 obj\n'+b+'\nendobj\n')};
+addS('%PDF-1.4\n');obj(1,'<</Type/Catalog/Pages 2 0 R>>');obj(2,'<</Type/Pages/Kids[3 0 R]/Count 1>>');obj(3,'<</Type/Page/Parent 2 0 R/MediaBox[0 0 595.28 841.89]/Resources<</XObject<</Im0 4 0 R>>>>/Contents 5 0 R>>');
+offs[4]=len;addS('4 0 obj\n<</Type/XObject/Subtype/Image/Width '+cv.width+'/Height '+cv.height+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+jpg.length+'>>\nstream\n');add(jpg);addS('\nendstream\nendobj\n');
+const cs='q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';obj(5,'<</Length '+cs.length+'>>\nstream\n'+cs+'\nendstream');
+const xo=len;let xr='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)xr+=String(offs[i]).padStart(10,'0')+' 00000 n \n';addS(xr+'trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n'+xo+'\n%%EOF\n');return new Blob(parts,{type:'application/pdf'})}
+const imgDownload=(blob,name)=>{const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),6000)};
+async function imgBuild(o){toast('Готовлю лист A4…');let cv=null;try{cv=await ordCanvas(o,ordExtra(o))}catch(e){errAdd(e&&e.message,'ordCanvas')}
+const b=cv&&await cvBlob(cv,'image/png');if(!b){snd.warn();toast('Не удалось создать картинку');return 0}
+IMG.cv=cv;IMG.blob=b;IMG.o=o;IMG.name='zakaz-'+o.date+'.png';if(IMG.url)URL.revokeObjectURL(IMG.url);IMG.url=URL.createObjectURL(b);$('#imgp').src=IMG.url;if(!$('#dimg').open)$('#dimg').showModal();return 1}
+const ordFinish=o=>{o.copied=true;upsert(o);L.draft=blank(L.draft.cook);saveL();try{$('#dimg').close()}catch(e){}try{if($('#dc').open)$('#cn').click()}catch(e){}try{$('#dr').close()}catch(e){}rAll();snd.ok();vib([60,40,60]);toast('✓ Отправлено и сохранено в истории')};
+async function imgShareFile(blob,name,type){const f=new File([blob],name,{type});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Заказ на '+day(IMG.o.date)});return 1}}catch(e){if(e&&e.name==='AbortError')return -1;snd.warn();toast('Не удалось открыть «Поделиться». Нажмите «Скачать»');return -1}
+imgDownload(blob,name);toast('Файл сохранён — отправьте его из галереи или «Файлов» в WhatsApp / Telegram / VK');return 0}
+Object.assign(ACT,{
+async ordimg(){if(!ORDCUR)return;IMG.fresh=true;await imgBuild(ORDCUR.o)},
+async himg(id){const o=ords().find(x=>x.id===id);if(!o)return;IMG.fresh=false;await imgBuild(o)},
+async imgshare(){if(!IMG.blob)return;const r=await imgShareFile(IMG.blob,IMG.name,'image/png');if(r===1){if(IMG.fresh)ordFinish(IMG.o);else{snd.ok();toast('✓ Готово')}}},
+async imgpdf(){if(!IMG.cv)return;const p=await pdfFromCanvas(IMG.cv);if(!p){snd.warn();toast('Не удалось создать PDF');return}const r=await imgShareFile(p,IMG.name.replace(/\.png$/,'.pdf'),'application/pdf');if(r===1){if(IMG.fresh)ordFinish(IMG.o);else{snd.ok();toast('✓ Готово')}}},
+imgclose(){snd.tap();$('#dimg').close()},
+imgsave(){if(!IMG.blob)return;imgDownload(IMG.blob,IMG.name);snd.ok();toast('✓ Картинка сохранена')},
+async imgcopy(){try{await navigator.clipboard.write([new ClipboardItem({'image/png':IMG.blob})]);snd.ok();toast('✓ Картинка скопирована — вставьте в чат')}catch(e){snd.warn();toast('Этот браузер не копирует картинки. Нажмите «Скачать»')}}});
+// ---------- 9.8.0: наблюдатель и утверждения ----------
+const AP={dirty:0,g:[],n:0,cfg:null,t:0,busy:0,err:'',mx:-1,mp:null,raw:{}};
+function apDesc(m,p,v){const a=String(p).split('/'),old=atPath(p),nm=o=>o&&typeof o==='object'?String(o.t||o.n||o.title||o.name||''):'';
+const AREA={prep:'Заготовки',prepMeta:'Банкет/гости',prepLibrary:'Архив заготовок',prepPins:'Закрепления',writeoffs:'Списания',plan:'План',orders:'Заказ',receipts:'Приёмка',catalog:'Каталог',prepCats:'Категории'}[a[0]]||a[0];
+const dd=RXD.test(a[1]||'')?' · '+a[1].split('-').reverse().slice(0,2).join('.'):'';
+const verb=m==='DELETE'?'Удалить':m==='PATCH'?'Изменить':'Записать';let what=nm(m==='DELETE'?old:v)||nm(old),ex='';
+if(m==='PATCH'&&v&&typeof v==='object'){const k=Object.keys(v);if(k.includes('done'))ex=v.done?' — отметить «готово»':' — снять отметку';else ex=' ('+k.slice(0,4).map(x=>x+': '+(v[x]&&typeof v[x]==='object'?'…':String(v[x]).slice(0,18))).join(', ')+')'}
+return(verb+' · '+AREA+dd+(what?' · «'+what.slice(0,50)+'»':'')+ex).slice(0,200)}
+function propose(m,p,v){if(Date.now()-gestT>4000)return;
+if((OBS.cfg.mode||'view')!=='edit'||OBS.cfg.on===0){if(Date.now()-OBS.vt>1500){OBS.vt=Date.now();snd.warn();toast('👁 Режим просмотра: правки выключены')}return}
+if(!gG||gG.t!==gestT)gG={t:gestT,id:uid()};
+const t=Math.max(Date.now(),OBS.last+1);OBS.last=t;const rec={m,p,t,by:String(OBS.cfg.n||'Наблюдатель').slice(0,40),g:gG.id,d:apDesc(m,p,v)};
+if(v!==undefined&&v!==null){let j='';try{j=JSON.stringify(v)}catch(e){}if(j.length>30000){toast('Слишком большая правка');return}rec.v=j}
+const id=uid();OBS.ls.push({id,g:rec.g,d:rec.d,t});if(OBS.ls.length>60)OBS.ls.shift();LS.set('vip3-myprop',OBS.ls);
+mut0('PUT','proposals/'+id,rec);if(DATA&&DATA.proposals)delete DATA.proposals;
+if(Date.now()-OBS.nt>1500){OBS.nt=Date.now();snd.ok();toast('✎ Отправлено шефу на утверждение')}
+rObs()}
+function rObs(){const b=$('#obsbar');if(!b)return;const on=isObs();b.hidden=!on;document.body.classList.toggle('obs',on);if(!on)return;
+const e2=(OBS.cfg.mode||'view')==='edit';b.textContent=(e2?'✎ Наблюдатель · правки идут шефу на утверждение':'👁 Наблюдатель · только просмотр')+(OBS.ls.length?' · ждут: '+OBS.ls.length:'');
+const l=$('#obsl');if(l)l.innerHTML=OBS.ls.length?OBS.ls.slice().reverse().map(x=>`<div class="api">${esc(x.d||'')}<small> · ${esc(tm(x.t))}</small></div>`).join(''):'<p class="small">Нет правок, ожидающих утверждения.</p>';
+const t=$('#obst');if(t)t.textContent=e2?'Вы можете менять данные: каждая правка уходит шефу и вступает в силу только после его утверждения.':'Сейчас включён режим просмотра: изменить данные нельзя.'}
+async function obsTick(force){if(!isObs()||DEMO||!DB||OBS.busy)return;if(!force&&Date.now()-OBS.t<2e4)return;OBS.busy=1;
+try{const c=await jget('access/obs');OBS.cfg=c&&typeof c==='object'?c:{};LS.set('vip3-obscfg',OBS.cfg);OBS.t=Date.now();
+if(OBS.cfg.on===0){OBS.busy=0;toast('Доступ наблюдателя выключен шефом');ACT.logout();return}
+if(OBS.ls.length){const d=(await jget('proposals','',true))||{},keep=[];let ok=0,no=0;OBS.ls.forEach(x=>{const r=d[x.id];if(r&&r.s==='ok'){ok++;return}if(r&&r.s==='no'){no++;return}if(!r&&Date.now()-x.t>3e5)return;keep.push(x)});
+if(keep.length!==OBS.ls.length){OBS.ls=keep;LS.set('vip3-myprop',keep)}if(ok){snd.ok();toast('✓ Шеф утвердил правок: '+ok)}else if(no){snd.warn();toast('✕ Шеф отклонил правок: '+no)}}}catch(e){}
+OBS.busy=0;rObs()}
+const apDivOK=(m,p)=>/^(?:PUT|PATCH|DELETE)$/.test(m)&&typeof p==='string'&&p.length<=200&&OBS_DIV.test(p)&&!OBS_FREE.test(p)&&p.split('/').every(x=>x&&!/[.#$\[\]]/.test(x));
+function apBuild(){const raw=AP.raw||{},now=Date.now(),by=new Map();let mx=0;
+Object.entries(raw).forEach(([id,r])=>{if(!r||typeof r!=='object')return;if(r.s){if(now-(Number(r.dt)||0)>1728e5)api('DELETE','proposals/'+id).catch(()=>{});return}
+if(!apDivOK(r.m,r.p)){api('PATCH','proposals/'+id,{s:'no',dt:now}).catch(()=>{});return}
+const g=String(r.g||id);let o=by.get(g);if(!o){o={g,t:Number(r.t)||0,by:String(r.by||'Наблюдатель'),items:[]};by.set(g,o)}o.items.push({...r,id});if((Number(r.t)||0)>mx)mx=Number(r.t)||0});
+const l=[...by.values()];l.forEach(o=>o.items.sort((a,b)=>((a.t||0)-(b.t||0))||(a.id<b.id?-1:1)));l.sort((a,b)=>a.t-b.t);AP.g=l;AP.n=l.length;
+if(AP.mx>=0&&mx>AP.mx){snd.ok();vib(60);toast('🔔 Наблюдатель: правка ждёт вашего утверждения ('+AP.n+')')}AP.mx=Math.max(AP.mx,mx)}
+async function apLoad(force){if(!isAdmin()||DEMO||!DB||AP.busy)return;if(!force&&Date.now()-AP.t<2e4)return;AP.busy=1;
+try{const d=(await jget('proposals','',true))||{};AP.raw=d&&typeof d==='object'?d:{};AP.t=Date.now();AP.err='';apBuild();try{const c=await jget('access/obs');AP.cfg=c&&typeof c==='object'?c:{}}catch(e){}}catch(e){AP.t=Date.now();AP.err=e&&e.status?'HTTP '+e.status:'нет связи'}
+AP.busy=0;rAp()}
+function rAp(){const b=$('#apbadge');if(b){b.hidden=!(AP.n&&isAdmin());b.textContent=AP.n>9?'9+':String(AP.n)}
+const sm=$('#adsA');if(sm)sm.textContent=AP.err?'⚠':AP.n?'ждут: '+AP.n:'';
+if(!dialogOpen('#dt'))return;const el=$('#apl');if(!el)return;
+el.innerHTML=AP.err?`<p class="small apw">Не удалось загрузить (${esc(AP.err)}). Опубликуйте новые правила Firebase — файл firebase-rules.json.</p>`:AP.g.length?AP.g.map(o=>`<div class="apg"><div class="apt"><b>${esc(o.by)}</b> · ${esc(tm(o.t))}</div>${o.items.slice(0,6).map(i=>`<div class="api">${esc(i.d||i.p)}</div>`).join('')}${o.items.length>6?`<div class="api">…и ещё ${o.items.length-6}</div>`:''}<div class="acts"><button class="p" data-a="apok" data-id="${esc(o.g)}">✓ Утвердить</button><button class="d" data-a="apno" data-id="${esc(o.g)}">✕ Отклонить</button></div></div>`).join('')+(AP.g.length>1?'<div class="acts"><button data-a="apokall">✓ Утвердить все</button><button class="d" data-a="apnoall">✕ Отклонить все</button></div>':''):'<p class="small">Нет правок на утверждение.</p>';
+const fa=document.activeElement,box=$('#obcfg');if(box&&!AP.dirty&&!(fa&&box.contains(fa))){const c=AP.cfg||{};$('#obn').value=c.n||'';$('#obm').value=c.mode==='edit'?'edit':'view';$('#obo').checked=c.on!==0}}
+async function apDecide(g,yes,quiet){const o=AP.g.find(x=>x.g===g);if(!o||o.busy)return 0;o.busy=1;let skipped=0;
+try{if(yes){for(const it of o.items){if(!apDivOK(it.m,it.p)){skipped++;continue}let v=null;if(typeof it.v==='string'&&it.v){try{v=JSON.parse(it.v)}catch(e){skipped++;continue}}
+if(it.m==='PATCH'){let cur;try{cur=await jget(it.p)}catch(e){cur=undefined}if(cur===null){skipped++;continue}}
+mut0(it.m,it.p,it.m==='DELETE'?null:v)}}
+const dt=Date.now();for(const it of o.items)await api('PATCH','proposals/'+it.id,{s:yes?'ok':'no',dt});
+o.items.forEach(it=>{if(AP.raw[it.id])AP.raw[it.id]={...AP.raw[it.id],s:yes?'ok':'no',dt}});apBuild();rAp();
+if(!quiet){yes?snd.ok():snd.tap();toast(yes?(skipped?'✓ Утверждено (пропущено: '+skipped+' — объект уже удалён)':'✓ Утверждено'):'✕ Отклонено')}}catch(e){o.busy=0;snd.warn();toast('Не удалось. Проверьте сеть и правила Firebase');return 0}
+return 1}
+Object.assign(ACT,{
+login(){if(ACT.lgb)return;ACT.lgb=1;return ACT.login0().finally(()=>{ACT.lgb=0})},
+async apok(g){await apDecide(g,true)},async apno(g){if(await ask('Отклонить правку?','<p>Изменение не будет применено.</p>','Отклонить'))await apDecide(g,false)},
+async apokall(){if(!AP.n)return;let k=0;for(const o of [...AP.g])k+=await apDecide(o.g,true,true);snd.ok();toast('✓ Утверждено: '+k)},
+async apnoall(){if(!AP.n)return;if(!await ask('Отклонить все правки?','<p>Ни одно из '+AP.n+' изменений не будет применено.</p>','Отклонить все'))return;let k=0;for(const o of [...AP.g])k+=await apDecide(o.g,false,true);snd.tap();toast('✕ Отклонено: '+k)},
+obssave(){if(!isAdmin())return need();const n=$('#obn').value.trim().slice(0,40),mode=$('#obm').value==='edit'?'edit':'view',on=$('#obo').checked?1:0;mut('PUT','access/obs',{n,mode,on});AP.cfg={n,mode,on};AP.dirty=0;snd.ok();toast('✓ Сохранено')},
+async obscreate(){if(!isAdmin())return need();const pw=$('#obp').value;if(pw.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}
+try{const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:VIEWER,password:pw,returnSecureToken:false})});const j=await r.json(),msg=(j.error&&j.error.message)||'';
+if(!r.ok){snd.warn();toast(/EMAIL_EXISTS/.test(msg)?'Аккаунт уже создан. Пароль меняет сам наблюдатель (или удалите его в Firebase → Authentication)':/OPERATION_NOT_ALLOWED/.test(msg)?'Создайте пользователя '+VIEWER+' в Firebase → Authentication':authErr(msg));return}
+$('#obp').value='';snd.ok();toast('✓ Аккаунт наблюдателя создан: '+VIEWER)}catch{snd.warn();toast('Нет интернета')}},
+async obspw(){const v=$('#onp').value;if(v.length<6){snd.warn();toast('Пароль — минимум 6 символов');return}
+try{const t=await tok();const r=await fetchFast('https://identitytoolkit.googleapis.com/v1/accounts:update?key='+CFG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:t,password:v,returnSecureToken:true})});const j=await r.json();
+if(!r.ok){snd.warn();toast(authErr(j.error&&j.error.message||''));return}
+AU={t:j.idToken,rt:j.refreshToken,exp:Date.now()+j.expiresIn*1000,ok:true};roleSet(AU.t);LS.set('vip3-rt',AU.rt);$('#onp').value='';snd.ok();toast('✓ Пароль изменён')}catch{snd.warn();toast('Не удалось. Проверьте сеть')}},
+obs(){snd.tap();rObs();$('#dobs').showModal()}});
 // ---- 9.4: резервная копия (напоминание, список узлов), журнал ошибок (вывод), уборка служебных отметок meta
 const BK_NODES=['team','catalog','orders','prep','prepMeta','prepLibrary','prepPins','prepCats','writeoffs','plan','sched','shifts','receipts','payroll'];
 const bkDays=()=>{const l=Number(LS.get('vip3-lastbk',0))||0;return l?Math.floor((Date.now()-l)/864e5):-1};
@@ -1332,6 +1490,7 @@ const inbL=Object.entries(inb).filter(([,v])=>v&&v.x).map(([id,v])=>({id,...v}))
 const stale=info.t&&Date.now()-info.t>30*6e4;
 let s='';if(CT.bad)s+=`<div class="tgw">⚠ Не прочитано: ${esc(CT.bad)}. Если там 401 или 403 — опубликуйте новые правила (файл firebase-rules.json) и войдите заново.</div>`;
 s+=!info.t?'<div class="tgw">Бот ещё не запускался. Откройте файл BOT-AR.md и выполните шаги.</div>':`<div class="${stale?'tgw':'small'}">${stale?'⚠ ':''}✈️ @${esc(info.bot||'?')} · последний запуск ${esc(agoD(info.t))}${info.w?' · ⚡ мгновенный режим':''}${stale?(info.w?'. Бот давно не отвечает — проверьте Cloudflare → Workers.':'. Бот давно не запускался — проверьте GitHub → Actions.'):''}</div>`;
+{const pr=(N.pre||{}).info;if(pr&&pr.t){const bad=!!pr.err,old=Date.now()-pr.t>15*6e4;s+=`<div class="${bad||old?'tgw':'small'}">🔗 Предзаказы: ${bad?'ошибка — '+esc(String(pr.err).slice(0,150)):'найдено '+(+pr.n||0)+' · обновлено '+esc(agoD(pr.t))+(old?' (давно — проверьте Cloudflare → Workers)':'')+(+pr.n?'':'. Если заказы есть, а здесь 0 — сообщите разработчику поля: '+esc(String(pr.k||'—')))}</div>`}else if(info.w)s+='<div class="small">🔗 Предзаказы: не подключены (в Worker нет секрета PRE_PASSWORD)</div>'}
 s+=grp&&grp.id?`<div class="small">👥 Группа: <b>${esc(grp.n||'подключена')}</b></div>`:'<div class="tgw">Группа не подключена: добавьте бота в группу и напишите там /group</div>';
 if(N.err&&N.err.m)s+=`<div class="tgw">Последняя ошибка бота (${esc(agoD(N.err.t))}): ${esc(String(N.err.m).slice(0,200))}</div>`;
 if(st)st.innerHTML=s;if(sm)sm.textContent=CT.c?(on+'/'+k.length+' в Telegram'):'';
@@ -1359,10 +1518,11 @@ const ks=Object.keys(del);if(!ks.length){LS.set('vip3-prune',now);return}
 try{for(let i=0;i<ks.length;i+=100){const part={};ks.slice(i,i+100).forEach(k=>part[k]=null);await api('PATCH','meta',part)}
 ks.forEach(k=>{const m=/^(live|pres)\/(.+)$/.exec(k);if(m){if(DATA.meta&&DATA.meta[m[1]])delete DATA.meta[m[1]][m[2]]}else if(DATA.meta)delete DATA.meta[k]});LS.set('vip3-prune',now)}catch(e){if(e&&[400,401,403,404].includes(e.status))LS.set('vip3-prune',now)}};
 const EMO=['🥩','🍗','🥓','🐟','🦐','🥚','🧀','🥛','🥬','🥕','🍅','🧅','🍄','🍎','🍋','🌶️','🧂','🫒','🍞','🥐','🍝','🍚','🥫','🍰','🍦','🍫','🥤','🍹','🍺','☕','🧴','🥡','🍢','🍔','🍕','🌯','🥗','🍲','🔥','📦'],emoH=a=>EMO.map(e=>`<button type="button" data-a="${a}" data-id="${e}" aria-label="${e}">${e}</button>`).join('');{const ga=$('#gemo'),gc=$('#cemo');if(ga)ga.innerHTML=emoH('emog');if(gc)gc.innerHTML=emoH('emoc')}
+try{const u=$('#qu');if(u){const v=String(LS.get('vip3-qu','')||'');if(v&&[...u.options].some(o=>o.value===v||o.text===v))u.value=v;u.addEventListener('change',()=>LS.set('vip3-qu',u.value))}}catch(e){errAdd(e&&e.message,'init')}
 try{fixDraftDate(true)}catch(e){errAdd(e&&e.message,'init')}try{syncDraft()}catch(e){errAdd(e&&e.message,'init')}try{rAll()}catch(e){errAdd(e&&e.message,'rAll')}setSt();try{placeInd()}catch(e){errAdd(e&&e.message,'init')}addEventListener('load',placeInd);addEventListener('resize',placeInd);addEventListener('orientationchange',()=>setTimeout(placeInd,200));Promise.resolve().then(()=>{streams();flush();carryAll(true);if(!DBV)detect().then(()=>setSt())});
 L.hold=(L.hold||[]).filter(o=>!o.at||Date.now()-o.at<3*864e5);if(L.hold.length){L.out.push(...L.hold.splice(0));saveL()}
 {const g=$('#dwho');if(g)g.addEventListener('cancel',e=>e.preventDefault());document.addEventListener('visibilitychange',()=>{if(document.hidden)whoHidAt=Date.now();else if(whoHidAt&&Date.now()-whoHidAt>30*6e4){try{sessionStorage.removeItem('vip3-who')}catch{}whoOpen()}});if(whoNeeded())whoOpen()}
-if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();try{bkNag()}catch(e){}ui();if(L.out.length){retryAt=0;flush()}}).catch(()=>{});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();presBeat();devSend();liveCheck();presCheck();if(tab==='order')rLive()}catch(e){}},6e4);setInterval(()=>{try{presCheck()}catch(e){}},2e4);setTimeout(()=>{try{presSend(true);devSend();tgBotLoad()}catch(e){}},7e3);setInterval(()=>{try{tgBotLoad();if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open)ctLoad()}catch(e){}},216e5);setInterval(()=>{try{if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open&&!document.hidden)ctLoad()}catch(e){}},3e4);{const g=$('#adG');if(g)g.addEventListener('toggle',()=>{if(g.open)ctLoad(true)})}{const b=$('#tgbox');if(b)b.addEventListener('change',async e=>{const t=e.target;if(!t||!t.classList||!t.classList.contains('tgph')||!isAdmin())return;const id=t.dataset.id,v=t.value.trim();if(!/^[\w-]{1,60}$/.test(id||''))return;if(v&&!PHRE.test(v)){snd.warn();toast('Телефон, например: +7 900 123-45-67');return}try{if(v)await api('PUT','contacts/phones/'+id,v);else await api('DELETE','contacts/phones/'+id);const c=CT.c||(CT.c={}),p=c.phones||(c.phones={});if(v)p[id]=v;else delete p[id];snd.ok();toast(v?'✓ Телефон сохранён':'Телефон удалён');rTg()}catch(er){snd.warn();toast('Не удалось сохранить телефон')}})}
+if(AU.rt&&!DEMO)tok().then(()=>{ensureTeamColors();try{bkNag()}catch(e){}ui();try{obsTick(true);apLoad(true)}catch(e){}if(L.out.length){retryAt=0;flush()}}).catch(()=>{if(!AU.rt&&LS.get('vip3-was','')){toast('Сессия закончилась — войдите снова');try{ACT.admin()}catch(e){}}});setInterval(()=>{if(!document.hidden)rSync()},2000);setInterval(()=>{try{liveBeat();presBeat();devSend();liveCheck();presCheck();if(tab==='order')rLive()}catch(e){}},6e4);setInterval(()=>{try{presCheck()}catch(e){}},2e4);setTimeout(()=>{try{presSend(true);devSend();tgBotLoad()}catch(e){}},7e3);setInterval(()=>{try{tgBotLoad();if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open)ctLoad()}catch(e){}},216e5);setInterval(()=>{try{if(isAdmin()&&dialogOpen('#dt')&&$('#adG').open&&!document.hidden)ctLoad()}catch(e){}},3e4);{const g=$('#adG');if(g)g.addEventListener('toggle',()=>{if(g.open)ctLoad(true)})}{const b=$('#tgbox');if(b)b.addEventListener('change',async e=>{const t=e.target;if(!t||!t.classList||!t.classList.contains('tgph')||!isAdmin())return;const id=t.dataset.id,v=t.value.trim();if(!/^[\w-]{1,60}$/.test(id||''))return;if(v&&!PHRE.test(v)){snd.warn();toast('Телефон, например: +7 900 123-45-67');return}try{if(v)await api('PUT','contacts/phones/'+id,v);else await api('DELETE','contacts/phones/'+id);const c=CT.c||(CT.c={}),p=c.phones||(c.phones={});if(v)p[id]=v;else delete p[id];snd.ok();toast(v?'✓ Телефон сохранён':'Телефон удалён');rTg()}catch(er){snd.warn();toast('Не удалось сохранить телефон')}})}
 setTimeout(pruneMeta,2e4+Math.random()*2e4);setInterval(pruneMeta,18e5);try{if(ERRS.length&&ERRS.some(x=>x.t>(Number(LS.get('vip3-errsent',0))||0)))errSoon()}catch(e){}
 // ---------- установка на главный экран ----------
 {const b=$('#instb');if(b){const UA=navigator.userAgent||'',iOS=/iphone|ipad|ipod/i.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),AND=/android/i.test(UA),

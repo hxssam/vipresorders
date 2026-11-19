@@ -216,6 +216,112 @@
           }
         }
       }
+    },
+    "devices": {
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+      "$dev": {
+        ".write": "$dev.length <= 40",
+        ".validate": "newData.hasChildren(['t', 'v'])",
+        "t": {
+          ".validate": "newData.isNumber()"
+        },
+        "v": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "q": {
+          ".validate": "newData.isNumber()"
+        },
+        "u": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "c": {
+          "id": {
+            ".validate": "newData.isString() && newData.val().length <= 60"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length <= 60"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "contacts": {
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+      ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+      "phones": {
+        "$id": {
+          ".validate": "newData.isString() && newData.val().length <= 24"
+        }
+      }
+    },
+    "notify": {
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+      ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
+      "info": {
+        ".read": true
+      }
+    },
+    "access": {
+      ".read": true,
+      "obs": {
+        ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+        ".validate": "newData.hasChildren(['on'])",
+        "n": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "on": {
+          ".validate": "newData.isNumber()"
+        },
+        "mode": {
+          ".validate": "newData.val() == 'view' || newData.val() == 'edit'"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "proposals": {
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || auth.token.email == 'viewer@vip.local')",
+      "$id": {
+        ".write": "auth != null && (auth.token.email == 'admin@vip.local' || (auth.token.email == 'viewer@vip.local' && !data.exists()))",
+        ".validate": "newData.hasChildren(['m','p','t'])",
+        "m": {
+          ".validate": "newData.val() == 'PUT' || newData.val() == 'PATCH' || newData.val() == 'DELETE'"
+        },
+        "p": {
+          ".validate": "newData.isString() && newData.val().length <= 200 && newData.val().matches(/^(prep|prepMeta|prepLibrary|prepPins|writeoffs|plan|orders|receipts|catalog|prepCats)\\/.+/)"
+        },
+        "t": {
+          ".validate": "newData.isNumber()"
+        },
+        "v": {
+          ".validate": "newData.isString() && newData.val().length <= 30000"
+        },
+        "by": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "d": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "g": {
+          ".validate": "newData.isString() && newData.val().length <= 30"
+        },
+        "s": {
+          ".validate": "newData.val() == 'ok' || newData.val() == 'no'"
+        },
+        "dt": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

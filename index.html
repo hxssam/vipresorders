@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.7.2">
+<meta name="vip-ver" content="9.8.0">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var t=JSON.parse(localStorage.getItem("vip3-theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -28,7 +28,8 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 </head>
 <body>
 <div class="w">
-<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib" data-a="admin" aria-label="Админ-панель">⚙</button></div>
+<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
+<button id="obsbar" class="obsbar" data-a="obs" hidden></button>
 
 <div class="instb" id="instb" hidden><span class="ii" aria-hidden="true">📲</span><div class="it2"><b>Установить приложение</b><small id="insub">Иконка на главном экране — открывается как приложение</small></div><button class="p" id="instgo" data-i="go">Установить</button><button class="x" data-i="x" aria-label="Скрыть">✕</button></div>
 
@@ -67,6 +68,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl"><span>🎉 О банкете</span><small id="bqday"></small></div>
 <label class="fl"><span>📅 Дата банкета</span><button type="button" class="dp" id="bqdt" data-dp data-title="Дата банкета" value="" aria-label="Дата банкета" aria-haspopup="dialog">Выберите дату</button></label>
 <div class="bqhint" id="bqhint" hidden role="status"></div>
+<div class="prebox" id="prebox" hidden></div>
 <label class="fl"><span>Название / повод</span><input id="bqt" maxlength="80" placeholder="Например, свадьба Ивановых" autocomplete="off"></label>
 <div class="row2"><label class="fl"><span>🕐 Время начала</span><input id="bqs" data-tm inputmode="numeric" maxlength="5" placeholder="18:00" autocomplete="off" enterkeyhint="done" aria-label="Время начала"></label><label class="fl"><span>👥 Гостей</span><input id="bqg" inputmode="numeric" placeholder="0" autocomplete="off"></label></div>
 <label class="fl"><span>📍 Зал / место</span><input id="bqp" maxlength="60" placeholder="Например, большой зал" autocomplete="off"></label>
@@ -76,7 +78,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 </section>
 <div id="plist"></div>
 <section class="card" id="padd" aria-label="Добавить заготовку">
-<div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off"><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
+<div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off" inputmode="decimal"><select id="qu" aria-label="Единица измерения"><option value="">ед.</option><option>порц</option><option>кг</option><option>г</option><option>л</option><option>мл</option><option>шт</option><option>уп</option><option>кор</option><option>пак</option><option>бан</option><option>бут</option><option>пуч</option></select><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
 <div class="chips qsug" id="qlist" aria-label="Из истории"></div>
 <details class="qfd"><summary>Категории подсказок</summary><div class="chips" id="qfil"></div></details>
 </section>
@@ -130,7 +132,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl f">Примечание</div><input id="dxt" maxlength="120" placeholder="Вес или примечание (необязательно)" autocomplete="off">
 <div class="acts"><button class="p" data-a="xsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div>
 <div class="acts" id="dxd" hidden><button class="d" data-a="xdel">🗑 Удалить позицию</button></div></dialog>
-<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button></div></dialog>
+<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button><button class="g" data-a="admin">🔐 Руководитель / наблюдатель</button></div></dialog>
 <dialog id="dbt"><h2>🎉 Банкеты вместе</h2><div id="dbtb"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="drs"><h2>Лист приёмки</h2><div id="drsb"></div><div class="acts rc-share"><button class="p" data-a="rcpdf">📄 PDF</button><button data-a="rccsv">📊 Excel</button><button data-a="rctext">📋 Копировать</button><button id="rcsend" data-a="rcsend" hidden>↗ Отправить текст</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="dth"><h2>Тема оформления</h2><div class="thopts" role="radiogroup" aria-label="Тема оформления">
@@ -138,11 +140,19 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <button class="thopt" data-a="setth" data-id="light" role="radio" aria-checked="false"><span class="thi">☀️</span><span class="tht"><b>Светлая</b><small>всегда светлый фон</small></span><i class="thck">✓</i></button>
 <button class="thopt" data-a="setth" data-id="dark" role="radio" aria-checked="false"><span class="thi">🌙</span><span class="tht"><b>Тёмная</b><small>для вечера и тёмной кухни</small></span><i class="thck">✓</i></button>
 </div><div class="small">Выбор сохраняется на этом телефоне.</div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
-<dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
+<dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts" id="cx" hidden><button class="im" data-a="ordimg">🖼 Лист A4 для WhatsApp / Telegram / VK</button></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
 
 <dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
 <dialog id="dt"><h2>Админ-панель</h2>
+<details class="adm" id="adA"><summary><span class="ai" aria-hidden="true">🔔</span><b>Наблюдатель и правки</b><small id="adsA"></small></summary><div class="adb">
+<div id="apl"></div>
+<div class="lbl f">Пользователь-наблюдатель</div><div id="obcfg"><input id="obn" maxlength="40" placeholder="Имя наблюдателя (видно в правках)" autocomplete="off">
+<select id="obm" aria-label="Режим"><option value="view">Только просмотр</option><option value="edit">Может править — с моим утверждением</option></select>
+<label class="chk"><input type="checkbox" id="obo" checked> Доступ включён</label>
+<div class="acts"><button class="p" data-a="obssave">Сохранить</button></div></div>
+<div class="lbl f">Создать аккаунт (один раз)</div><input id="obp" type="password" placeholder="Пароль наблюдателя (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obscreate">Создать аккаунт viewer@vip.local</button></div>
+<p class="small">Наблюдатель входит в приложение через ⚙ → «Наблюдатель». Его правки не применяются, пока вы их не утвердите. Чтобы полностью закрыть доступ — выключите «Доступ включён» или удалите пользователя в Firebase → Authentication.</p></div></details>
 <details class="adm" id="adT" open><summary><span class="ai" aria-hidden="true">👥</span><b>Команда</b><small id="adsT"></small></summary><div class="adb">
 <div id="tl"></div>
 <div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
@@ -177,7 +187,9 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
-<dialog id="da"><h2>Вход для руководителя</h2><input id="ap" type="password" placeholder="Пароль" autocomplete="current-password"><div class="acts"><button class="p" data-a="login">Войти</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="da"><form id="daf" autocomplete="on"><h2 id="dah">Вход для руководителя</h2><div class="seg" id="dar"><button type="button" class="on" data-a="loginrole" data-id="adm">Руководитель</button><button type="button" data-a="loginrole" data-id="obs">Наблюдатель</button></div><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
+<dialog id="dimg" class="dimg"><h2>Заказ — лист A4</h2><div class="imw"><img id="imgp" alt="Заказ на листе A4"></div><p class="small">Весь заказ на одной странице. «Поделиться» открывает WhatsApp, Telegram, VK и другие приложения.</p><div class="acts"><button class="p" data-a="imgshare">📤 Поделиться</button><button data-a="imgpdf">📄 PDF A4</button></div><div class="acts"><button data-a="imgsave">⬇ Скачать</button><button data-a="imgcopy">📋 Копировать</button><button class="g" data-a="imgclose">Закрыть</button></div></dialog>
+<dialog id="dobs"><h2>👁 Наблюдатель</h2><p class="small" id="obst"></p><div id="obsl"></div><div class="lbl f">Сменить пароль</div><input id="onp" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obspw">Сменить пароль</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
 <dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="lbl" style="margin-top:8px">Категория</div><select id="llc"></select><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
