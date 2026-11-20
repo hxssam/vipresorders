@@ -68,9 +68,9 @@ const mention=id=>{const c=cookBy(id),t=chatOf(id)[0],u=t&&CH[t]&&CH[t].u;return
 // Читаем только нужные пути (не весь sched/shifts): бот запускается каждые 5 минут, экономим трафик Firebase.
 async function shiftsOn(date){const hide=!!(await safe('shifts/_hide/'+date,null)),own=await safe('shifts/'+date,null);
  if(own&&typeof own==='object'&&Object.values(own).some(v=>v!==undefined&&v!==null))return{map:own,hide};
- const last=await safe('shifts/_last',{}),m={};
+ const m={};
  const rows=await Promise.all(TEAM.map(async c=>[c,await safe(`sched/${c.id}/${date}`,null)]));
- rows.forEach(([c,v])=>{if(isWork(v))m[c.id]=(last&&last[c.id])||''});return{map:m,hide}}
+ rows.forEach(([c,v])=>{if(isWork(v))m[c.id]=''});return{map:m,hide}}
 
 // банкеты — упрощённая копия bqCalc из приложения
 function banquets(m,ds){m=m&&typeof m==='object'?m:{};ds=ds&&typeof ds==='object'?ds:{};const gn=v=>{const g=Math.round(Number(v));return g>0&&g<=1e5?g:0},mk=(id,v)=>({id,title:String(v.title||''),guests:gn(v.guests),time:okTm(v.time)?v.time:'',place:String(v.place||''),note:String(v.note||'')}),
@@ -91,7 +91,7 @@ async function afterBind(chat,c,from){const has=(PH[c.id]||'');await send(chat,`
 function pickKb(from){const list=TEAM.filter(c=>c.id!==CHIEF_ID||isChiefUser(from));const rows=[];for(let i=0;i<list.length;i+=2)rows.push(list.slice(i,i+2).map(c=>({text:c.n,callback_data:('b:'+c.id).slice(0,64)})));return{inline_keyboard:rows}}
 
 async function onPrivate(m,S){const from=m.from||{},chat=m.chat.id,txt=String(m.text||'').trim(),mine=CH[String(from.id)];
- if(m.contact){if(!mine){await send(chat,'Сначала нажмите /start и выберите своё имя.');return}
+ if(m.contact){if(!mine){await send(chat,'Выберите своё имя:',{reply_markup:pickKb(from)});return}
   if(m.contact.user_id!==from.id){await send(chat,'Отправьте именно свой номер: кнопка «📱 Отправить мой номер».');return}
   const ph='+'+String(m.contact.phone_number||'').replace(/\D/g,'');if(ph.length<6){await send(chat,'Не удалось прочитать номер.');return}
   await put('contacts/phones/'+mine.k,ph.slice(0,24));PH[mine.k]=ph;await send(chat,'✅ Номер сохранён.',{reply_markup:{remove_keyboard:true}});return}
@@ -104,15 +104,15 @@ async function onPrivate(m,S){const from=m.from||{},chat=m.chat.id,txt=String(m.
    const au=from.username&&TEAM.find(x=>x.u&&x.u.toLowerCase()===from.username.toLowerCase());
    if(au){const r=await bind(from,au.id);if(r.ok)await afterBind(chat,r.cook,from);return}
    await send(chat,'Здравствуйте! Выберите своё имя:',{reply_markup:pickKb(from)});return}
-  if(c==='stop'){if(mine){await del('contacts/chats/'+from.id);delete CH[String(from.id)]}await send(chat,'Отключено. Чтобы подключиться снова — /start.',{reply_markup:{remove_keyboard:true}});return}
-  if(!mine){await send(chat,'Нажмите /start и выберите своё имя.');return}
+  if(c==='stop'){if(mine){await del('contacts/chats/'+from.id);delete CH[String(from.id)]}await send(chat,'Отключено. Чтобы подключиться снова, напишите мне любое сообщение.',{reply_markup:{remove_keyboard:true}});return}
+  if(!mine){await send(chat,'Выберите своё имя:',{reply_markup:pickKb(from)});return}
   if(c==='phone'){await send(chat,'Нажмите кнопку, чтобы отправить номер шефу:',{reply_markup:contactKb});return}
   if(c==='smena'||c==='shift'){const tom=addDays(parts().date,1),s=await shiftsOn(tom),has=Object.prototype.hasOwnProperty.call(s.map,mine.k);
    await send(chat,has?`⏰ Завтра (${dayL(tom)}) вы на смене${s.map[mine.k]&&!s.hide?': <b>'+H(s.map[mine.k])+'</b>':''}.`:`Завтра (${dayL(tom)}) вас в графике нет.`);return}
   if(c==='me'||c==='help'){await send(chat,`Вы: <b>${H(cookBy(mine.k)?cookBy(mine.k).n:'?')}</b>${PH[mine.k]?'\nТелефон: '+H(PH[mine.k]):''}\n/smena — смена завтра\n/phone — номер телефона\n/stop — отключить`);return}
   return}
  if(!txt)return;
- if(!mine){await send(chat,'Нажмите /start и выберите своё имя, тогда я смогу передать сообщение шефу.');return}
+ if(!mine){await send(chat,'Здравствуйте! Выберите своё имя, тогда я смогу передать сообщение шефу:',{reply_markup:pickKb(from)});return}
  const t=NOW(),rec={k:mine.k,n:(cookBy(mine.k)||{}).n||mine.n,tid:String(from.id),x:txt.slice(0,500),t};await put(`contacts/inbox/${t}_${from.id}`,rec);
  const cc=chiefChat();if(cc&&String(cc)!==String(from.id))await send(cc,`✉️ <b>${H(rec.n)}</b>:\n${H(rec.x)}`);
  await send(chat,'✓ Передал шефу.')}
@@ -171,7 +171,9 @@ async function evAlerts(S,now,cfg){if(cfg.al===0)return;const cc=chiefChat();if(
  // ошибки приложения
  const heavy=T-(sentRef.heavyP||0)>18e5;let errs=[];if(heavy){await mark('heavyP',T);const el=await safe('errlog',null);if(el&&typeof el==='object')for(const[dv,es]of Object.entries(el))if(es&&typeof es==='object')for(const e of Object.values(es))if(e&&e.t&&e.m)errs.push({...e,dv})}
  const lastE=sentRef.errT;if(lastE===undefined){await mark('errT',T)}else if(heavy){const nw=errs.filter(e=>e.t>lastE).sort((a,b)=>a.t-b.t);
-  if(nw.length&&T-(sentRef.errA||0)>36e5){const l=nw[nw.length-1];if(await send(cc,`⚠ <b>Ошибки в приложении:</b> ${nw.length} нов.\nПоследняя: ${H(String(l.m).slice(0,160))}${l.v?' (v'+H(l.v)+')':''}`)){await mark('errT',T);await mark('errA',T)}}}
+  if(nw.length&&T-(sentRef.errA||0)>36e5){const grp={};for(const e of nw){const k=String(e.m).slice(0,100)+'|'+(e.s||''),g=grp[k]||(grp[k]={e,n:0,v:new Set(),d:new Set()});g.n+=Number(e.n)||1;if(e.v)g.v.add(e.v);g.d.add(e.dv)}
+    const gl=Object.values(grp).sort((x,y)=>y.n-x.n),rows=gl.slice(0,4).map(g=>`• ${H(String(g.e.m).slice(0,140))}${g.e.s?' · '+H(String(g.e.s).slice(0,40)):''} · ${[...g.v].map(x=>'v'+H(x)).join(', ')||'v?'} · ×${g.n} · ${g.d.size} тел.`);
+    if(await send(cc,`⚠ <b>Ошибки в приложении:</b> ${nw.length} нов.\n${rows.join('\n')}${gl.length>4?'\n… и ещё видов: '+(gl.length-4):''}`)){await mark('errT',T);await mark('errA',T)}}}
  // резервная копия
  const bk=now.hour>=MORN_H?Number(await safe('plan/cfg/bk',0))||0:0;if(now.hour>=MORN_H&&(!bk||T-bk>7*864e5)&&T-(sentRef.bkA||0)>864e5){if(await send(cc,bk?`💾 Резервная копия не делалась ${Math.floor((T-bk)/864e5)} дн. Приложение → Админ → Данные и копия.`:'💾 Резервная копия ещё не делалась. Приложение → Админ → Данные и копия.'))await mark('bkA',T)}
  // телефоны с неотправленными записями

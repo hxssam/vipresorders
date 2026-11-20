@@ -86,9 +86,9 @@ function makeBot(env){
  async function shiftsOn(date){const hide=!!(await safe('shifts/_hide/'+date,null)),own=await safe('shifts/'+date,null);
   if(own&&typeof own==='object'&&Object.values(own).some(v=>v!==undefined&&v!==null))return{map:own,hide};
   if(!room(TEAM.length+3)){const e=bud();if(TEAM.length>30)e.team=1;throw e}   // не хватает запросов в этом проходе (или команда больше 30 человек) — неполный список не шлём
-  const last=await safe('shifts/_last',{}),m={};
+  const m={};
   const rows=await Promise.all(TEAM.map(async c=>[c,await safe(`sched/${c.id}/${date}`,null)]));
-  rows.forEach(([c,v])=>{if(isWork(v))m[c.id]=(last&&last[c.id])||''});return{map:m,hide}}
+  rows.forEach(([c,v])=>{if(isWork(v))m[c.id]=''});return{map:m,hide}}
 
  // ---------- привязка Telegram ↔ повар ----------
  async function bind(from,cookId){const c=cookBy(cookId);if(!c)return{ok:false,why:'Такого повара нет в списке.'};
@@ -204,15 +204,16 @@ function makeBot(env){
  // «Подача» блюда на сайте предзаказов = время ЧЧ:ММ (поле serve; у старых заказов — course). Голые цифры (1, 2…) временем не считаются.
  const preServe=x=>{for(const v of[x.serve,x.course]){const m=/^\s*(\d{1,2})\s*:\s*(\d{2})\s*$/.exec(String(v==null?'':v));if(m){const t=m[1].padStart(2,'0')+':'+m[2];if(okTm(t))return t}}return''};
  // блюда предзаказа → заготовки банкета (одна позиция = одна задача; ключ стабилен по названию, чтобы отметки поваров не терялись)
- function preDishes(id,L){const out=new Map();for(const x of L){const nm=String(x.name||x.title).replace(/\s+/g,' ').trim().slice(0,80);if(!nm)continue;
-   const key='pre_'+id+'_'+hash(nm.toLowerCase().replace(/ё/g,'е')),n=Number(String(x.qty!==undefined&&x.qty!==null?x.qty:(x.count!==undefined&&x.count!==null?x.count:'')).replace(',','.')),
-   u=String(x.unit||x.u||'').trim().slice(0,8)||(/(сет|ваз|набор|пицц|торт|бутыл)/i.test(nm)?'шт':'порц'),o=out.get(key),sv=preServe(x);
-   if(o){o.n+=n>0?n:0;if(sv&&(!o.sv||sv<o.sv))o.sv=sv;continue}out.set(key,{key,t:nm,n:n>0?n:0,u,sv,raw:n>0?'':String(x.qty||'').slice(0,20)})}
-  return[...out.values()].map(d=>({key:d.key,t:d.t,sv:d.sv,q:d.n>0?(Math.round(d.n*100)/100)+' '+d.u:d.raw}))}
+ function preDishes(id,L){const out=new Map(),first=new Map();for(const x of L){const nm=String(x.name||x.title).replace(/\s+/g,' ').trim().slice(0,80);if(!nm)continue;
+   const base=hash(nm.toLowerCase().replace(/ё/g,'е')),sv=preServe(x),f=first.has(base)?first.get(base):(first.set(base,sv),sv),key='pre_'+id+'_'+base+(sv===f?'':'_'+hash(sv||'-')),
+   n=Number(String(x.qty!==undefined&&x.qty!==null?x.qty:(x.count!==undefined&&x.count!==null?x.count:'')).replace(',','.')),
+   u=String(x.unit||x.u||'').trim().slice(0,8)||(/(сет|ваз|набор|пицц|торт|бутыл)/i.test(nm)?'шт':'порц'),nt=String(x.note||'').replace(/\s+/g,' ').trim().slice(0,60),o=out.get(key);
+   if(o){o.n+=n>0?n:0;if(nt&&o.nt.indexOf(nt)<0)o.nt=(o.nt?o.nt+'; ':'')+nt;continue}out.set(key,{key,t:nm,n:n>0?n:0,u,sv,nt,raw:n>0?'':String(x.qty||'').slice(0,20)})}
+  return[...out.values()].map(d=>({key:d.key,t:d.t,sv:d.sv,nt:d.nt.slice(0,120),q:d.n>0?(Math.round(d.n*100)/100)+' '+d.u:d.raw}))}
  function preNorm(id,o,doc){const st=String(pick(o,['status','state'])||'').toLowerCase();if(/^(cancel|reject|delet|отмен)/.test(st))return null;
   const dr=String(pick(o,['date','eventDate','day'])||''),date=/^\d{4}-\d{2}-\d{2}/.test(dr)?dr.slice(0,10):'';if(!date)return null;
   const lines=pick(o,['lines','items','dishes']),L=Array.isArray(lines)?lines.filter(x=>x&&typeof x==='object'&&(x.name||x.title)):[];
-  const itemsTxt=L.map(x=>`• ${String(x.name||x.title).slice(0,60)}${x.qty?' × '+x.qty:''}${preServe(x)?' @'+preServe(x):''}${x.note?' ('+String(x.note).slice(0,40)+')':''}`).join('\n').slice(0,1500);
+  const itemsTxt=L.map(x=>`• ${String(x.name||x.title).slice(0,60)}${x.qty?' × '+x.qty:''}${preServe(x)?' @'+preServe(x):''}${x.note?' ('+String(x.note).replace(/\s+/g,' ').trim().slice(0,60)+')':''}`).join('\n').slice(0,1500);
   const g=Math.round(Number(pick(o,['guests','pax','persons','people','count']))),rec={title:String(pick(o,['name','guest','client','title'])||'Предзаказ').replace(/\s+/g,' ').slice(0,80),src:'pre',pid:id};
   if(g>0&&g<=1e5)rec.guests=g;const tm=preTime(pick(o,['time','hour','at']));if(tm)rec.time=tm;
   const pl=String(pick(o,['table','place','hall','zone'])||'').slice(0,60);if(pl)rec.place=pl;const nt=String(pick(o,['note','notes','comment','wishes'])||'').slice(0,400);if(nt)rec.note=nt;if(itemsTxt)rec.pi=itemsTxt;
@@ -227,7 +228,7 @@ function makeBot(env){
   let r=await q();if(r.status===401||r.status===403){PT.t=0;r=await q()}
   if(!r.ok){const j=await r.json().catch(()=>({}));const e=new Error('Firestore '+r.status+(j&&j.error&&j.error.message?': '+String(j.error.message).slice(0,100):''));e.status=r.status;throw e}
   const a=await r.json();return(Array.isArray(a)?a:[]).filter(x=>x&&x.document).map(x=>x.document)}
- async function evPre(now,cfg){if(!PRE_PW||cfg.pre===0)return;const T=NOW(),P=N.pre&&typeof N.pre==='object'?N.pre:{},pi=P.info&&typeof P.info==='object'?P.info:{};if(T-(Number(pi.t)||0)<45e3)return;
+ async function evPre(now,cfg,force){if(!PRE_PW||cfg.pre===0)return;const T=NOW(),P=N.pre&&typeof N.pre==='object'?N.pre:{},pi=P.info&&typeof P.info==='object'?P.info:{};if(!force&&T-(Number(pi.t)||0)<45e3)return;
   if(!room(10))throw bud();PTW.n=0;const from=addDays(now.date,-1),info={t:T,n:0,w:0,d:0,tw:0,err:''};let map=P.map&&typeof P.map==='object'?{...P.map}:{},changed=false;const touched=new Set();
   try{const docs=await preQuery(from),cur=new Map();let keys='';
    for(const d of docs){const id=String(d.name||'').split('/').pop();if(!/^[A-Za-z0-9_-]{1,40}$/.test(id))continue;const n=preNorm(id,fsObj(d.fields||{}),d);if(n){cur.set(id,n);if(!keys)keys=n.keys}}
@@ -239,8 +240,8 @@ function makeBot(env){
     await put(`prepMeta/${n.date}/b/${bid}`,{...rec,o});touched.add(n.date);
     const ex=await safe('prep/'+n.date,{}),upd={},keep=[],live=new Set();
     n.dishes.forEach((d,i)=>{live.add(d.key);keep.push(d.key);const c=ex&&typeof ex==='object'?ex[d.key]:null;
-     if(c&&typeof c==='object'){if(c.t!==d.t)upd[d.key+'/t']=d.t;if((c.q||'')!==d.q)upd[d.key+'/q']=d.q;const wsv=d.sv||rec.time||'';if(wsv&&(c.svs||'')!==wsv){upd[d.key+'/sv']=wsv;upd[d.key+'/svs']=wsv}}
-     else if(tk.indexOf(d.key)<0)upd[d.key]={t:d.t,q:d.q,g:'banq',bq:bid,k:'other',ks:'auto',c:o+i+1,src:'pre',pid:id,...((d.sv||rec.time)?{sv:d.sv||rec.time,svs:d.sv||rec.time}:{})}});
+     if(c&&typeof c==='object'){if(c.t!==d.t)upd[d.key+'/t']=d.t;if((c.q||'')!==d.q)upd[d.key+'/q']=d.q;if((c.pn||'')!==d.nt)upd[d.key+'/pn']=d.nt||null;const wsv=d.sv||rec.time||'';if(wsv&&(c.svs||'')!==wsv){upd[d.key+'/sv']=wsv;upd[d.key+'/svs']=wsv}}
+     else if(tk.indexOf(d.key)<0)upd[d.key]={t:d.t,q:d.q,g:'banq',bq:bid,k:'other',ks:'auto',c:o+i+1,src:'pre',pid:id,...(d.nt?{pn:d.nt}:{}),...((d.sv||rec.time)?{sv:d.sv||rec.time,svs:d.sv||rec.time}:{})}});
     for(const k of tk)if(!live.has(k)&&ex&&ex[k])upd[k]=null;
     if(Object.keys(upd).length){const okw=await wTasks(n.date,upd);tch.add(n.date);if(!okw){info.more=1;break}}
     map[id]={d:n.date,s:n.sig,o,tk:keep,tm:rec.time||''};changed=true;info.w++}
@@ -286,11 +287,14 @@ function makeBot(env){
   await stage(()=>evPre(now,cfg));
   let whErr='';
   if(slow){await stage(()=>evShifts(now,cfg));await stage(()=>evBanq(now,cfg));await stage(()=>evAlerts(now,cfg));await stage(()=>evProps(now,cfg));await stage(()=>cleanup());whErr=await webhookCheck(info).catch(e=>{if(e&&e.budget)return'';throw e});
-   if(room(3))await put('notify/info',{bot,t:NOW(),g:GROUP&&GROUP.id?1:0,v:2,...(info.w?{w:info.w}:{})})}
+   if(room(3))await put('notify/info',{bot,t:NOW(),g:GROUP&&GROUP.id?1:0,v:2,...(info.w?{w:info.w}:{})});
+   if(info.w&&/^https:\/\/[A-Za-z0-9.-]+$/.test(String(info.w))&&room(3))await put('access/w',String(info.w)).catch(()=>{})}
   if(bigTeam&&!whErr)whErr='В команде больше 30 человек: бесплатного лимита Cloudflare не хватает, чтобы прочитать смены';
   if(room(3)){if(whErr)await put('notify/err',{t:NOW(),m:String(whErr).slice(0,200)});else if(N.err)await del('notify/err').catch(()=>{})}
   log(`ok: slow=${slow} outbox=${ob||0} bot=@${bot} requests=${REQ.n}`)}
 
+ // мгновенная синхронизация предзаказов: вызывается сайтом предзаказов сразу после сохранения (/presync), не ждёт минутного cron
+ async function preFast(){if(!PRE_PW)return;await login();const[p,c]=await Promise.all([safe('notify/pre',{}),safe('notify/cfg',{})]);N={pre:p&&typeof p==='object'?p:{}};await evPre(parts(),c&&typeof c==='object'?c:{},true)}
  async function fail(e){try{if(IDT)await put('notify/err',{t:NOW(),m:String(e&&e.message||e).slice(0,200)})}catch{}}
 
  // /setup: проверяет каждую часть и ставит Webhook; возвращает список [ок?, текст] для страницы
@@ -311,12 +315,16 @@ function makeBot(env){
   add(g&&g.id?true:null,g&&g.id?'المجموعة متصلة: '+(g.n||''):'المجموعة غير متصلة بعد: أضف البوت إلى المجموعة (أو اكتب /group فيها)');
   return R}
 
- return{cron,update,setup,fail,login,hookSecret,req:REQ}}
+ return{cron,update,setup,fail,login,hookSecret,preFast,req:REQ}}
 
 // ---------- «толчок»: приложение сообщает, что только что отправлен заказ или сообщение ----------
 let BUSY=null,AGAIN=false;
 function kick(env){AGAIN=true;if(BUSY)return BUSY;
  BUSY=(async()=>{try{while(AGAIN){AGAIN=false;const b=makeBot(env);try{await b.cron(false)}catch(e){console.error('poke:',e.message);await b.fail(e)}}}finally{BUSY=null}})();return BUSY}
+
+let PBUSY=null,PAGAIN=false;
+function preKick(env){PAGAIN=true;if(PBUSY)return PBUSY;
+ PBUSY=(async()=>{try{while(PAGAIN){PAGAIN=false;const b=makeBot(env);try{await b.preFast()}catch(e){console.error('presync:',e.message)}}}finally{PBUSY=null}})();return PBUSY}
 
 const page=(R)=>`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ВИАЙПИ бот</title><body dir="rtl" style="font:18px/1.7 system-ui,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;background:#0b0d1a;color:#eee"><h2>إعداد بوت المطبخ</h2>${R.map(([ok,t])=>`<div style="margin:8px 0">${ok===true?'✅':ok===false?'❌':'⚠️'} ${H(t)}</div>`).join('')}<p style="color:#9ab">${R.some(r=>r[0]===false)?'أصلح السطر الأحمر ثم حدّث هذه الصفحة.':'كل شيء جاهز. أرسل /start للبوت في تيليجرام: يجب أن يرد خلال ثانيتين.'}</p></body>`;
 
@@ -335,6 +343,10 @@ export default{
    if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
    if(o&&o!==allow)return new Response(null,{status:403});
    ctx.waitUntil(kick(env));return new Response(null,{status:204,headers:cors})}
+  if(p==='/presync'){const allow=env.SITE_ORIGIN||'https://hxssam.github.io',o=req.headers.get('origin'),cors={'Access-Control-Allow-Origin':allow,'Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Max-Age':'86400'};
+   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
+   if(o&&o!==allow)return new Response(null,{status:403});
+   ctx.waitUntil(preKick(env));return new Response(null,{status:204,headers:cors})}
   if(p==='/setup'){const b=makeBot(env);let R;try{R=await b.setup(u.origin)}catch(e){R=[[false,'خطأ غير متوقع: '+e.message]]}
    return new Response(page(R),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}})}
   return new Response('VIP bot ok',{headers:{'content-type':'text/plain; charset=utf-8'}})}};
