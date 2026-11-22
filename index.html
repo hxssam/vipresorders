@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.5">
+<meta name="vip-ver" content="9.9.6">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var d=document.documentElement,g=localStorage.getItem("vip3-gate"),r=localStorage.getItem("vip3-rt");if(g!=="\"2\""||!r||r==="\"\"")d.className+=" locked"}catch(e){document.documentElement.className+=" locked"}</script>
@@ -46,7 +46,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 </main>
 </div>
 <div class="w">
-<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
+<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib ghb" id="ghbtn" data-a="ghost" aria-label="Режим невидимки" aria-pressed="false" hidden>👻</button><button class="g ib nbb" id="nbtn" data-a="notif" aria-label="Уведомления" hidden><span class="nbi" aria-hidden="true">🔔</span><i id="nbadge" hidden></i></button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
 <button id="obsbar" class="obsbar" data-a="obs" hidden></button>
 <button id="apbar" class="obsbar apbar" data-a="admin" hidden></button>
 
@@ -98,6 +98,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div id="plist"></div>
 <section class="card" id="padd" aria-label="Добавить заготовку">
 <div class="pa3"><input id="qt" maxlength="80" placeholder="Что приготовить?" autocomplete="off"><input id="qq" maxlength="20" placeholder="Кол-во" autocomplete="off" inputmode="decimal"><select id="qu" aria-label="Единица измерения"><option value="">ед.</option><option>порц</option><option>кг</option><option>г</option><option>л</option><option>мл</option><option>шт</option><option>уп</option><option>кор</option><option>пак</option><option>бан</option><option>бут</option><option>пуч</option></select><button class="p" data-a="qadd" aria-label="Добавить">＋</button></div>
+<div class="qtm" id="qtm"><label class="qtl" for="qd" title="Таймер, минуты">⏱</label><input id="qd" inputmode="numeric" maxlength="3" placeholder="мин" autocomplete="off" aria-label="Таймер в минутах (необязательно)"><div class="chips" aria-label="Быстрый выбор"><button class="chip" data-a="qdset" data-id="5">5</button><button class="chip" data-a="qdset" data-id="10">10</button><button class="chip" data-a="qdset" data-id="18">18</button><button class="chip" data-a="qdset" data-id="30">30</button><button class="chip" data-a="qdset" data-id="60">60</button></div></div>
 <div class="chips qsug" id="qlist" aria-label="Из истории"></div>
 <details class="qfd"><summary>Категории подсказок</summary><div class="chips" id="qfil"></div></details>
 </section>
@@ -159,7 +160,9 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <button class="thopt" data-a="setth" data-id="light" role="radio" aria-checked="false"><span class="thi">☀️</span><span class="tht"><b>Светлая</b><small>всегда светлый фон</small></span><i class="thck">✓</i></button>
 <button class="thopt" data-a="setth" data-id="dark" role="radio" aria-checked="false"><span class="thi">🌙</span><span class="tht"><b>Тёмная</b><small>для вечера и тёмной кухни</small></span><i class="thck">✓</i></button>
 </div><div class="small">Выбор сохраняется на этом телефоне.</div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
-<dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts" id="cx" hidden><button class="im" data-a="ordimg">🖼 Лист A4 для WhatsApp / Telegram / VK</button></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
+<dialog id="dc"><h2 id="ct">Вы уверены?</h2><div id="cb"></div><div class="acts" id="cx" hidden><button class="im" data-a="ordimg">🖼 Лист A4 для отправки в мессенджер</button></div><div class="acts"><button class="g" id="cn">Нет, вернуться</button><button class="p" id="cy">Да</button></div></dialog>
+
+<dialog id="dn" aria-label="Уведомления"><h2>🔔 Уведомления</h2><div id="nbox"></div><div class="lbl f" style="margin-top:14px">Последние</div><div id="nlist" style="max-height:44dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
 <dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
@@ -169,7 +172,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div id="trl"></div>
 <div class="acts"><button class="g" data-a="trload">↻ Обновить</button></div>
 <div class="lbl f">Удалили раньше? Вернуть заказ из сообщения</div>
-<div class="small">Вставьте текст заказа из Telegram или WhatsApp («🧾 Заказ на …»). Можно сразу несколько сообщений.</div>
+<div class="small">Вставьте текст заказа из мессенджера («🧾 Заказ на …»). Можно сразу несколько сообщений.</div>
 <textarea id="trmsg" rows="4" placeholder="🧾 Заказ на пт, 20.11 …" autocomplete="off"></textarea>
 <div id="trpv"></div>
 <div class="acts"><button class="p" data-a="trparse">Проверить текст</button><button class="g" data-a="trfile">📂 Из файла копии…</button></div>
@@ -190,11 +193,11 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <details class="adm" id="adT" open><summary><span class="ai" aria-hidden="true">👥</span><b>Команда</b><small id="adsT"></small></summary><div class="adb">
 <div id="tl"></div>
 <div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
-<input id="tu" placeholder="Username в Telegram, например ali_cook (необязательно)" maxlength="40" style="margin-top:8px" autocapitalize="off" autocomplete="off">
 <div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div></div></details>
-<details class="adm" id="adG"><summary><span class="ai" aria-hidden="true">📱</span><b>Телефоны и Telegram</b><small id="adsG"></small></summary><div class="adb">
-<div id="tgst"></div>
-<div id="tgbox"></div></div></details>
+<details class="adm" id="adN"><summary><span class="ai" aria-hidden="true">🔔</span><b>Уведомления</b><small id="adsN"></small></summary><div class="adb">
+<div id="ntbox"></div></div></details>
+<details class="adm" id="adG"><summary><span class="ai" aria-hidden="true">📱</span><b>Телефоны и устройства</b><small id="adsG"></small></summary><div class="adb">
+<div id="phbox"></div></div></details>
 <details class="adm" id="adC"><summary><span class="ai" aria-hidden="true">📦</span><b>Каталог товаров</b><small id="adsC"></small></summary><div class="adb">
 <div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
 <p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p></div></details>
@@ -226,7 +229,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="da"><form id="daf" autocomplete="on"><div id="accs" class="accs" hidden></div><h2 id="dah">Вход для руководителя</h2><div class="seg" id="dar"><button type="button" class="on" data-a="loginrole" data-id="adm">Руководитель</button><button type="button" data-a="loginrole" data-id="obs">Наблюдатель</button></div><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
-<dialog id="dimg" class="dimg"><h2>Заказ — лист A4</h2><div class="imw"><div class="imgbusy" id="imgbusy" hidden><i class="spin"></i><span>Готовлю лист A4…</span></div><img id="imgp" alt="Заказ на листе A4"></div><p class="small">Весь заказ на одной странице. «Поделиться» открывает WhatsApp, Telegram, VK и другие приложения.</p><div class="acts"><button class="p" data-a="imgshare">📤 Поделиться</button><button data-a="imgpdf">📄 PDF A4</button></div><div class="acts"><button data-a="imgsave">⬇ Скачать</button><button data-a="imgcopy">📋 Копировать</button><button class="g" data-a="imgclose">Закрыть</button></div></dialog>
+<dialog id="dimg" class="dimg"><h2>Заказ — лист A4</h2><div class="imw"><div class="imgbusy" id="imgbusy" hidden><i class="spin"></i><span>Готовлю лист A4…</span></div><img id="imgp" alt="Заказ на листе A4"></div><p class="small">Весь заказ на одной странице. «Поделиться» открывает WhatsApp, VK и другие приложения для отправки.</p><div class="acts"><button class="p" data-a="imgshare">📤 Поделиться</button><button data-a="imgpdf">📄 PDF A4</button></div><div class="acts"><button data-a="imgsave">⬇ Скачать</button><button data-a="imgcopy">📋 Копировать</button><button class="g" data-a="imgclose">Закрыть</button></div></dialog>
 <dialog id="dobe"><h2 id="obeh">Наблюдатель</h2><div class="lbl f">Имя (для входа и в запросах)</div><input id="oben" maxlength="40" autocomplete="off" placeholder="Например: Владелец, Официант Анна"><div class="lbl f">Пароль</div><input id="obep" type="password" autocomplete="new-password" placeholder="Пароль (от 6 символов)"><div class="lbl f">Что может делать</div><select id="obem" aria-label="Режим"><option value="view">Только смотреть</option><option value="edit">Правки — с утверждением</option></select><div class="lbl f">Какие разделы видит</div><div class="obsec" id="obesec"><label class="chk"><input type="checkbox" data-obv="ord"> 🧾 Заказ и история заказов</label><label class="chk"><input type="checkbox" data-obv="prep"> ✅ Заготовки</label><label class="chk"><input type="checkbox" data-obv="bq"> 🎉 Банкеты</label><label class="chk"><input type="checkbox" data-obv="sched"> 📅 График и смены</label><label class="chk"><input type="checkbox" data-obv="wo"> 🗑️ Списание</label><label class="chk"><input type="checkbox" data-obv="recv"> 📦 Приёмка и «Не привезли»</label></div><div class="lbl f">Доступ</div><label class="chk"><input type="checkbox" id="obeon" checked> Доступ включён</label><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="p" data-a="obesave">Сохранить</button></div><div class="acts"><button class="d" id="obedel" data-a="obedel" hidden>Удалить наблюдателя</button></div></dialog>
 <dialog id="dobs"><h2>👁 Наблюдатель</h2><p class="small" id="obst"></p><div id="obsl"></div><div class="lbl f">Сменить пароль</div><input id="onp" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obspw">Сменить пароль</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
@@ -240,6 +243,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div id="tkG" hidden><div class="row2"><label><div class="lbl">Гостей в этот день</div><input id="tkgst" inputmode="numeric" placeholder="например, 80" autocomplete="off"></label><label><div class="lbl">На 1 гостя</div><input id="tkk" inputmode="decimal" value="1" autocomplete="off"></label></div><div class="row2"><select id="tkgu"></select><div class="small" id="tkres" style="margin:0;align-self:center"></div></div><div class="small">Число гостей меняется в одном месте — все количества пересчитаются сами.</div></div>
 <div class="chips wrap" id="tkhint" style="margin-top:8px"></div>
 <div class="lbl" style="margin:12px 0 4px">Категория</div><select id="tkc"></select><div class="small" id="tkcs" style="margin-top:6px"></div>
+<div class="lbl" style="margin:12px 0 4px">⏱ Таймер, мин (необязательно)</div><input id="tkd" inputmode="numeric" maxlength="3" placeholder="например, 18 — варка риса" autocomplete="off">
 <label class="chk"><input type="checkbox" id="tkb"> 🎉 Банкет</label>
 <div id="tkbqb" hidden><div class="lbl" style="margin:10px 0 4px">Какой банкет</div><select id="tkbq" aria-label="Банкет"></select></div>
 <div id="tksvb" hidden><div class="lbl" style="margin:10px 0 4px">🕐 Время подачи</div><input id="tksv" data-tm inputmode="numeric" maxlength="5" placeholder="19:30" autocomplete="off" enterkeyhint="done" aria-label="Время подачи"></div>

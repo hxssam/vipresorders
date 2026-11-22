@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.5"}
+:root{--vip-ver:"9.9.6"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1041,3 +1041,81 @@ body.obs-ro select.who{opacity:.75}
 body.obs-ro #woproducts,body.obs-ro #vWriteoff .sticky{display:none!important}
 body.obs #gcab{display:none!important}
 body.obs-ro [data-rccourier]{pointer-events:none;opacity:.75}
+/* 9.9.6: человеческие описания правок */
+.api .apx{font-style:normal;font-weight:800;opacity:.7;margin-left:4px}
+
+/* ================= 9.9.6: уведомления · таймеры · невидимка · анимации ================= */
+.ghb{opacity:.5;transition:opacity .2s,background .2s,box-shadow .2s,transform .12s}
+.ghb.on{opacity:1;background:var(--ac);color:#fff;box-shadow:0 0 0 3px #7c3aed38}
+.ghb[hidden],.nbb[hidden]{display:none}
+.nbb{position:relative}.nbb.nfoff{opacity:.6}
+#nbadge{position:absolute;top:1px;right:1px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#dc2626;color:#fff;font:700 11px/17px system-ui,sans-serif;font-style:normal;text-align:center;animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+#nbadge[hidden]{display:none}
+.nbb.ring .nbi{display:inline-block;transform-origin:50% 8%;animation:ring 3s ease-in-out infinite}
+@keyframes ring{0%,60%,100%{transform:rotate(0)}6%{transform:rotate(16deg)}12%{transform:rotate(-14deg)}18%{transform:rotate(10deg)}24%{transform:rotate(-7deg)}30%{transform:rotate(3deg)}}
+/* окно уведомлений */
+.nfc{border:1px solid var(--ln);border-radius:14px;padding:12px;margin:8px 0;background:var(--bg)}
+.nfc b{display:block}.nfc small{display:block;color:var(--mu);margin-top:3px}
+.nfc.ok{border-color:var(--ok);background:var(--okbg)}.nfc.ok b{color:var(--ok)}
+.nfi{display:flex;gap:10px;padding:10px 4px;border-top:1px solid var(--ln);animation:rowin .3s both}
+.nfi i{font-style:normal;font-size:20px;flex:none;width:28px;text-align:center}
+.nfi b{display:block;font-size:15px}.nfi span{display:block;font-size:14px;overflow-wrap:anywhere}.nfi small{color:var(--mu)}
+.nfi.nw{background:linear-gradient(90deg,var(--ac2),transparent);border-radius:10px}
+/* шеф: раздел «Уведомления» */
+.ntd{display:flex;align-items:center;gap:8px;padding:6px 0}.ntd b{flex:1;min-width:0;overflow-wrap:anywhere}
+.ntr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+.ntr .chip{flex:1 1 170px;justify-content:flex-start;text-align:left}
+.ntr .nta{width:112px;flex:none;text-align:center;font-weight:700;padding-left:6px;padding-right:6px}
+.ntr small{flex-basis:100%;color:var(--mu);margin:-2px 0 2px 4px}
+/* таймер при добавлении заготовки */
+.qtm{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-top:6px}
+.qtm .qtl{font-size:20px;line-height:1;flex:none;padding:0 2px}
+.qtm input{width:72px;flex:none;text-align:center;min-height:40px}
+.qtm .chips{display:flex;flex-wrap:nowrap;gap:6px;flex:1 1 auto;min-width:0;margin:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.qtm .chips::-webkit-scrollbar{display:none}
+.qtm .chip{min-height:38px;padding:4px 12px;flex:none}
+/* таймер в строке заготовки */
+.tmb{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 11px;border-radius:999px;font-size:14px;font-weight:800;background:var(--ac2);color:var(--ac);border:1.5px solid transparent;margin:0 6px 4px 0;font-variant-numeric:tabular-nums;transition:background .2s,color .2s,border-color .2s,transform .12s}
+.tmb .tmi{font-style:normal}.tmb em{font-style:normal;font-weight:800;opacity:.75;font-size:12px}
+.tmb.run{background:var(--okbg);color:var(--ok);border-color:var(--ok);animation:tmpulse 2s ease-in-out infinite}
+.tmb.run.hot{background:#fef3c7;color:#b45309;border-color:#f59e0b;animation-duration:.9s}
+.tmb.fin{background:#dc2626;color:#fff;animation:tmshake .6s ease-in-out infinite}
+.tmb.fin em{opacity:1;background:#fff;color:#dc2626;border-radius:999px;padding:1px 8px}
+.tmb.ro{opacity:.7}
+@keyframes tmpulse{0%,100%{box-shadow:0 0 0 0 #10b98155}50%{box-shadow:0 0 0 6px #10b98100}}
+@keyframes tmshake{0%,100%{transform:none}20%{transform:rotate(-3deg) scale(1.04)}40%{transform:rotate(3deg) scale(1.04)}60%{transform:rotate(-2deg)}80%{transform:rotate(2deg)}}
+/* сигнал «время вышло» — поверх всего, не пропустишь */
+.tmbar{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:98;pointer-events:none}
+.tmbar[hidden]{display:none}
+.tmbi{pointer-events:auto;display:flex;align-items:center;gap:12px;max-width:560px;margin:0 auto;padding:12px 14px;border-radius:18px;background:#dc2626;color:#fff;box-shadow:0 12px 36px #0007}
+.tmbi b{display:block;font-size:17px}.tmbi small{opacity:.92}.tmbi>div{flex:1;min-width:0;overflow-wrap:anywhere}
+.tmbe{font-size:30px;display:inline-block;animation:tmshake .7s ease-in-out infinite}
+.tmbi button{background:#fff;color:#dc2626;min-width:64px}
+.tmbar.in .tmbi{animation:tmin .45s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes tmin{from{opacity:0;transform:translateY(-30px) scale(.94)}to{opacity:1;transform:none}}
+/* праздник: банкет завершён / всё готово */
+.cele-cv{position:fixed;inset:0;width:100vw;height:100vh;z-index:95;pointer-events:none}
+.cele{position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;background:#0006;animation:bd .3s ease-out both}
+.cele.out{opacity:0;transition:opacity .45s}
+.cele-c{max-width:320px;margin:0 20px;padding:26px 22px;border-radius:24px;text-align:center;background:var(--sf);box-shadow:0 20px 60px #0008;animation:celein .6s cubic-bezier(.2,1.4,.4,1) both}
+.cele-c b{display:block;font-size:20px;margin:8px 0 4px}.cele-c small{color:var(--mu)}
+.cele-e{display:block;font-style:normal;font-size:60px;animation:celeb 1.1s ease-in-out infinite}
+@keyframes celein{from{opacity:0;transform:scale(.6) translateY(30px)}to{opacity:1;transform:none}}
+@keyframes celeb{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-10px) rotate(8deg)}}
+/* общая «живость» */
+.pbar i{transition:width .55s cubic-bezier(.2,.8,.2,1);background-image:linear-gradient(90deg,var(--ac),var(--ac3))}
+.pbar.full i{background-image:linear-gradient(90deg,var(--ok),#6ee7b7,var(--ok));background-size:200% 100%;animation:shine 1.6s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background .2s,color .2s,box-shadow .2s,opacity .2s,border-color .2s}
+.chip:active,.tab:active{transform:scale(.94)}
+.pr{transition:background .3s,border-color .3s,opacity .3s}
+@media(prefers-reduced-motion:reduce){.tmb.run,.tmb.fin,.tmbe,.cele-e,.nbb.ring .nbi,.pbar.full i{animation:none!important}}
+/* шапка: у шефа шесть кнопок (добавились 👻 и 🔔) — сжимаем их, чтобы название не наезжало на кнопки */
+#thbtn{margin-left:auto}
+.top h1{overflow:hidden}
+.top:has(#ghbtn:not([hidden])){gap:4px}
+.top:has(#ghbtn:not([hidden])) .ib{width:33px;min-height:36px;font-size:15px;border-radius:10px}
+@media(max-width:350px){.top:has(#ghbtn:not([hidden])) h1{display:none}}
+/* 9.9.6: место под колокольчик резервируется — шапка не прыгает, когда он появляется */
+#nbtn[hidden]{display:inline-flex!important;visibility:hidden}
+#nbtn.gone{display:none!important}
