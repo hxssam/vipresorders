@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.8';
+const VER='9.9.9';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -1395,7 +1395,7 @@ setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!meta
 let SNDK=0,PWSC=0,EPT=0,PREW=LS.get('vip3-pw',''),PRK=0;const PRA={};
 // ---------- 9.9.6: уведомления (Web Push) · таймеры заготовок · режим невидимки · праздник ----------
 // Все const ниже стоят до первой отрисовки (см. правило TDZ выше); функции — function-объявления.
-const NF={on:false,pub:'',busy:0,busy2:0,tst:0,tr:null,wk:null,log:[],lt:0,seen:(()=>{let s=Number(LS.get('vip3-nseen',0))||0;if(!s){s=Date.now();LS.set('vip3-nseen',s)}return s})()};
+const NF={on:false,pub:'',busy:0,busy2:0,tst:0,tr:null,wk:null,net:null,sp:null,log:[],lt:0,seen:(()=>{let s=Number(LS.get('vip3-nseen',0))||0;if(!s){s=Date.now();LS.set('vip3-nseen',s)}return s})()};
 const NT={subs:null,cfg:null,t:0,busy:0,to:'cooks'};
 const PHD={t:0,c:null,d:null,bad:'',busy:0};
 const TM={al:{},cur:null,rep:0,last:0,pt:0},RFH={busy:0,last:0};
@@ -1424,7 +1424,7 @@ function nfWhy(){const e=nfEnv();
 function nfErr(e,step){const n=String(e&&e.name||''),m=String(e&&e.message||'');
  if(e&&e.sw)return'Фоновая служба приложения ещё не запущена. Закройте приложение полностью, откройте снова (два раза) и повторите.';
  if(e&&(e.status===401||e.status===403))return'Нет доступа к базе: шеф должен опубликовать новые правила Firebase.';
- if(m==='timeout')return step===3?'Телефон не смог связаться с сервисом уведомлений Google/Apple за 20 секунд. Выключите VPN и экономию трафика и повторите.':'Нет ответа за отведённое время (шаг '+step+'). Закройте приложение полностью, откройте снова и повторите.';
+ if(m==='timeout')return step===3?'Телефон не смог связаться с сервисом уведомлений Google/Apple за 60 секунд. Попробуйте по порядку: 1) Wi-Fi вместо LTE и выключить VPN; 2) закрыть приложение и открыть снова; 3) удалить иконку с экрана «Домой», добавить заново и повторить.':'Нет ответа за отведённое время (шаг '+step+'). Закройте приложение полностью, откройте снова и повторите.';
  if(n==='NotAllowedError')return'Разрешение не выдано. Откройте настройки телефона → ВИАЙПИ → Уведомления → разрешить.';
  if(n==='AbortError'||n==='InvalidStateError'||n==='NotSupportedError')return'Не удалось подключиться к сервису уведомлений ('+n+'). Проверьте интернет/VPN и повторите.';
  return'Шаг '+step+': '+(n||'ошибка')+(m?' — '+m.slice(0,90):'')}
@@ -1458,16 +1458,21 @@ async function nfSave(sub,pub){const j=sub.toJSON(),k=j.keys||{};if(!j.endpoint|
  await api('PUT','push/subs/'+id,rec);LS.set('vip3-nsub',{id,sig,at:Date.now(),pk:pub});return id}
 const nfSigOf=id=>[id,(presMe()||{}).id||'',isAdmin()?'adm':'cook',nfUid()].join('|');
 // тихое обслуживание: подписка жива, ключ тот же, привязка к повару актуальна (после смены кабинета)
+// один общий запрос подписки: фоновая проверка при открытии и кнопка «Включить» не толкаются (второй запрос вставал в очередь за зависшим первым)
+function nfSubscribe(reg,pub){if(NF.sp)return NF.sp;const p=reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)});NF.sp=p;const clr=()=>{if(NF.sp===p)NF.sp=null};p.then(clr,clr);return p}
 async function nfEnsure(force){if(DEMO||!DB||!AU.rt||isObs()||!nfCan()||nfIOS()&&!nfStandalone()||Notification.permission!=='granted'||NF.busy)return;NF.busy=1;
  try{const reg=await nfReg();let sub=await reg.pushManager.getSubscription();const pub=await nfPub();if(!pub){NF.busy=0;return}const st=LS.get('vip3-nsub',null)||{};
   if(sub&&((nfSubKey(sub)&&nfSubKey(sub)!==pub)||(st.pk&&st.pk!==pub))){try{await sub.unsubscribe()}catch(e){}sub=null}
-  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)});
+  if(!sub)sub=await withT(nfSubscribe(reg,pub),7e4);
   NF.on=true;const id=nfHid(sub.endpoint);if(force||st.id!==id||st.sig!==nfSigOf(id)||Date.now()-(st.at||0)>12*36e5)await nfSave(sub,pub)}catch(e){}
  NF.busy=0;nfBadge();if(dialogOpen('#dn'))rNf()}
 async function nfCheck(){NF.on=false;NF.dg={};try{NF.dg.ctrl=!!(navigator.serviceWorker&&navigator.serviceWorker.controller)}catch(e){}
  if(nfCan()&&Notification.permission==='granted'&&!(nfIOS()&&!nfStandalone())){try{const reg=await nfReg();const sub=await reg.pushManager.getSubscription();NF.on=!!sub;NF.dg.sub=!!sub}catch(e){NF.dg.sub=false}}
  try{if('serviceWorker' in navigator)withT(navigator.serviceWorker.ready,3000).then(r=>{if(r&&r.active)r.active.postMessage({type:'ver'})}).catch(()=>{})}catch(e){}
  nfBadge();if(dialogOpen('#dn'))rNf()}
+// доступен ли с этого телефона адрес сервиса уведомлений (без ответа = сеть/VPN его блокирует). Запускается только при открытии 🔔
+function nfNet(){const h=nfEnv().ios?'web.push.apple.com':'fcm.googleapis.com';if(NF.net&&NF.net.h===h&&NF.net.ok!==null&&Date.now()-NF.net.t<6e4)return;NF.net={h,ok:null,t:Date.now()};
+ try{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),7e3);fetch('https://'+h+'/',{mode:'no-cors',cache:'no-store',signal:ac.signal}).then(()=>{NF.net.ok=true},()=>{NF.net.ok=false}).then(()=>{clearTimeout(to);NF.net.t=Date.now();if(dialogOpen('#dn'))rNf()})}catch(e){NF.net.ok=null}}
 function nfForMe(x){const to=String(x.to||'').split(','),me=presMe(),uid=nfUid();return to.some(t=>t==='team'?true:t==='all'?x.u!==uid:t==='adm'?isAdmin():t==='cooks'?!isAdmin():t==='me'?x.u===uid:!!(me&&t==='c:'+me.id))}
 async function nfLoad(force){if(DEMO||!DB||!AU.rt||isObs()||NF.busy2||(!force&&Date.now()-NF.lt<15e3))return;NF.busy2=1;
  try{const o=await jget('push/log','orderBy=%22t%22&limitToLast=40');NF.log=o&&typeof o==='object'?Object.entries(o).map(([id,v])=>({id,...v})).filter(x=>x&&x.ti&&nfForMe(x)).sort((p,q)=>q.t-p.t):[];NF.lt=Date.now()}catch(e){}
@@ -1477,7 +1482,7 @@ function nfBadge(){const b=$('#nbadge'),bt=$('#nbtn');if(!bt)return;const gone=D
 const nfAgo=t=>{const m=Math.round((Date.now()-(Number(t)||0))/6e4);return m<1?'только что':m<60?m+' мин назад':m<1440?Math.floor(m/60)+' ч назад':Math.floor(m/1440)+' дн. назад'};
 const nfIc=k=>({tm:'⏱',sh:'⏰',h:'✍️',w:'🗑',c:'🔒',bq:'🎉',od:'🧾',ap:'🔔',er:'⚠'})[k]||'📣';
 function nfDg(){const e=nfEnv(),d=NF.dg||{},R=(ok,t)=>`<div class="dgr ${ok===true?'ok':ok===false?'no':''}"><i>${ok===true?'✓':ok===false?'✗':'·'}</i>${esc(t)}</div>`,pm={granted:'выдано',denied:'запрещено',default:'ещё не спрашивали'};
- return`<details class="nfd"><summary>Диагностика</summary>`+R(null,'Версия: приложение '+VER+(NF.swv?' · служба '+NF.swv:''))+(e.ios?R(e.sa,'iPhone: открыто с экрана «Домой»'):'')+R(e.https,'Защищённое соединение (https)')+R(e.sw,'Фоновая служба доступна')+R(e.pm&&e.no,'Браузер умеет уведомления')+R(e.perm==='granted'?true:e.perm==='denied'?false:null,'Разрешение: '+(pm[e.perm]||e.perm))+R(d.ctrl===undefined?null:!!d.ctrl,'Служба управляет страницей')+R(d.sub===undefined?null:!!d.sub,'Подписка на этом телефоне')+R(LS.get('vip3-nsub',null)?true:null,'Телефон записан на сервере')+nfDgW()+`</details>`}
+ return`<details class="nfd"><summary>Диагностика</summary>`+R(null,'Версия: приложение '+VER+(NF.swv?' · служба '+NF.swv:''))+(e.ios?R(e.sa,'iPhone: открыто с экрана «Домой»'):'')+R(e.https,'Защищённое соединение (https)')+R(e.sw,'Фоновая служба доступна')+R(e.pm&&e.no,'Браузер умеет уведомления')+R(e.perm==='granted'?true:e.perm==='denied'?false:null,'Разрешение: '+(pm[e.perm]||e.perm))+R(d.ctrl===undefined?null:!!d.ctrl,'Служба управляет страницей')+R(d.sub===undefined?null:!!d.sub,'Подписка на этом телефоне')+R(LS.get('vip3-nsub',null)?true:null,'Телефон записан на сервере')+(NF.net?R(NF.net.ok,NF.net.ok===false?'Нет связи с '+NF.net.h+': сеть или VPN блокирует службу уведомлений — попробуйте Wi-Fi':NF.net.ok?'Связь с '+NF.net.h+' есть':'Проверяю связь с '+NF.net.h+'…'):'')+nfDgW()+`</details>`}
 function nfDgW(){const g=NF.wk,T=Date.now(),sec=t=>Math.max(0,Math.round((T-(+t||0))/1e3)),ago=t=>{const x=sec(t);return x<90?x+' с назад':x<5400?Math.round(x/60)+' мин назад':Math.round(x/3600)+' ч назад'};let h='';
  if(!g||!g.hb)h+=`<div class="dgr"><i>·</i>Сервер уведомлений: пока нет данных (Worker не обновлён или ещё не запускался)</div>`;
  else{const alive=T-g.hb<15e4,stuck=g.fin&&g.hb>g.fin&&T-g.hb>8e4;h+=`<div class="dgr ${alive&&!stuck?'ok':'no'}"><i>${alive&&!stuck?'✓':'✗'}</i>${esc('Сервер уведомлений (Cloudflare): запуск '+ago(g.hb)+(stuck?' — не доходит до конца (лимит процессора?)':!alive?' — не запускается, проверьте Cron':''))}</div>`}
@@ -1565,7 +1570,7 @@ function confetti(){if(CEL.on)return;try{if(matchMedia('(prefers-reduced-motion:
 Object.assign(ACT,{
 notif(){try{snd.tap()}catch(e){}const d=$('#dn');try{rNf()}catch(e){try{$('#nbox').innerHTML='<div class="nfc er"><b>⚠ Не удалось показать состояние</b><small>Закройте приложение и откройте снова.</small></div>'}catch(x){}}
  try{if(!d.open)d.showModal()}catch(e){try{d.setAttribute('open','')}catch(x){}}
- try{NF.seen=Date.now();LS.set('vip3-nseen',NF.seen);nfBadge()}catch(e){}try{nfLoad(true)}catch(e){}try{nfCheck()}catch(e){}},
+ try{NF.seen=Date.now();LS.set('vip3-nseen',NF.seen);nfBadge()}catch(e){}try{nfLoad(true)}catch(e){}try{nfCheck()}catch(e){}try{nfNet()}catch(e){}},
 async nfon(){const st=nfState();
  if(st==='ios'){await ask('Добавьте на экран «Домой»','<p>На iPhone уведомления работают только у приложения с главного экрана:</p><p>1) В Safari нажмите «Поделиться» ⬆️<br>2) Выберите «На экран Домой»<br>3) Откройте иконку «ВИАЙПИ» и нажмите 🔔 ещё раз.</p>','Понятно','Закрыть');return}
  if(st==='none'){snd.warn();nfMsg(nfWhy()||'Этот браузер не поддерживает уведомления',1);return}
@@ -1580,7 +1585,11 @@ async nfon(){const st=nfState();
   step=3;nfMsg('3/4 · Подключаю этот телефон…');
   const reg=await withT(navigator.serviceWorker.ready,9000).catch(()=>{throw Object.assign(new Error('sw'),{sw:1})});let sub=await reg.pushManager.getSubscription();
   if(sub&&nfSubKey(sub)&&nfSubKey(sub)!==pub){try{await sub.unsubscribe()}catch(e){}sub=null}
-  if(!sub)sub=await withT(reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)}),20000);
+  if(!sub){const sp=nfSubscribe(reg,pub);   // Apple на LTE иногда отвечает 30–50 с: ждём тот же запрос, а не шлём новый
+   try{sub=await withT(sp,25000)}
+   catch(e){if(!(e&&e.message==='timeout'))throw e;
+    nfMsg('3/4 · Apple отвечает медленно — жду ещё до 35 секунд. Не закрывайте приложение.');
+    try{sub=await withT(sp,35000)}catch(e2){sub=await reg.pushManager.getSubscription().catch(()=>null);if(!sub)throw e2}}}
   step=4;nfMsg('4/4 · Записываю на сервере…');
   await withT(nfSave(sub,pub),12000);
   NF.on=true;nfMsg(null);snd.ok();vib(30);toast('🔔 Уведомления включены · отправляю проверку');rNf();nfBadge();try{nfCheck()}catch(e){}
