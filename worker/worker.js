@@ -1,15 +1,17 @@
-// ВИАЙПИ РЕСТОБАР КУХНЯ — Worker 9.9.6 на Cloudflare (бесплатный тариф): настоящие push-уведомления + синхронизация предзаказов.
+// ВИАЙПИ РЕСТОБАР КУХНЯ — Worker 9.9.8 на Cloudflare (бесплатный тариф): настоящие push-уведомления + синхронизация предзаказов.
 // Telegram больше не нужен. Cron раз в минуту + «толчок» /poke из приложения (мгновенная отправка).
 // Секреты (в коде их нет):
 //   BOT_PASSWORD  — пароль пользователя bot@vip.local в Firebase Auth      (Secret)  — как и раньше
 //   PRE_PASSWORD  — пароль сайта предзаказов (необязательно)                (Secret)  — как и раньше
 //   TZ_NAME, MORNING_HOUR, EVENING_HOUR — необязательно (Europe/Moscow, 8, 18)
 // Ключи Web Push (VAPID) Worker создаёт сам при первом запуске и кладёт в Firebase: push/cfg/pub (публичный) и push/prv (приватный, читает только бот).
-// Адреса: /setup — проверка (открыть один раз) · /poke — «толчок» из приложения · /presync — «толчок» от сайта предзаказов.
+// Адреса: /setup — проверка (открыть один раз) · /poke — «толчок» из приложения · /presync — «толчок» от сайта предзаказов · /test?s=<телефон> — реальная проверка одного телефона (9.9.8).
 
 const FB_KEY='AIzaSyCxQD7xmm63Dv13eSsZSN7tYFAMj9l6Rsk',FB_PROJECT='viprestobarfakaz';   // публичные данные из config.js приложения
 const SITE_URL='https://hxssam.github.io/vipresorders/';
 const WDS=['вс','пн','вт','ср','чт','пт','сб'];
+// 9.9.8: какой сервис принял сообщение (для диагностики на экране телефона) и защита проверки от частых нажатий
+const svcOf=h=>/(^|\.)apple\.com$/.test(h)?'Apple':/(^|\.)(googleapis|google)\.com$/.test(h)?'Google':/(^|\.)mozilla\.(com|org)$/.test(h)?'Mozilla':/(^|\.)windows\.com$/.test(h)?'Microsoft':String(h||'?').slice(0,40),hostOf=e=>{try{return new URL(e).hostname}catch{return''}},TLAST={};
 const H=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const addDays=(ds,n)=>{const d=new Date(ds+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const dayL=ds=>{const[y,m,d]=ds.split('-').map(Number);return`${WDS[new Date(Date.UTC(y,m-1,d,12)).getUTCDay()]}, ${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}`};
@@ -66,7 +68,7 @@ function makeBot(env){
  const log=(...a)=>console.log(...a);
  // Бесплатный тариф Cloudflare: не больше 50 внешних запросов за один запуск. Считаем их и не берёмся за необязательное, когда запас на исходе.
  const REQ={n:0},LIMIT=44,bud=()=>{const e=new Error('исчерпан лимит запросов Cloudflare (50)');e.budget=1;return e},sub=(u,o)=>{if(REQ.n>=49)throw bud();REQ.n++;return fetch(u,o)},room=k=>REQ.n+k<=LIMIT;
- let IDT='',RL=0,TEAM=[],CHIEF_ID='chef-hossam',N={},CFG={},SUBS=null;const sentRef={};
+ let IDT='',RL=0,TEAM=[],CHIEF_ID='chef-hossam',N={},CFG={},SUBS=null;const sentRef={},OUT=[];   // OUT: что ответили Google/Apple/Mozilla на каждую отправку в этом запуске
  // ---------- Firebase REST ----------
  async function login(){const ck=BOT_EMAIL+'|'+hash(BOT_PW),T=Date.now();if(TOK.k===ck&&TOK.t>T){IDT=TOK.v;return}
   const r=await sub(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:BOT_EMAIL,password:BOT_PW,returnSecureToken:true})});
@@ -114,15 +116,15 @@ function makeBot(env){
   for(const[id,s]of Object.entries(subs||{})){if(!s||typeof s!=='object'||typeof s.ep!=='string'||!s.k||!s.k.p256dh||!s.k.auth)continue;
    for(const t of toks){if(t==='team'||(t==='all'&&!(uid&&s.u===uid))||(t==='adm'&&s.r==='adm')||(t==='cooks'&&s.r!=='adm')||(t==='me'&&uid&&s.u===uid)||(s.c&&t==='c:'+s.c)||t==='s:'+id){out.set(id,s);break}}}
   return[...out.entries()]}
- async function pushOne(s,m){let u;try{u=new URL(s.ep)}catch{return 0}if(u.protocol!=='https:')return 0;
+ async function pushOne(s,m){let u;try{u=new URL(s.ep)}catch{OUT.push({v:'?',c:0,w:'bad-endpoint'});return 0}if(u.protocol!=='https:'){OUT.push({v:svcOf(u.hostname),c:0,w:'not-https'});return 0}
   const h={Authorization:`vapid t=${await vapidJwt(u.origin,VSUB)}, k=${VK.pub}`,TTL:String(Math.max(30,Math.min(86400,+m.ttl||7200))),Urgency:m.k==='tm'?'high':'normal'};let body;
   try{body=await wpEncrypt(unb64u(s.k.p256dh),unb64u(s.k.auth),ENC.encode(JSON.stringify({ti:String(m.ti||'').slice(0,90),b:String(m.b||'').slice(0,220),k:m.k||'',tag:m.tag||'',url:m.url||'',ts:NOW(),...(m.k==='tm'?{ri:1}:{})})));h['Content-Encoding']='aes128gcm';h['Content-Type']='application/octet-stream'}catch(e){body=undefined}   // не вышло зашифровать — шлём «стук» без текста: приложение само покажет общее уведомление
-  const r=await sub(s.ep,{method:'POST',headers:h,body});return r.status}
+  const r=await sub(s.ep,{method:'POST',headers:h,body});let w='';if(r.status<200||r.status>=300){try{w=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch{}}OUT.push({v:svcOf(u.hostname),c:r.status,w});return r.status}
  // m: {ti,b,to,k,u,tag,url,ttl}. Возвращает число доставленных. Мёртвые подписки (404/410) удаляются сами.
  async function deliver(m,id){await vapid();const subs=await getSubs(),tg=targets(m.to,subs,m.u).filter(([,s])=>!s.pk||s.pk===VK.pub);
   const stale=Object.entries(subs).filter(([,s])=>s&&s.pk&&s.pk!==VK.pub).length;let ok=0,gone=[],left=[];
   for(let i=0;i<tg.length;i+=6){const ch=tg.slice(i,i+6);if(!room(ch.length+3)){left.push(...ch.map(x=>x[0]));continue}
-   const rs=await Promise.all(ch.map(async([sid,s])=>{try{return[sid,await pushOne(s,m)]}catch(e){if(e&&e.budget)return[sid,-1];log('push fail',e.message);return[sid,0]}}));
+   const rs=await Promise.all(ch.map(async([sid,s])=>{try{return[sid,await pushOne(s,m)]}catch(e){if(e&&e.budget)return[sid,-1];log('push fail',e.message);OUT.push({v:svcOf(hostOf(s.ep)),c:0,w:'net: '+String(e&&e.message||e).slice(0,100)});return[sid,0]}}));
    for(const[sid,st]of rs){if(st>=200&&st<300)ok++;else if(st===404||st===410)gone.push(sid);else if(st===-1)left.push(sid);else log('push status',st,sid)}}
   for(const sid of gone){if(!room(3))break;await del('push/subs/'+sid).catch(()=>{});delete subs[sid]}
   if(left.length&&room(3)){const lid='w'+NOW().toString(36)+Math.random().toString(36).slice(2,5);await put('push/out/'+lid,{at:NOW()+30000,ti:m.ti,b:m.b||'',to:left.map(x=>'s:'+x).join(',').slice(0,1900),k:m.k||'',u:m.u||'',by:m.by||'',lg:1})}
@@ -240,16 +242,33 @@ function makeBot(env){
   catch(e){if(e&&e.budget){info.tw=PTW.n;try{await put('notify/pre/info',info)}catch(e2){}throw e}info.err=String(e&&e.message||e).slice(0,160);log('pre:',info.err)}
   info.tw=PTW.n;if(room(2))await put('notify/pre/info',info)}
 
+ // ---------- 9.9.8: прозрачность — что на самом деле ответили Google/Apple ----------
+ const okC=c=>c>=200&&c<300;
+ const dgSum=()=>{if(!OUT.length)return null;const bad=OUT.find(x=>!okC(x.c)),g=bad||OUT[OUT.length-1];return{t:NOW(),n:OUT.filter(x=>okC(x.c)).length,f:OUT.filter(x=>!okC(x.c)).length,v:g.v,c:g.c,w:String(g.w||'').slice(0,140)}};
+ // push/dg: hb — запуск начался, fin — отправка очереди закончилась, last — итог последних отправок. Читают шеф и повара, пишет только бот.
+ const dgPut=async o=>{if(!IDT||!room(2))return;try{await db('PATCH','push/dg',o)}catch(e){if(e&&e.budget)return;log('dg fail',e&&e.message)}};
+ // «Проверка» из приложения: реальное сообщение на ОДИН телефон, ответ Google/Apple возвращаем на экран
+ async function test(sid){sid=String(sid||'');if(!/^[A-Za-z0-9_-]{2,64}$/.test(sid))return{ok:false,w:'bad-id'};
+  const T=Date.now();if(TLAST[sid]&&T-TLAST[sid]<4000)return{ok:false,w:'wait'};TLAST[sid]=T;
+  await login();await vapid();const subs=await getSubs(true),s=subs[sid];
+  if(!s||typeof s!=='object'||typeof s.ep!=='string'||!s.k||!s.k.p256dh||!s.k.auth)return{ok:false,w:'nosub'};
+  if(s.pk&&s.pk!==VK.pub)return{ok:false,w:'oldkey'};
+  try{await pushOne(s,{ti:'✅ Уведомления работают',b:'Проверка с сервера: это сообщение пришло на телефон',k:'x',ttl:300})}catch(e){if(e&&e.budget)throw e;OUT.push({v:svcOf(hostOf(s.ep)),c:0,w:'net: '+String(e&&e.message||e).slice(0,100)})}
+  const o=OUT[OUT.length-1]||{v:'?',c:0,w:''},ok=okC(o.c);
+  if(o.c===404||o.c===410){try{await del('push/subs/'+sid)}catch{}}
+  const sm=dgSum();if(sm)await dgPut({last:sm});
+  return{ok,c:o.c,v:o.v,w:ok?'':String(o.w||'').slice(0,140)}}
+
  // ---------- проходы ----------
  // Каждую минуту: очередь push (в т.ч. таймеры, которые наступят в ближайшие ~55 с), напоминания, новые заказы, предзаказы. Раз в 5 минут ещё: банкеты, правки, оповещения шефу, чистка.
- async function cron(slow,fast){if(!BOT_PW)throw new Error('Нет секрета BOT_PASSWORD');await login();
+ async function cron(slow,fast){if(!BOT_PW)throw new Error('Нет секрета BOT_PASSWORD');await login();await dgPut({hb:NOW()});
   const[n,cf]=await Promise.all([get('notify'),safe('push/cfg',{})]);   // notify читаем строго: при сбое лучше пропустить проход, чем потерять отметки и продублировать сообщения
   N=n&&typeof n==='object'?n:{};CFG=cf&&typeof cf==='object'?cf:{};Object.assign(sentRef,N.sent||{});
   const now=parts(),info=N.info&&typeof N.info==='object'?N.info:{};
   let bigTeam=0;const stage=async f=>{try{await f()}catch(e){if(e&&e.budget){if(e.team)bigTeam=1;log('мало запросов в этом проходе — остальное сделаю в следующем');return}throw e}};
   const rem=CFG.rem&&typeof CFG.rem==='object'&&Object.values(CFG.rem).some(x=>x&&x.on===1);
   if(rem||slow)await loadTeam();
-  let sent=0;await stage(async()=>{sent=await runOut(fast?0:59e3)});
+  let sent=0;await stage(async()=>{sent=await runOut(fast?0:59e3)});{const sm=dgSum();await dgPut({fin:NOW(),...(sm?{last:sm}:{})})}
   if(rem)await stage(()=>evRem(now));
   await stage(()=>evOrders(now));
   await stage(()=>evPre(now,N.cfg&&typeof N.cfg==='object'?N.cfg:{}));
@@ -268,14 +287,19 @@ function makeBot(env){
   add(!!BOT_PW,BOT_PW?'BOT_PASSWORD موجود':'BOT_PASSWORD غير موجود: أضفه في Settings ← Variables and Secrets (نوع Secret)');
   if(!BOT_PW)return R;
   try{await login();add(true,'دخول Firebase نجح (bot@vip.local)')}catch(e){const m=String(e.message);add(false,'دخول Firebase فشل: '+m+(/INVALID_LOGIN|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)?' ← كلمة السر BOT_PASSWORD لا تطابق مستخدم bot@vip.local في Firebase':''));return R}
-  try{await get('push/cfg');add(true,'قراءة Firebase تعمل (القواعد منشورة)')}catch(e){add(false,'قراءة/كتابة Firebase مرفوضة ('+e.status+'): انشر ملف firebase-rules.json (النسخة 9.9.6) في Realtime Database ← Rules');return R}
+  try{await get('push/cfg');add(true,'قراءة Firebase تعمل (القواعد منشورة)')}catch(e){add(false,'قراءة/كتابة Firebase مرفوضة ('+e.status+'): انشر ملف firebase-rules.json (النسخة 9.9.8) في Realtime Database ← Rules');return R}
   try{const v=await vapid();add(true,'مفاتيح الإشعارات جاهزة: '+v.pub.slice(0,14)+'…')}catch(e){add(false,'تعذّر إنشاء مفاتيح الإشعارات: '+e.message);return R}
   try{const s=await getSubs(true),a=Object.values(s).filter(x=>x&&x.ep);add(a.length?true:null,a.length?'أجهزة مشتركة بالإشعارات: '+a.length+' (من '+new Set(a.map(x=>x.c||x.u)).size+' مستخدم)':'لا توجد أجهزة مشتركة بعد: افتح التطبيق على الهاتف واضغط «🔔 تفعيل الإشعارات»')}catch(e){add(null,'تعذّرت قراءة الأجهزة')}
+  try{const g=await safe('push/dg',{});
+   if(g&&g.hb){const ago=Math.round((NOW()-g.hb)/1000);add(ago<150?true:false,'آخر تشغيل للـ Worker: قبل '+ago+' ثانية'+(ago>=150?' ← الـ Cron لا يعمل: Cloudflare ← vip-bot ← Settings ← Triggers ← Cron: * * * * *':''));
+    if(g.fin&&g.hb>g.fin&&NOW()-g.hb>80e3)add(false,'التشغيل يبدأ ولا ينتهي: غالباً حد المعالج (CPU) في الخطة المجانية. Cloudflare ← vip-bot ← Metrics ← Errors')}
+   else add(null,'لم يسجّل الـ Worker أي تشغيل بعد: انتظر دقيقة وأعد فتح الصفحة. إن بقي هكذا فالـ Cron غير مضاف');
+   if(g&&g.last&&typeof g.last==='object'){const l=g.last;add(!l.f,'آخر إرسال حقيقي: '+l.v+' ← '+l.c+(l.w?' ('+l.w+')':'')+' · نجح '+l.n+' · فشل '+l.f)}}catch{}
   try{await put('notify/info',{t:NOW(),v:3,w:origin});await put('access/w',origin);add(true,'تم حفظ عنوان الـ Worker في Firebase (التطبيق سيرسل إشعاراً فورياً)')}catch(e){add(false,'تعذّرت الكتابة في notify/info أو access/w ('+e.status+')')}
   add(PRE_PW?true:null,PRE_PW?'ربط الطلبات المسبقة مفعّل':'ربط الطلبات المسبقة غير مفعّل (PRE_PASSWORD غير موجود — اختياري)');
   return R}
 
- return{cron,setup,fail,login,preFast,req:REQ,wpEncrypt,targets,deliver,vapid}}
+ return{cron,setup,fail,login,preFast,test,req:REQ,out:OUT,wpEncrypt,targets,deliver,vapid}}
 
 // ---------- «толчок»: приложение сообщает, что только что отправлено уведомление или заказ ----------
 let BUSY=null,AGAIN=false;
@@ -296,6 +320,10 @@ export default{
    if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});if(o&&o!==allow)return new Response(null,{status:403});return cors};
   if(p==='/poke'){const g=gate();if(g instanceof Response)return g;ctx.waitUntil(kick(env));return new Response(null,{status:204,headers:g})}
   if(p==='/presync'){const g=gate();if(g instanceof Response)return g;ctx.waitUntil(preKick(env));return new Response(null,{status:204,headers:g})}
+  if(p==='/test'){const g=gate();if(g instanceof Response)return g;
+   if(req.method!=='POST')return new Response(null,{status:405,headers:g});
+   const b=makeBot(env);let R;try{R=await b.test(u.searchParams.get('s'))}catch(e){R={ok:false,c:0,w:String(e&&e.message||e).slice(0,140)}}
+   return new Response(JSON.stringify(R),{headers:{...g,'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
   if(p==='/setup'){const b=makeBot(env);let R;try{R=await b.setup(u.origin)}catch(e){R=[[false,'خطأ غير متوقع: '+e.message]]}
    return new Response(page(R),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}})}
   return new Response('VIP push ok',{headers:{'content-type':'text/plain; charset=utf-8'}})}};

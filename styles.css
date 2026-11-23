@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.7"}
+:root{--vip-ver:"9.9.8"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1139,3 +1139,5 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 /* 9.9.7: шапка на узких телефонах — кнопка ↻ добавила ещё один значок, поэтому подпись поджимается и не обрезается */
 @media(max-width:410px){.top{gap:3px}.top h1{font-size:13px;letter-spacing:0}.top h1 b{font-size:12px}}
 @media(max-width:350px){.top h1 b{display:none}.top button.ib{width:31px}}
+/* ===== 9.9.8: результат проверки — ответ Google/Apple на экране ===== */
+.nfc.ok small,.nfc.ok b{overflow-wrap:anywhere}.nfc b{line-height:1.35}

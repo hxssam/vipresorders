@@ -639,6 +639,10 @@
         "$id": {
           ".write": "auth != null && auth.token.email == 'bot@vip.local'"
         }
+      },
+      "dg": {
+        ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())",
+        ".write": "auth != null && auth.token.email == 'bot@vip.local'"
       }
     }
   }

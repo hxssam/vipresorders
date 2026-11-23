@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.7';
+const VER='9.9.8';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -1395,7 +1395,7 @@ setInterval(()=>{if(document.hidden)return;tickN++;const sse=ST.open.meta&&!meta
 let SNDK=0,PWSC=0,EPT=0,PREW=LS.get('vip3-pw',''),PRK=0;const PRA={};
 // ---------- 9.9.6: уведомления (Web Push) · таймеры заготовок · режим невидимки · праздник ----------
 // Все const ниже стоят до первой отрисовки (см. правило TDZ выше); функции — function-объявления.
-const NF={on:false,pub:'',busy:0,busy2:0,log:[],lt:0,seen:(()=>{let s=Number(LS.get('vip3-nseen',0))||0;if(!s){s=Date.now();LS.set('vip3-nseen',s)}return s})()};
+const NF={on:false,pub:'',busy:0,busy2:0,tst:0,tr:null,wk:null,log:[],lt:0,seen:(()=>{let s=Number(LS.get('vip3-nseen',0))||0;if(!s){s=Date.now();LS.set('vip3-nseen',s)}return s})()};
 const NT={subs:null,cfg:null,t:0,busy:0,to:'cooks'};
 const PHD={t:0,c:null,d:null,bad:'',busy:0};
 const TM={al:{},cur:null,rep:0,last:0,pt:0},RFH={busy:0,last:0};
@@ -1428,7 +1428,24 @@ function nfErr(e,step){const n=String(e&&e.name||''),m=String(e&&e.message||'');
  if(n==='NotAllowedError')return'Разрешение не выдано. Откройте настройки телефона → ВИАЙПИ → Уведомления → разрешить.';
  if(n==='AbortError'||n==='InvalidStateError'||n==='NotSupportedError')return'Не удалось подключиться к сервису уведомлений ('+n+'). Проверьте интернет/VPN и повторите.';
  return'Шаг '+step+': '+(n||'ошибка')+(m?' — '+m.slice(0,90):'')}
-function nfMsg(t,err){NF.msg=t?{t:String(t),err:!!err}:null;if(dialogOpen('#dn'))rNf()}
+// что ответил сервис уведомлений (Google/Apple) на проверку — понятным языком
+function nfTrWhy(r){const v=r.v||'сервис уведомлений',c=+r.c||0,w=String(r.w||'').slice(0,90),W=w?' — '+w:'';
+ if(r.w==='nosub')return'сервер не нашёл этот телефон в списке: нажмите «↻ Переподключить»';
+ if(r.w==='oldkey')return'ключи устарели: нажмите «↻ Переподключить»';
+ if(r.w==='wait')return'подождите несколько секунд и нажмите снова';
+ if(r.w==='bad-id')return'неверный номер телефона в записи: нажмите «↻ Переподключить»';
+ if(r.w==='http')return'Cloudflare Worker вернул ошибку (HTTP '+c+'): возможно, лимит бесплатного тарифа. Откройте Cloudflare → vip-bot → Logs';
+ if(r.w==='old')return'на сервере старая версия Worker: вставьте новый worker.js и нажмите Deploy';
+ if(r.w==='off')return'нет интернета';
+ if(r.w==='net')return'Worker (Cloudflare) не ответил. Откройте его адрес с /setup в браузере: если страница не грузится — Worker остановлен (лимит бесплатного тарифа) или не опубликован (Deploy)';
+ if(c===404||c===410)return v+' удалил подписку этого телефона (она устарела): нажмите «↻ Переподключить»';
+ if(c===401||c===403)return v+' отклонил подпись сервера (код '+c+W+'): нажмите «↻ Переподключить»; если не поможет — покажите это сообщение разработчику';
+ if(c===400)return v+' отклонил запрос (код 400'+W+')';
+ if(c===413)return v+': сообщение слишком большое (413)';
+ if(c===429)return v+': слишком много запросов (429), повторите через минуту';
+ if(c>=500)return v+' временно недоступен (код '+c+'), повторите через минуту';
+ return c?v+' ответил кодом '+c+W:'сервер не смог связаться с '+v+W}
+function nfMsg(t,err,ok){NF.msg=t?{t:String(t),err:!!err,ok:!!ok}:null;if(dialogOpen('#dn'))rNf()}
 const withT=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
 const nfReg=()=>withT(navigator.serviceWorker.ready,5000);
 // выход из аккаунта: убираем запись об этом телефоне (keepalive — запрос переживает перезагрузку страницы)
@@ -1454,19 +1471,26 @@ async function nfCheck(){NF.on=false;NF.dg={};try{NF.dg.ctrl=!!(navigator.servic
 function nfForMe(x){const to=String(x.to||'').split(','),me=presMe(),uid=nfUid();return to.some(t=>t==='team'?true:t==='all'?x.u!==uid:t==='adm'?isAdmin():t==='cooks'?!isAdmin():t==='me'?x.u===uid:!!(me&&t==='c:'+me.id))}
 async function nfLoad(force){if(DEMO||!DB||!AU.rt||isObs()||NF.busy2||(!force&&Date.now()-NF.lt<15e3))return;NF.busy2=1;
  try{const o=await jget('push/log','orderBy=%22t%22&limitToLast=40');NF.log=o&&typeof o==='object'?Object.entries(o).map(([id,v])=>({id,...v})).filter(x=>x&&x.ti&&nfForMe(x)).sort((p,q)=>q.t-p.t):[];NF.lt=Date.now()}catch(e){}
+ try{const g=await jget('push/dg');NF.wk=g&&typeof g==='object'?g:null}catch(e){}
  NF.busy2=0;nfBadge();if(dialogOpen('#dn'))rNf()}
 function nfBadge(){const b=$('#nbadge'),bt=$('#nbtn');if(!bt)return;const gone=DEMO||isObs(),off=gone||!AU.rt;bt.classList.toggle('gone',gone);bt.hidden=off;if(off)return;const n=NF.log.filter(x=>x.t>NF.seen).length;if(b){b.hidden=!n;b.textContent=n>9?'9+':String(n)}bt.classList.toggle('ring',n>0);bt.classList.toggle('nfoff',nfState()!=='on'&&!n)}
 const nfAgo=t=>{const m=Math.round((Date.now()-(Number(t)||0))/6e4);return m<1?'только что':m<60?m+' мин назад':m<1440?Math.floor(m/60)+' ч назад':Math.floor(m/1440)+' дн. назад'};
 const nfIc=k=>({tm:'⏱',sh:'⏰',h:'✍️',w:'🗑',c:'🔒',bq:'🎉',od:'🧾',ap:'🔔',er:'⚠'})[k]||'📣';
 function nfDg(){const e=nfEnv(),d=NF.dg||{},R=(ok,t)=>`<div class="dgr ${ok===true?'ok':ok===false?'no':''}"><i>${ok===true?'✓':ok===false?'✗':'·'}</i>${esc(t)}</div>`,pm={granted:'выдано',denied:'запрещено',default:'ещё не спрашивали'};
- return`<details class="nfd"><summary>Диагностика</summary>`+R(null,'Версия: приложение '+VER+(NF.swv?' · служба '+NF.swv:''))+(e.ios?R(e.sa,'iPhone: открыто с экрана «Домой»'):'')+R(e.https,'Защищённое соединение (https)')+R(e.sw,'Фоновая служба доступна')+R(e.pm&&e.no,'Браузер умеет уведомления')+R(e.perm==='granted'?true:e.perm==='denied'?false:null,'Разрешение: '+(pm[e.perm]||e.perm))+R(d.ctrl===undefined?null:!!d.ctrl,'Служба управляет страницей')+R(d.sub===undefined?null:!!d.sub,'Подписка на этом телефоне')+R(LS.get('vip3-nsub',null)?true:null,'Телефон записан на сервере')+`</details>`}
+ return`<details class="nfd"><summary>Диагностика</summary>`+R(null,'Версия: приложение '+VER+(NF.swv?' · служба '+NF.swv:''))+(e.ios?R(e.sa,'iPhone: открыто с экрана «Домой»'):'')+R(e.https,'Защищённое соединение (https)')+R(e.sw,'Фоновая служба доступна')+R(e.pm&&e.no,'Браузер умеет уведомления')+R(e.perm==='granted'?true:e.perm==='denied'?false:null,'Разрешение: '+(pm[e.perm]||e.perm))+R(d.ctrl===undefined?null:!!d.ctrl,'Служба управляет страницей')+R(d.sub===undefined?null:!!d.sub,'Подписка на этом телефоне')+R(LS.get('vip3-nsub',null)?true:null,'Телефон записан на сервере')+nfDgW()+`</details>`}
+function nfDgW(){const g=NF.wk,T=Date.now(),sec=t=>Math.max(0,Math.round((T-(+t||0))/1e3)),ago=t=>{const x=sec(t);return x<90?x+' с назад':x<5400?Math.round(x/60)+' мин назад':Math.round(x/3600)+' ч назад'};let h='';
+ if(!g||!g.hb)h+=`<div class="dgr"><i>·</i>Сервер уведомлений: пока нет данных (Worker не обновлён или ещё не запускался)</div>`;
+ else{const alive=T-g.hb<15e4,stuck=g.fin&&g.hb>g.fin&&T-g.hb>8e4;h+=`<div class="dgr ${alive&&!stuck?'ok':'no'}"><i>${alive&&!stuck?'✓':'✗'}</i>${esc('Сервер уведомлений (Cloudflare): запуск '+ago(g.hb)+(stuck?' — не доходит до конца (лимит процессора?)':!alive?' — не запускается, проверьте Cron':''))}</div>`}
+ if(g&&g.last&&typeof g.last==='object'){const l=g.last;h+=`<div class="dgr ${l.f?'no':'ok'}"><i>${l.f?'✗':'✓'}</i>${esc('Последняя отправка: '+l.v+' → '+l.c+(l.w?' ('+String(l.w).slice(0,70)+')':'')+' · '+ago(l.t))}</div>`}
+ if(NF.tr)h+=`<div class="dgr ${NF.tr.ok?'ok':'no'}"><i>${NF.tr.ok?'✓':'✗'}</i>${esc('Проверка этого телефона: '+(NF.tr.ok?NF.tr.v+' принял ('+NF.tr.c+')':nfTrWhy(NF.tr))+' · '+ago(NF.tr.at))}</div>`;
+ return h}
 function rNf(){const el=$('#nbox'),li=$('#nlist');if(!el||!li)return;const st=nfState();let h='';
  if(st==='on')h=`<div class="nfc ok"><b>✓ Уведомления включены</b><small>Они придут на этот телефон, даже когда приложение закрыто.</small></div><div class="acts"><button class="p" data-a="nftest">🔔 Проверить</button><button data-a="nfon">↻ Переподключить</button><button class="g" data-a="nfoff">Выключить</button></div>`;
  else if(st==='ios')h=`<div class="nfc"><b>iPhone: сначала добавьте на экран «Домой»</b><small>Так устроен iOS: уведомления работают только у приложения с главного экрана.</small></div><div class="acts"><button class="p" data-a="nfon">Как это сделать</button></div>`;
  else if(st==='none')h=`<div class="nfc er"><b>Здесь уведомления не работают</b><small>${esc(nfWhy()||'Этот браузер не умеет уведомления.')}</small></div>`;
  else if(st==='denied')h=`<div class="nfc"><b>Уведомления запрещены в настройках</b><small>Откройте настройки телефона → уведомления → ВИАЙПИ (или сайта) → разрешить. Потом вернитесь сюда.</small></div>`;
  else h=`<div class="nfc"><b>Уведомления выключены</b><small>Смена на завтра, напоминания шефа и таймеры заготовок — даже при закрытом приложении.</small></div><div class="acts"><button class="p" data-a="nfon">🔔 Включить уведомления</button></div>`;
- el.innerHTML=(NF.msg?`<div class="nfc ${NF.msg.err?'er':'wt'}" role="status"><b>${NF.msg.err?'⚠ ':'⏳ '}${esc(NF.msg.t)}</b></div>`:'')+h+nfDg();
+ el.innerHTML=(NF.msg?`<div class="nfc ${NF.msg.ok?'ok':NF.msg.err?'er':'wt'}" role="status"><b>${NF.msg.ok?'✓ ':NF.msg.err?'⚠ ':'⏳ '}${esc(NF.msg.t)}</b></div>`:'')+h+nfDg();
  li.innerHTML=NF.log.length?NF.log.map(x=>`<div class="nfi${x.t>NF.seen?' nw':''}"><i>${nfIc(x.k)}</i><div><b>${esc(x.ti)}</b>${x.b?`<span>${esc(x.b)}</span>`:''}<small>${esc(nfAgo(x.t))}${x.by&&x.by!=='авто'?' · '+esc(x.by):''}</small></div></div>`).join(''):'<div class="small" style="margin:10px 2px">Пока уведомлений нет.</div>'}
 function nfOnPush(d){if(!d||typeof d!=='object')return;const t=String(d.ti||'');
  if(d.k==='tm'){if(Date.now()-TM.last>25e3){TM.last=Date.now();tmBar(t.replace(/^⏱\s*/,'').replace(/\s—\s*готово$/,''),'Время вышло');snd.alarm();vib([400,200,400,200,600])}}
@@ -1564,8 +1588,26 @@ async nfon(){const st=nfState();
  catch(e){snd.warn();nfMsg(nfErr(e,step),1)}
  finally{NF.run=0}},
 async nfoff(){try{const reg=await nfReg(),sub=await reg.pushManager.getSubscription();if(sub){const id=nfHid(sub.endpoint);await sub.unsubscribe();await api('DELETE','push/subs/'+id).catch(()=>{})}NF.on=false;LS.set('vip3-nsub',null);snd.tap();toast('Уведомления выключены');rNf();nfBadge()}catch(e){snd.warn();toast('Не удалось выключить')}},
-async nftest(){await tok();const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
- if(await ntDo(api('PUT','push/out/'+id,{at:Date.now(),ti:'🔔 Проверка уведомлений',b:'Если вы это видите — всё работает',to:'me',k:'tm',u:nfUid(),by:String((presMe()||{}).n||'').slice(0,40)}))){wkPoke();snd.ok();toast('Отправлено. Уведомление придёт в течение минуты')}},
+async nftest(){if(NF.tst)return;NF.tst=1;snd.tap();
+ try{await tok();const st=LS.get('vip3-nsub',null);let w='';try{w=LS.get('vip3-pw','')}catch(e){}
+  if(!w){try{await preLoadW();w=LS.get('vip3-pw','')}catch(e){}}
+  if(!st||!st.id){nfMsg('Этот телефон ещё не записан на сервере. Нажмите «↻ Переподключить».',1);return}
+  if(!w||!navigator.onLine){   // адреса Worker нет или нет сети: старый путь через очередь (ответа сервиса не покажет)
+   const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+   if(await ntDo(api('PUT','push/out/'+id,{at:Date.now(),ti:'🔔 Проверка уведомлений',b:'Если вы это видите — всё работает',to:'me',k:'tm',u:nfUid(),by:String((presMe()||{}).n||'').slice(0,40)}))){wkPoke();snd.ok();nfMsg(navigator.onLine?'Отправлено через очередь. Адрес Worker ещё не сохранён: откройте /setup на Cloudflare один раз.':'Нет интернета — проверка отправится, когда он появится.',0)}
+   return}
+  nfMsg('Отправляю проверку через сервер…');const t0=Date.now();let r=null;
+  try{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),15e3);let x;try{x=await fetch(w+'/test?s='+encodeURIComponent(st.id),{method:'POST',signal:ac.signal})}finally{clearTimeout(to)}
+   const tx=await x.text();try{r=JSON.parse(tx)}catch(e){r=null}
+   if(!r||typeof r!=='object')r=/VIP push ok/.test(tx)?{ok:false,w:'old'}:{ok:false,w:'http',c:x.status}}
+  catch(e){r={ok:false,w:navigator.onLine?'net':'off'}}
+  r.at=Date.now();NF.tr=r;const ms=Date.now()-t0;
+  if(r.ok){snd.ok();vib(30);const hint=nfEnv().ios?'Если на экране ничего нет: Настройки → Уведомления → ВИАЙПИ, и выключите «Фокусирование».':'Если на экране ничего нет: Настройки → Приложения → ВИАЙПИ (или Chrome) → Уведомления, и отключите «Не беспокоить» и экономию батареи.';
+   nfMsg((r.v||'Сервис')+' принял сообщение за '+(ms/1e3).toFixed(1)+' с. Оно должно появиться на экране. '+hint,0,1);toast('✓ '+(r.v||'Сервис')+' принял · смотрите на экран')}
+  else{snd.warn();nfMsg('Проверка не прошла: '+nfTrWhy(r),1)}
+  setTimeout(()=>nfLoad(true),1200)}
+ catch(e){snd.warn();nfMsg('Проверка не выполнена: '+String(e&&e.message||e).slice(0,100),1)}
+ finally{NF.tst=0;if(dialogOpen('#dn'))rNf()}},
 async ntshift(){if(!isAdmin())return need();const tom=dAdd(1),s=shiftsFor(tom),ids=Object.keys(s.map).filter(id=>team().some(c=>c.id===id));if(!ids.length){snd.warn();toast('На завтра никто не отмечен в смене');return}
  const by=new Map(),hide=hrsHid(tom);ids.forEach(id=>{const t=hide?'':String(s.map[id]||'');(by.get(t)||by.set(t,[]).get(t)).push('c:'+id)});
  if(await ntDo((async()=>{for(const[t,to]of by)await ntSend(to.join(','),'⏰ Завтра ваша смена',day(tom)+(t?' · '+t:' · время уточнит шеф'),'sh')})())){snd.ok();toast('✓ Отправлено: '+ids.length+' '+rupl(ids.length,['повару','поварам','поварам']))}},
