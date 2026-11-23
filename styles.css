@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.6"}
+:root{--vip-ver:"9.9.7"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1119,3 +1119,23 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 /* 9.9.6: место под колокольчик резервируется — шапка не прыгает, когда он появляется */
 #nbtn[hidden]{display:inline-flex!important;visibility:hidden}
 #nbtn.gone{display:none!important}
+
+/* ===== 9.9.7: кнопка ↻, подсказки уведомлений, диагностика ===== */
+.rfb .rfi{display:inline-block;font-size:19px;line-height:1;transform-origin:50% 52%}
+.rfb.spin .rfi{animation:rfspin .65s cubic-bezier(.4,.1,.3,1)}
+@keyframes rfspin{to{transform:rotate(360deg)}}
+.nfc.er{border-color:#dc2626;background:color-mix(in srgb,#dc2626 9%,var(--sf))}
+.nfc.wt{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--sf))}
+.nfd{margin:10px 0 2px;font-size:13px;color:var(--mu)}
+.nfd summary{cursor:pointer;padding:6px 0;font-weight:700}
+.dgr{display:flex;gap:8px;align-items:flex-start;padding:3px 0;line-height:1.3}
+.dgr i{font-style:normal;font-weight:800;width:14px;flex:none;text-align:center}
+.dgr.ok i{color:var(--ok)}.dgr.no i{color:#dc2626}
+@media(prefers-reduced-motion:reduce){.rfb.spin .rfi{animation:none}}
+/* 9.9.7: у шефа в шапке 7 кнопок — делаем их чуть компактнее и поджимаем название, чтобы оно не обрезалось */
+.top:has(#ghbtn:not([hidden])){gap:3px}
+.top:has(#ghbtn:not([hidden])) .ib{width:31px}
+@media(max-width:410px){.top:has(#ghbtn:not([hidden])) h1{font-size:13px;letter-spacing:0}.top:has(#ghbtn:not([hidden])) h1 b{font-size:12px}}
+/* 9.9.7: шапка на узких телефонах — кнопка ↻ добавила ещё один значок, поэтому подпись поджимается и не обрезается */
+@media(max-width:410px){.top{gap:3px}.top h1{font-size:13px;letter-spacing:0}.top h1 b{font-size:12px}}
+@media(max-width:350px){.top h1 b{display:none}.top button.ib{width:31px}}

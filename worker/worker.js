@@ -109,10 +109,10 @@ function makeBot(env){
    await put('push/cfg/pub',pb);VK.pub=pb;VK.key=kp.privateKey;VK.t=Date.now()+36e5;return VK}
   throw new Error('Не удалось получить ключи push')}
  async function getSubs(force){if(SUBS&&!force)return SUBS;if(!room(2))throw bud();const s=await safe('push/subs',{});SUBS=s&&typeof s==='object'?s:{};return SUBS}
- // кому: all (все, кроме отправителя) · adm (устройства шефа) · cooks (все повара) · me (устройства отправителя) · c:<повар> · s:<подписка>
+ // кому: team (все устройства, включая отправителя — таймеры) · all (все, кроме отправителя) · adm (устройства шефа) · cooks (все повара) · me (устройства отправителя) · c:<повар> · s:<подписка>
  function targets(to,subs,uid){const out=new Map(),toks=String(to||'').split(',').map(x=>x.trim()).filter(Boolean);
   for(const[id,s]of Object.entries(subs||{})){if(!s||typeof s!=='object'||typeof s.ep!=='string'||!s.k||!s.k.p256dh||!s.k.auth)continue;
-   for(const t of toks){if((t==='all'&&!(uid&&s.u===uid))||(t==='adm'&&s.r==='adm')||(t==='cooks'&&s.r!=='adm')||(t==='me'&&uid&&s.u===uid)||(s.c&&t==='c:'+s.c)||t==='s:'+id){out.set(id,s);break}}}
+   for(const t of toks){if(t==='team'||(t==='all'&&!(uid&&s.u===uid))||(t==='adm'&&s.r==='adm')||(t==='cooks'&&s.r!=='adm')||(t==='me'&&uid&&s.u===uid)||(s.c&&t==='c:'+s.c)||t==='s:'+id){out.set(id,s);break}}}
   return[...out.entries()]}
  async function pushOne(s,m){let u;try{u=new URL(s.ep)}catch{return 0}if(u.protocol!=='https:')return 0;
   const h={Authorization:`vapid t=${await vapidJwt(u.origin,VSUB)}, k=${VK.pub}`,TTL:String(Math.max(30,Math.min(86400,+m.ttl||7200))),Urgency:m.k==='tm'?'high':'normal'};let body;
@@ -128,11 +128,11 @@ function makeBot(env){
   if(left.length&&room(3)){const lid='w'+NOW().toString(36)+Math.random().toString(36).slice(2,5);await put('push/out/'+lid,{at:NOW()+30000,ti:m.ti,b:m.b||'',to:left.map(x=>'s:'+x).join(',').slice(0,1900),k:m.k||'',u:m.u||'',by:m.by||'',lg:1})}
   if(!m.lg&&room(2)){const lid=id||('w'+NOW().toString(36)+Math.random().toString(36).slice(2,5));await put('push/log/'+lid,{t:NOW(),ti:String(m.ti||'').slice(0,90),b:String(m.b||'').slice(0,220),to:String(m.to||'').slice(0,300),k:m.k||'',by:String(m.by||'').slice(0,40),u:m.u||'',n:ok,...(stale?{st:stale}:{})}).catch(()=>{})}
   return ok}
- // очередь push/out: записи, время которых наступило или наступит в ближайшие ~55 секунд; ждём точного времени внутри запуска (поэтому таймер срабатывает «секунда в секунду»)
+ // очередь push/out: записи, время которых наступило или наступит в ближайшие ~55 секунд; ждём точного времени внутри запуска (поэтому таймер срабатывает «секунда в секунду»); окно 59 с, чтобы между запусками не оставалось «слепых» секунд
  async function runOut(horizon){if(!room(8))return 0;const q=await get('push/out','orderBy="at"&endAt='+(NOW()+horizon)+'&limitToFirst=30').catch(e=>{if(e&&e.budget)throw e;if(e&&(e.status===401||e.status===403))return null;throw e});
   if(!q||typeof q!=='object')return 0;let n=0;
   for(const[id,m]of Object.entries(q).sort((a,b)=>(a[1]&&a[1].at||0)-(b[1]&&b[1].at||0))){if(!room(8))break;if(!m||typeof m!=='object'||!m.ti){await del('push/out/'+id).catch(()=>{});continue}
-   const w=(+m.at||0)-NOW();if(w>0)await sleep(Math.min(w,58e3));
+   const w=(+m.at||0)-NOW();if(w>0)await sleep(Math.min(w,59e3));
    const t=await take('push/out/'+id);if(!t||typeof t!=='object')continue;   // забрали только раз: второй проход уже ничего не найдёт — дублей нет
    n+=await deliver(t,id)}
   return n}
@@ -249,7 +249,7 @@ function makeBot(env){
   let bigTeam=0;const stage=async f=>{try{await f()}catch(e){if(e&&e.budget){if(e.team)bigTeam=1;log('мало запросов в этом проходе — остальное сделаю в следующем');return}throw e}};
   const rem=CFG.rem&&typeof CFG.rem==='object'&&Object.values(CFG.rem).some(x=>x&&x.on===1);
   if(rem||slow)await loadTeam();
-  let sent=0;await stage(async()=>{sent=await runOut(fast?0:55e3)});
+  let sent=0;await stage(async()=>{sent=await runOut(fast?0:59e3)});
   if(rem)await stage(()=>evRem(now));
   await stage(()=>evOrders(now));
   await stage(()=>evPre(now,N.cfg&&typeof N.cfg==='object'?N.cfg:{}));

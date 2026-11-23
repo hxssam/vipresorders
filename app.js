@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.6';
+const VER='9.9.7';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -1398,7 +1398,7 @@ let SNDK=0,PWSC=0,EPT=0,PREW=LS.get('vip3-pw',''),PRK=0;const PRA={};
 const NF={on:false,pub:'',busy:0,busy2:0,log:[],lt:0,seen:(()=>{let s=Number(LS.get('vip3-nseen',0))||0;if(!s){s=Date.now();LS.set('vip3-nseen',s)}return s})()};
 const NT={subs:null,cfg:null,t:0,busy:0,to:'cooks'};
 const PHD={t:0,c:null,d:null,bad:'',busy:0};
-const TM={al:{},cur:null,rep:0,last:0};
+const TM={al:{},cur:null,rep:0,last:0,pt:0},RFH={busy:0,last:0};
 const CEL={s:{},tap:0,on:0};
 const NTX={h:['✍️ Запишите часы смены','Не забудьте записать свои рабочие часы за сегодня.'],w:['🗑 Запишите списания','Проверьте и внесите списания за сегодня, пока не забыли.'],c:['🔒 Закройте кухню','Перед уходом: выключите технику и газ, уберите продукты, закройте кухню.']};
 const NTR=[['sh','⏰','Смена на завтра','каждому — его время смены','18:00'],['h','✍️','Запишите часы','тем, кто сегодня на смене','23:00'],['w','🗑','Запишите списания','тем, кто сегодня на смене','23:30'],['c','🔒','Закройте кухню','тем, кто сегодня на смене','23:45']];
@@ -1410,6 +1410,25 @@ const nfHid=ep=>{let a=5381,b=52711;for(let i=0;i<ep.length;i++){const c=ep.char
 const nfIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const nfStandalone=()=>{try{return!!(navigator.standalone||matchMedia('(display-mode: standalone)').matches)}catch(e){return false}};
 const nfCan=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+// 9.9.7: что умеет этот телефон — для понятных подсказок и диагностики (никаких «молчаливых» кнопок)
+function nfEnv(){const ua=navigator.userAgent||'',n='Notification' in window;let perm='—';try{if(n)perm=Notification.permission}catch(e){}
+ return{ios:nfIOS(),sa:nfStandalone(),https:location.protocol==='https:'||location.hostname==='localhost',sw:'serviceWorker' in navigator,pm:'PushManager' in window,no:n,perm,inApp:/fban|fbav|instagram|line\/|telegram|vkclient|whatsapp|; wv\)/i.test(ua),hw:/huawei|honor|hmscore/i.test(ua)}}
+function nfWhy(){const e=nfEnv();
+ if(e.inApp)return'Сайт открыт внутри другого приложения (мессенджер или соцсеть). Откройте ссылку в Chrome (Android) или Safari (iPhone).';
+ if(!e.https)return'Сайт нужно открывать по адресу с https://';
+ if(e.ios&&e.sa&&!e.pm)return'На этом iPhone слишком старая iOS. Нужна iOS 16.4 или новее: Настройки → Основные → Обновление ПО.';
+ if(!e.sw)return'Браузер не разрешает фоновую службу (возможно, режим инкогнито). Откройте сайт в обычном режиме.';
+ if(e.hw)return'Huawei/Honor без сервисов Google: браузер Huawei может не получать уведомления. Откройте сайт в Chrome, если он установлен.';
+ if(!e.pm||!e.no)return'Этот браузер не умеет уведомления. Откройте сайт в Chrome (Android) или установите его на экран «Домой» (iPhone, iOS 16.4+).';
+ return''}
+function nfErr(e,step){const n=String(e&&e.name||''),m=String(e&&e.message||'');
+ if(e&&e.sw)return'Фоновая служба приложения ещё не запущена. Закройте приложение полностью, откройте снова (два раза) и повторите.';
+ if(e&&(e.status===401||e.status===403))return'Нет доступа к базе: шеф должен опубликовать новые правила Firebase.';
+ if(m==='timeout')return step===3?'Телефон не смог связаться с сервисом уведомлений Google/Apple за 20 секунд. Выключите VPN и экономию трафика и повторите.':'Нет ответа за отведённое время (шаг '+step+'). Закройте приложение полностью, откройте снова и повторите.';
+ if(n==='NotAllowedError')return'Разрешение не выдано. Откройте настройки телефона → ВИАЙПИ → Уведомления → разрешить.';
+ if(n==='AbortError'||n==='InvalidStateError'||n==='NotSupportedError')return'Не удалось подключиться к сервису уведомлений ('+n+'). Проверьте интернет/VPN и повторите.';
+ return'Шаг '+step+': '+(n||'ошибка')+(m?' — '+m.slice(0,90):'')}
+function nfMsg(t,err){NF.msg=t?{t:String(t),err:!!err}:null;if(dialogOpen('#dn'))rNf()}
 const withT=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
 const nfReg=()=>withT(navigator.serviceWorker.ready,5000);
 // выход из аккаунта: убираем запись об этом телефоне (keepalive — запрос переживает перезагрузку страницы)
@@ -1428,21 +1447,26 @@ async function nfEnsure(force){if(DEMO||!DB||!AU.rt||isObs()||!nfCan()||nfIOS()&
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)});
   NF.on=true;const id=nfHid(sub.endpoint);if(force||st.id!==id||st.sig!==nfSigOf(id)||Date.now()-(st.at||0)>12*36e5)await nfSave(sub,pub)}catch(e){}
  NF.busy=0;nfBadge();if(dialogOpen('#dn'))rNf()}
-async function nfCheck(){NF.on=false;if(nfCan()&&Notification.permission==='granted'&&!(nfIOS()&&!nfStandalone())){try{const reg=await nfReg();NF.on=!!(await reg.pushManager.getSubscription())}catch(e){}}nfBadge();if(dialogOpen('#dn'))rNf()}
-function nfForMe(x){const to=String(x.to||'').split(','),me=presMe(),uid=nfUid();return to.some(t=>t==='all'?x.u!==uid:t==='adm'?isAdmin():t==='cooks'?!isAdmin():t==='me'?x.u===uid:!!(me&&t==='c:'+me.id))}
+async function nfCheck(){NF.on=false;NF.dg={};try{NF.dg.ctrl=!!(navigator.serviceWorker&&navigator.serviceWorker.controller)}catch(e){}
+ if(nfCan()&&Notification.permission==='granted'&&!(nfIOS()&&!nfStandalone())){try{const reg=await nfReg();const sub=await reg.pushManager.getSubscription();NF.on=!!sub;NF.dg.sub=!!sub}catch(e){NF.dg.sub=false}}
+ try{if('serviceWorker' in navigator)withT(navigator.serviceWorker.ready,3000).then(r=>{if(r&&r.active)r.active.postMessage({type:'ver'})}).catch(()=>{})}catch(e){}
+ nfBadge();if(dialogOpen('#dn'))rNf()}
+function nfForMe(x){const to=String(x.to||'').split(','),me=presMe(),uid=nfUid();return to.some(t=>t==='team'?true:t==='all'?x.u!==uid:t==='adm'?isAdmin():t==='cooks'?!isAdmin():t==='me'?x.u===uid:!!(me&&t==='c:'+me.id))}
 async function nfLoad(force){if(DEMO||!DB||!AU.rt||isObs()||NF.busy2||(!force&&Date.now()-NF.lt<15e3))return;NF.busy2=1;
  try{const o=await jget('push/log','orderBy=%22t%22&limitToLast=40');NF.log=o&&typeof o==='object'?Object.entries(o).map(([id,v])=>({id,...v})).filter(x=>x&&x.ti&&nfForMe(x)).sort((p,q)=>q.t-p.t):[];NF.lt=Date.now()}catch(e){}
  NF.busy2=0;nfBadge();if(dialogOpen('#dn'))rNf()}
 function nfBadge(){const b=$('#nbadge'),bt=$('#nbtn');if(!bt)return;const gone=DEMO||isObs(),off=gone||!AU.rt;bt.classList.toggle('gone',gone);bt.hidden=off;if(off)return;const n=NF.log.filter(x=>x.t>NF.seen).length;if(b){b.hidden=!n;b.textContent=n>9?'9+':String(n)}bt.classList.toggle('ring',n>0);bt.classList.toggle('nfoff',nfState()!=='on'&&!n)}
 const nfAgo=t=>{const m=Math.round((Date.now()-(Number(t)||0))/6e4);return m<1?'только что':m<60?m+' мин назад':m<1440?Math.floor(m/60)+' ч назад':Math.floor(m/1440)+' дн. назад'};
 const nfIc=k=>({tm:'⏱',sh:'⏰',h:'✍️',w:'🗑',c:'🔒',bq:'🎉',od:'🧾',ap:'🔔',er:'⚠'})[k]||'📣';
+function nfDg(){const e=nfEnv(),d=NF.dg||{},R=(ok,t)=>`<div class="dgr ${ok===true?'ok':ok===false?'no':''}"><i>${ok===true?'✓':ok===false?'✗':'·'}</i>${esc(t)}</div>`,pm={granted:'выдано',denied:'запрещено',default:'ещё не спрашивали'};
+ return`<details class="nfd"><summary>Диагностика</summary>`+R(null,'Версия: приложение '+VER+(NF.swv?' · служба '+NF.swv:''))+(e.ios?R(e.sa,'iPhone: открыто с экрана «Домой»'):'')+R(e.https,'Защищённое соединение (https)')+R(e.sw,'Фоновая служба доступна')+R(e.pm&&e.no,'Браузер умеет уведомления')+R(e.perm==='granted'?true:e.perm==='denied'?false:null,'Разрешение: '+(pm[e.perm]||e.perm))+R(d.ctrl===undefined?null:!!d.ctrl,'Служба управляет страницей')+R(d.sub===undefined?null:!!d.sub,'Подписка на этом телефоне')+R(LS.get('vip3-nsub',null)?true:null,'Телефон записан на сервере')+`</details>`}
 function rNf(){const el=$('#nbox'),li=$('#nlist');if(!el||!li)return;const st=nfState();let h='';
- if(st==='on')h=`<div class="nfc ok"><b>✓ Уведомления включены</b><small>Они придут на этот телефон, даже когда приложение закрыто.</small></div><div class="acts"><button class="p" data-a="nftest">🔔 Проверить</button><button class="g" data-a="nfoff">Выключить</button></div>`;
+ if(st==='on')h=`<div class="nfc ok"><b>✓ Уведомления включены</b><small>Они придут на этот телефон, даже когда приложение закрыто.</small></div><div class="acts"><button class="p" data-a="nftest">🔔 Проверить</button><button data-a="nfon">↻ Переподключить</button><button class="g" data-a="nfoff">Выключить</button></div>`;
  else if(st==='ios')h=`<div class="nfc"><b>iPhone: сначала добавьте на экран «Домой»</b><small>Так устроен iOS: уведомления работают только у приложения с главного экрана.</small></div><div class="acts"><button class="p" data-a="nfon">Как это сделать</button></div>`;
- else if(st==='none')h=`<div class="nfc"><b>Этот браузер не умеет уведомления</b><small>Откройте сайт в Chrome (Android) или установите приложение на экран «Домой» (iPhone).</small></div>`;
+ else if(st==='none')h=`<div class="nfc er"><b>Здесь уведомления не работают</b><small>${esc(nfWhy()||'Этот браузер не умеет уведомления.')}</small></div>`;
  else if(st==='denied')h=`<div class="nfc"><b>Уведомления запрещены в настройках</b><small>Откройте настройки телефона → уведомления → ВИАЙПИ (или сайта) → разрешить. Потом вернитесь сюда.</small></div>`;
  else h=`<div class="nfc"><b>Уведомления выключены</b><small>Смена на завтра, напоминания шефа и таймеры заготовок — даже при закрытом приложении.</small></div><div class="acts"><button class="p" data-a="nfon">🔔 Включить уведомления</button></div>`;
- el.innerHTML=h;
+ el.innerHTML=(NF.msg?`<div class="nfc ${NF.msg.err?'er':'wt'}" role="status"><b>${NF.msg.err?'⚠ ':'⏳ '}${esc(NF.msg.t)}</b></div>`:'')+h+nfDg();
  li.innerHTML=NF.log.length?NF.log.map(x=>`<div class="nfi${x.t>NF.seen?' nw':''}"><i>${nfIc(x.k)}</i><div><b>${esc(x.ti)}</b>${x.b?`<span>${esc(x.b)}</span>`:''}<small>${esc(nfAgo(x.t))}${x.by&&x.by!=='авто'?' · '+esc(x.by):''}</small></div></div>`).join(''):'<div class="small" style="margin:10px 2px">Пока уведомлений нет.</div>'}
 function nfOnPush(d){if(!d||typeof d!=='object')return;const t=String(d.ti||'');
  if(d.k==='tm'){if(Date.now()-TM.last>25e3){TM.last=Date.now();tmBar(t.replace(/^⏱\s*/,'').replace(/\s—\s*готово$/,''),'Время вышло');snd.alarm();vib([400,200,400,200,600])}}
@@ -1495,8 +1519,10 @@ function tmBar(title,sub){let b=document.getElementById('tmbar');if(!b){b=docume
  b.innerHTML=`<div class="tmbi"><span class="tmbe">⏰</span><div><b>${esc(title)}</b><small>${esc(sub||'Время вышло')}</small></div><button class="p" data-a="tmok">ОК</button></div>`;b.hidden=false;b.classList.remove('out');void b.offsetWidth;b.classList.add('in')}
 function tmBarOff(){const b=document.getElementById('tmbar');if(b){b.hidden=true;b.classList.remove('in')}clearInterval(TM.rep);TM.rep=0;TM.cur=null}
 function tmAlarm(id,t,d){TM.cur={id,d};TM.last=Date.now();snd.alarm();vib([400,200,400,200,800]);tmBar(t.t,'Время вышло'+(t.dur?' · '+t.dur+' мин':''));clearInterval(TM.rep);let n=0;TM.rep=setInterval(()=>{if(!TM.cur||++n>7){clearInterval(TM.rep);TM.rep=0;return}snd.alarm();vib([300,150,300])},4e3)}
-function tmScan(){const now=Date.now(),pr=DATA.prep||{};
- for(const d of[dAdd(-1),dAdd(0),dAdd(1)]){const m=pr[d];if(!m)continue;for(const id in m){const t=m[id];if(!t||!(t.tm>0)||t.done)continue;const k=id+':'+t.tm;if(t.tm<=now&&!TM.al[k]){TM.al[k]=1;if(now-t.tm<45e3)tmAlarm(id,{...t,id},d)}}}
+function tmScan(){const now=Date.now(),pr=DATA.prep||{};let nx=0;
+ for(const d of[dAdd(-1),dAdd(0),dAdd(1)]){const m=pr[d];if(!m)continue;for(const id in m){const t=m[id];if(!t||!(t.tm>0)||t.done)continue;const k=id+':'+t.tm;if(t.tm<=now&&!TM.al[k]){TM.al[k]=1;if(now-t.tm<45e3)tmAlarm(id,{...t,id},d)}else if(t.tm>now&&(!nx||t.tm<nx))nx=t.tm}}
+ // сигнал «секунда в секунду»: ближайший конец ставим отдельным таймером, а не ждём ближайшего тика раз в секунду
+ if(nx&&nx-now<=1100){clearTimeout(TM.pt);TM.pt=setTimeout(()=>{try{tmScan()}catch(e){}},nx-now+15)}
  document.querySelectorAll('.tmc').forEach(e=>{const l=(+e.dataset.end)-now,b=e.closest('.tmb');if(l<=0){if(b&&b.classList.contains('run')){b.className='tmb fin';b.dataset.a='tmack';b.innerHTML='<i class="tmi">⏰</i>Время вышло<em>ОК</em>'}}else{e.textContent=tmFmt(l);if(b&&l<6e4)b.classList.add('hot')}})}
 function tmDrop(day,id){api('DELETE','push/out/tm_'+day+'_'+id).catch(()=>{});mut('PATCH',`prep/${day}/${id}`,{tm:null,tb:null});if(TM.cur&&TM.cur.id===id)tmBarOff()}
 // ---- праздник: банкет завершён / заготовки готовы ----
@@ -1513,18 +1539,30 @@ function confetti(){if(CEL.on)return;try{if(matchMedia('(prefers-reduced-motion:
  const t0=performance.now();const step=t=>{const e=t-t0;x.clearRect(0,0,W,H);let live=0;for(const p of P){p.vy+=.42;p.vx*=.992;p.vy*=.992;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(p.y<H+20){live++;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.globalAlpha=Math.max(0,Math.min(1,(3200-e)/700));x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore()}}
   if(e<3200&&live)requestAnimationFrame(step);else{cv.remove();CEL.on=0}};requestAnimationFrame(step)}
 Object.assign(ACT,{
-notif(){snd.tap();rNf();$('#dn').showModal();NF.seen=Date.now();LS.set('vip3-nseen',NF.seen);nfBadge();nfLoad(true);nfCheck()},
+notif(){try{snd.tap()}catch(e){}const d=$('#dn');try{rNf()}catch(e){try{$('#nbox').innerHTML='<div class="nfc er"><b>⚠ Не удалось показать состояние</b><small>Закройте приложение и откройте снова.</small></div>'}catch(x){}}
+ try{if(!d.open)d.showModal()}catch(e){try{d.setAttribute('open','')}catch(x){}}
+ try{NF.seen=Date.now();LS.set('vip3-nseen',NF.seen);nfBadge()}catch(e){}try{nfLoad(true)}catch(e){}try{nfCheck()}catch(e){}},
 async nfon(){const st=nfState();
  if(st==='ios'){await ask('Добавьте на экран «Домой»','<p>На iPhone уведомления работают только у приложения с главного экрана:</p><p>1) В Safari нажмите «Поделиться» ⬆️<br>2) Выберите «На экран Домой»<br>3) Откройте иконку «ВИАЙПИ» и нажмите 🔔 ещё раз.</p>','Понятно','Закрыть');return}
- if(st==='none'){snd.warn();toast('Этот браузер не поддерживает уведомления');return}
- if(st==='denied'){snd.warn();toast('Разрешите уведомления в настройках телефона');rNf();return}
- let perm;try{perm=await Notification.requestPermission()}catch(e){perm='default'}
- if(perm!=='granted'){snd.warn();toast('Без разрешения уведомления не придут');rNf();return}
- try{const pub=await nfPub();if(!pub){snd.warn();toast('Уведомления ещё не настроены на сервере. Шеф: обновите Worker (SETUP-AR.md)');return}
-  const reg=await nfReg();let sub=await reg.pushManager.getSubscription();if(sub&&nfSubKey(sub)&&nfSubKey(sub)!==pub){try{await sub.unsubscribe()}catch(e){}sub=null}
-  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)});
-  await nfSave(sub,pub);NF.on=true;snd.ok();vib(30);toast('🔔 Уведомления включены');rNf();nfBadge()}
- catch(e){snd.warn();toast(e&&(e.status===401||e.status===403)?'Нет доступа: шеф должен опубликовать правила Firebase 9.9.6':'Не получилось включить уведомления. Проверьте интернет')}},
+ if(st==='none'){snd.warn();nfMsg(nfWhy()||'Этот браузер не поддерживает уведомления',1);return}
+ if(st==='denied'){snd.warn();nfMsg('Уведомления запрещены. Откройте настройки телефона → ВИАЙПИ → Уведомления → разрешить. Потом нажмите 🔔 ещё раз.',1);return}
+ if(NF.run)return;NF.run=1;let step=1;
+ try{
+  let perm=Notification.permission;
+  if(perm!=='granted'){nfMsg('1/4 · Разрешите уведомления в окне телефона…');try{perm=await Notification.requestPermission()}catch(e){perm='default'}}
+  if(perm!=='granted'){snd.warn();nfMsg(perm==='denied'?'Вы нажали «Запретить». Откройте настройки телефона → ВИАЙПИ → Уведомления → разрешить.':'Разрешение не выдано. Нажмите «Включить» и ответьте «Разрешить».',1);return}
+  step=2;nfMsg('2/4 · Проверяю связь с сервером…');
+  const pub=await withT(nfPub(),9000).catch(()=>'');if(!pub){snd.warn();nfMsg('Сервер уведомлений не ответил. Шеф: откройте адрес Worker с /setup один раз и проверьте интернет.',1);return}
+  step=3;nfMsg('3/4 · Подключаю этот телефон…');
+  const reg=await withT(navigator.serviceWorker.ready,9000).catch(()=>{throw Object.assign(new Error('sw'),{sw:1})});let sub=await reg.pushManager.getSubscription();
+  if(sub&&nfSubKey(sub)&&nfSubKey(sub)!==pub){try{await sub.unsubscribe()}catch(e){}sub=null}
+  if(!sub)sub=await withT(reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:nfBytes(pub)}),20000);
+  step=4;nfMsg('4/4 · Записываю на сервере…');
+  await withT(nfSave(sub,pub),12000);
+  NF.on=true;nfMsg(null);snd.ok();vib(30);toast('🔔 Уведомления включены · отправляю проверку');rNf();nfBadge();try{nfCheck()}catch(e){}
+  setTimeout(()=>{try{ACT.nftest()}catch(e){}},700)}
+ catch(e){snd.warn();nfMsg(nfErr(e,step),1)}
+ finally{NF.run=0}},
 async nfoff(){try{const reg=await nfReg(),sub=await reg.pushManager.getSubscription();if(sub){const id=nfHid(sub.endpoint);await sub.unsubscribe();await api('DELETE','push/subs/'+id).catch(()=>{})}NF.on=false;LS.set('vip3-nsub',null);snd.tap();toast('Уведомления выключены');rNf();nfBadge()}catch(e){snd.warn();toast('Не удалось выключить')}},
 async nftest(){await tok();const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
  if(await ntDo(api('PUT','push/out/'+id,{at:Date.now(),ti:'🔔 Проверка уведомлений',b:'Если вы это видите — всё работает',to:'me',k:'tm',u:nfUid(),by:String((presMe()||{}).n||'').slice(0,40)}))){wkPoke();snd.ok();toast('Отправлено. Уведомление придёт в течение минуты')}},
@@ -1539,12 +1577,21 @@ async ntrem(k){if(!isAdmin())return need();const d=NTR.find(x=>x[0]===k);if(!d)r
 async ntev(k){if(!isAdmin())return need();if(!NTE.some(x=>x[0]===k))return;const C=NT.cfg||(NT.cfg={}),E=C.ev||(C.ev={}),nv=E[k]===0?1:0;E[k]=nv;rNt();snd.tap();if(!await ntDo(api('PUT','push/cfg/ev/'+k,nv))){E[k]=nv?0:1;rNt()}},
 async ntref(){toast('Обновляю…');ntLoad(true)},
 async phref(){toast('Обновляю…');phLoad(true)},
+refresh(){const b=$('#rfbtn'),now=Date.now();
+ if(RFH.busy)return;
+ if(now-RFH.last<2500){RFH.last=0;snd.tap();toast('Перезагружаю…');setTimeout(()=>location.reload(),120);return}
+ RFH.last=now;RFH.busy=1;if(b)b.classList.add('spin');try{snd.tap();vib(12)}catch(e){}
+ // 1) данные: сбрасываем кэш чтения и заново открываем живые потоки — всё приходит свежим; 2) проверяем новую версию приложения; 3) уведомления
+ try{hidAt=Date.now()-16000;wake()}catch(e){}
+ try{navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})}catch(e){}
+ try{nfLoad(true);nfEnsure()}catch(e){}try{if(isAdmin())ntLoad(true)}catch(e){}
+ setTimeout(()=>{RFH.busy=0;if(b)b.classList.remove('spin');toast('✓ Обновлено · нажмите ещё раз — полная перезагрузка')},650)},
 ghost(){if(!isAdmin())return need();const on=!ghOn();LS.set('vip3-ghost',on?1:0);rGhost();snd.tap();vib(on?[20,30,20]:15);
  if(on){ghClear();toast('👻 Невидимка: вас не видно в «В сети» и в наборе заказа')}else{toast('Вы снова видны команде');try{presSend(true);liveSoon()}catch(e){}}},
 async tmstart(id){const t=((DATA.prep||{})[pd]||{})[id];if(!t||!(t.dur>0)||t.done||isObs())return;const me=presMe(),end=Date.now()+Math.round(t.dur*6e4),day0=pd;
  mut('PATCH',`prep/${day0}/${id}`,{tm:end,tb:me?{id:me.id,n:me.n}:null});snd.ok();vib(25);
- tok().then(()=>api('PUT','push/out/tm_'+day0+'_'+id,{at:end,ti:'⏱ '+String(t.t).slice(0,70),b:'Время вышло ('+t.dur+' мин)',to:'me',k:'tm',u:nfUid(),by:me?String(me.n).slice(0,40):''})).then(()=>wkPoke()).catch(()=>{});
- toast('⏱ Таймер '+t.dur+' мин'+(NF.on?' · придёт уведомление':' · включите 🔔 вверху, чтобы сигнал пришёл и при закрытом приложении'))},
+ tok().then(()=>api('PUT','push/out/tm_'+day0+'_'+id,{at:end,ti:'⏱ '+String(t.t).slice(0,70),b:'Время вышло ('+t.dur+' мин)'+(me?' · запустил '+String(me.n).slice(0,30):''),to:'team',k:'tm',u:nfUid(),by:me?String(me.n).slice(0,40):''})).then(()=>wkPoke()).catch(()=>{});
+ toast('⏱ Таймер '+t.dur+' мин · сигнал получит вся команда'+(NF.on?'':' · включите 🔔 вверху, чтобы сигнал пришёл и вам при закрытом приложении'))},
 async tmstop(id){const t=((DATA.prep||{})[pd]||{})[id];if(!t)return;tmDrop(pd,id);snd.tap();toast('Таймер остановлен')},
 tmack(id){tmDrop(pd,id);snd.tap()},
 tmok(){const c=TM.cur;if(c)tmDrop(c.d||pd,c.id);else tmBarOff();snd.tap();tmBarOff()},
@@ -2062,7 +2109,7 @@ setInterval(()=>{try{if(isAdmin()&&dialogOpen('#dt')&&!document.hidden){if($('#a
 {const b=$('#ntbox');if(b)b.addEventListener('change',async e=>{const t=e.target;if(!t)return;if(t.id==='ntto'){NT.to=t.value;return}if(t.classList&&t.classList.contains('nta')&&isAdmin()){const k=t.dataset.k,v=normTm(t.value);if(!v){snd.warn();toast('Время в формате чч:мм, например 23:30');rNt();return}t.value=v;const C=NT.cfg||(NT.cfg={}),R=C.rem||(C.rem={}),cur=R[k]||{on:0},nv={on:cur.on===1?1:0,at:v};R[k]=nv;if(await ntDo(api('PUT','push/cfg/rem/'+k,nv))){snd.ok();toast('✓ Время: '+v)}}})}
 setTimeout(pruneMeta,2e4+Math.random()*2e4);setInterval(pruneMeta,18e5);try{if(ERRS.length&&ERRS.some(x=>x.t>(Number(LS.get('vip3-errsent',0))||0)))errSoon()}catch(e){}
 // 9.9.6: уведомления, таймеры, праздник
-if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data;if(!d||typeof d!=='object')return;try{if(d.type==='vip-push')nfOnPush(d.d);else if(d.type==='vip-resub')nfEnsure(true);else if(d.type==='vip-open')ACT.notif()}catch(x){}});
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data;if(!d||typeof d!=='object')return;try{if(d.type==='vip-push')nfOnPush(d.d);else if(d.type==='vip-resub')nfEnsure(true);else if(d.type==='vip-ver'){NF.swv=String(d.v||'').slice(0,12);if(dialogOpen('#dn'))rNf()}else if(d.type==='vip-open')ACT.notif()}catch(x){}});
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{CEL.tap=Date.now()},{passive:true,capture:true}));
 setInterval(()=>{try{if(!document.hidden)tmScan()}catch(e){}},1000);
 addEventListener('visibilitychange',()=>{if(!document.hidden){try{tmScan();nfCheck();nfEnsure();nfLoad()}catch(e){}}});

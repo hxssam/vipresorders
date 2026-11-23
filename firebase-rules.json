@@ -600,7 +600,7 @@
           "at"
         ],
         "$id": {
-          ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (root.child('ok').child(auth.uid).exists() && newData.child('k').val() == 'tm' && newData.child('to').val() == 'me' && newData.child('u').val() == auth.uid && (!data.exists() || data.child('u').val() == auth.uid)) || (root.child('ok').child(auth.uid).exists() && !newData.exists() && data.child('u').val() == auth.uid))",
+          ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (root.child('ok').child(auth.uid).exists() && newData.child('k').val() == 'tm' && (newData.child('to').val() == 'me' || (newData.child('to').val() == 'team' && newData.child('ti').val().beginsWith('⏱'))) && newData.child('u').val() == auth.uid && (!data.exists() || data.child('u').val() == auth.uid)) || (root.child('ok').child(auth.uid).exists() && !newData.exists() && data.child('u').val() == auth.uid))",
           ".validate": "$id.length <= 60 && newData.hasChildren(['at', 'ti'])",
           "at": {
             ".validate": "newData.isNumber()"
