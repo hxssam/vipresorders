@@ -187,6 +187,9 @@
       "on": {
         ".validate": "newData.isNumber() && (newData.val() == 0 || newData.val() == 1)"
       },
+      "seed": {
+        ".validate": "newData.isNumber() && newData.val() == 1"
+      },
       "al": {
         "$h": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30"
