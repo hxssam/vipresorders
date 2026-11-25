@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.12">
+<meta name="vip-ver" content="9.9.13">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var d=document.documentElement,g=localStorage.getItem("vip3-gate"),r=localStorage.getItem("vip3-rt");if(g!=="\"2\""||!r||r==="\"\"")d.className+=" locked"}catch(e){document.documentElement.className+=" locked"}</script>
@@ -46,7 +46,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 </main>
 </div>
 <div class="w">
-<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib ghb" id="ghbtn" data-a="ghost" aria-label="Режим невидимки" aria-pressed="false" hidden>👻</button><button class="g ib nbb" id="nbtn" data-a="notif" aria-label="Уведомления" hidden><span class="nbi" aria-hidden="true">🔔</span><i id="nbadge" hidden></i></button><button class="g ib rfb" id="rfbtn" data-a="refresh" aria-label="Обновить" title="Обновить"><span class="rfi" aria-hidden="true">↻</span></button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
+<div class="top"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h1>ВИАЙПИ <b>РЕСТОБАР КУХНЯ</b></h1><button class="g ib unfab" id="unfab" data-a="undo" aria-label="Отменить последнее действие" title="Отменить последнее" hidden><span aria-hidden="true">↩</span><i id="unn" hidden></i></button><button class="g ib" id="thbtn" data-a="theme" aria-label="Тема оформления: светлая или тёмная">🌓</button><button class="g ib ghb" id="ghbtn" data-a="ghost" aria-label="Режим невидимки" aria-pressed="false" hidden>👻</button><button class="g ib nbb" id="nbtn" data-a="notif" aria-label="Уведомления" hidden><span class="nbi" aria-hidden="true">🔔</span><i id="nbadge" hidden></i></button><button class="g ib rfb" id="rfbtn" data-a="refresh" aria-label="Обновить" title="Обновить"><span class="rfi" aria-hidden="true">↻</span></button><button class="g ib" id="saved" data-a="diag" aria-label="Связь">…</button><button class="g ib" data-a="hist" aria-label="История заказов">🕘</button><button class="g ib apb" data-a="admin" aria-label="Админ-панель">⚙<i id="apbadge" hidden></i></button></div>
 <button id="obsbar" class="obsbar" data-a="obs" hidden></button>
 <button id="apbar" class="obsbar apbar" data-a="admin" hidden></button>
 
@@ -289,7 +289,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 
 <dialog id="dg"><h2 id="dgh">Новая группа</h2><div class="row2 catnew"><input id="gne" maxlength="4" placeholder="📦" aria-label="Значок" autocomplete="off"><input id="ggn" maxlength="40" placeholder="Например, напитки" aria-label="Название" autocomplete="off"></div><div class="lbl f">Выберите значок</div><div class="emo" id="gemo"></div><div class="acts"><button class="p" id="dgok" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <div class="tg" id="tg" role="status"></div>
-<div class="unpill" id="unpill" hidden><button class="unb" data-a="undo" aria-label="Отменить последнее действие"><span class="uni" aria-hidden="true">↩</span><span class="unt"><b>Отменить</b><small id="unm"></small></span></button><button class="unx" data-a="unclose" aria-label="Скрыть">✕</button></div><button class="unfab" id="unfab" data-a="unshow" aria-label="Отменить последнее" hidden><span aria-hidden="true">↩</span><i id="unn"></i></button>
+<div class="unpill" id="unpill" hidden><button class="unb" data-a="undo" aria-label="Отменить последнее действие"><span class="uni" aria-hidden="true">↩</span><span class="unt"><b>Отменить</b><small id="unm"></small></span></button><button class="unx" data-a="unclose" aria-label="Скрыть">✕</button></div>
 
 <script src="config.js" defer></script>
 <script src="app.js" defer></script>

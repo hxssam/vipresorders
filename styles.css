@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.12"}
+:root{--vip-ver:"9.9.13"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1173,10 +1173,6 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 .unpill .unt b{font-size:15px}
 .unpill .unt small{font-size:12px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
 .unpill .unx{background:transparent;color:inherit;border:0;opacity:.7;min-width:44px;min-height:48px;padding:0 10px}
-.unfab{position:fixed;inset-inline-start:10px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:40;width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;background:var(--sf);color:var(--tx);border:1px solid var(--ln);box-shadow:var(--sh);font-size:20px;font-weight:800;opacity:.92}
-.unfab[hidden]{display:none}
-.unfab i{position:absolute;top:-4px;inset-inline-end:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--ac);color:#fff;font:700 11px/18px system-ui;text-align:center;font-style:normal;padding:0 4px}
-.unfab i:empty{display:none}
 @media print{.unpill,.unfab{display:none!important}}
 /* ===== 9.9.10: ТТК ===== */
 .ttkbox{border-left-color:#16a34a}
@@ -1301,3 +1297,18 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 .ttk-for{margin:6px 4px 4px;font-size:12.5px;font-weight:700;color:var(--mu);overflow-wrap:anywhere}
 #dttp .acts #ttpgo{flex:1 1 100%;min-height:52px}
 #dttp .acts #ttpgo[hidden]{display:none}
+/* 9.9.13: Undo — круглая кнопка в шапке; кружок «готово» у блюда/продукта; блок «Готово» внизу */
+.unfab{position:relative}
+.unfab[hidden]{display:none}
+.unfab span{font-weight:800}
+.unfab i{position:absolute;top:-4px;inset-inline-end:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--ac);color:#fff;font:700 11px/18px system-ui,sans-serif;text-align:center;font-style:normal;padding:0 4px}
+.unfab i[hidden]{display:none}
+.unfab.pop{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+.top:has(#unfab:not([hidden])) h1 b{display:none}
+.top:has(#unfab:not([hidden])) h1{font-size:11px;letter-spacing:0}
+.ttkb>summary .ttk-ck{flex:none;width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;border:2.5px solid var(--ac);background:var(--bg);color:#fff;font-size:21px;font-weight:800;line-height:1;display:inline-flex;align-items:center;justify-content:center;position:relative;transition:background-color .2s,border-color .2s,transform .15s}
+.ttkb>summary .ttk-ck:after{content:"";position:absolute;inset:-9px}
+.ttkb>summary .ttk-ck:active{transform:scale(.88)}
+.ttkb>summary .ttk-ck.on{background:var(--ok);border-color:var(--ok)}
+.ttk-dh{margin-top:16px;color:var(--ok)}
+@media(prefers-reduced-motion:reduce){.unfab.pop{animation:none!important}}
