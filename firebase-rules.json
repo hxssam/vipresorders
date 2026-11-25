@@ -1,11 +1,11 @@
 {
   "rules": {
     "team": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
     "catalog": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('wo').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('wo').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
       "edits": {
         ".write": "auth != null && auth.token.email == 'admin@vip.local'"
       },
@@ -34,7 +34,7 @@
       }
     },
     "orders": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
       ".indexOn": [
         "created"
       ],
@@ -43,7 +43,7 @@
       }
     },
     "prep": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
       "$date": {
         "$id": {
           ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
@@ -51,21 +51,21 @@
       }
     },
     "prepMeta": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
       "$date": {
         ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
       }
     },
     "prepLibrary": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
       ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
     },
     "prepPins": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
       ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
     },
     "writeoffs": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('wo').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('wo').val() == 1))",
       "$date": {
         "$id": {
           ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
@@ -73,22 +73,22 @@
       }
     },
     "plan": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
       ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
     },
     "sched": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
     "shifts": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('sched').val() == 1))",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'"
     },
     "meta": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
       ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())",
       "proposals": {
-        ".write": "auth != null && ((auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('m').val() == 'edit'))",
+        ".write": "auth != null && ((root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('m').val() == 'edit'))",
         ".validate": "newData.isNumber()"
       }
     },
@@ -98,7 +98,7 @@
     },
     "acct": {
       "$key": {
-        ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists())",
+        ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())",
         ".write": "auth != null && auth.token.email == 'admin@vip.local'",
         "in": {
           "$date": {
@@ -163,7 +163,7 @@
       }
     },
     "prepCats": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'",
       "$id": {
         ".validate": "newData.hasChildren(['n'])",
@@ -181,14 +181,72 @@
         }
       }
     },
+    "ttk": {
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('prep').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('bq').val() == 1))",
+      ".write": "auth != null && auth.token.email == 'admin@vip.local'",
+      "on": {
+        ".validate": "newData.isNumber() && (newData.val() == 0 || newData.val() == 1)"
+      },
+      "al": {
+        "$h": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30"
+        }
+      },
+      "d": {
+        "$id": {
+          ".validate": "newData.hasChildren(['n'])",
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+          },
+          "c": {
+            ".validate": "newData.isString() && newData.val().length <= 40"
+          },
+          "ld": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 14"
+          },
+          "nt": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "o": {
+            ".validate": "newData.isNumber()"
+          },
+          "i": {
+            "$cid": {
+              ".validate": "newData.hasChildren(['n', 'q', 'u'])",
+              "n": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+              },
+              "q": {
+                ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000000"
+              },
+              "u": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 8"
+              },
+              "o": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
     "receipts": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('ord').val() == 1) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('v').child('recv').val() == 1))",
       "$oid": {
         ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())"
       }
     },
     "errlog": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists())",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())",
       ".write": "auth != null && auth.token.email == 'admin@vip.local'",
       "$dev": {
         ".write": "(auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists())) && ($dev.length <= 40)",
@@ -268,11 +326,11 @@
       ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
       ".write": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
       "info": {
-        ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)"
+        ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)"
       }
     },
     "access": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
       "obs": {
         ".write": "auth != null && auth.token.email == 'admin@vip.local'",
         ".validate": "newData.hasChildren(['on'])",
@@ -304,9 +362,9 @@
       }
     },
     "proposals": {
-      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || auth.token.email == 'viewer@vip.local')",
+      ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
       "$id": {
-        ".write": "auth != null && (auth.token.email == 'admin@vip.local' || (auth.token.email == 'viewer@vip.local' && !data.exists()) || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('m').val() == 'edit' && !data.exists() && newData.child('u').val() == auth.uid))",
+        ".write": "auth != null && (auth.token.email == 'admin@vip.local' || (root.child('ob').child(auth.uid).child('on').val() == 1 && root.child('ob').child(auth.uid).child('m').val() == 'edit' && !data.exists() && newData.child('u').val() == auth.uid))",
         ".validate": "newData.hasChildren(['m','p','t'])",
         "m": {
           ".validate": "newData.val() == 'PUT' || newData.val() == 'PATCH' || newData.val() == 'DELETE'"
@@ -456,7 +514,7 @@
       "cfg": {
         ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local')",
         "pub": {
-          ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || (auth.token.email == 'viewer@vip.local' && root.child('access').child('obs').child('on').val() != 0) || root.child('ob').child(auth.uid).child('on').val() == 1)",
+          ".read": "auth != null && (auth.token.email == 'admin@vip.local' || auth.token.email == 'bot@vip.local' || root.child('ok').child(auth.uid).exists() || root.child('ob').child(auth.uid).child('on').val() == 1)",
           ".write": "auth != null && auth.token.email == 'bot@vip.local'",
           ".validate": "newData.isString() && newData.val().length >= 80 && newData.val().length <= 100"
         },

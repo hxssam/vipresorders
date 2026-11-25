@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.9">
+<meta name="vip-ver" content="9.9.10">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var d=document.documentElement,g=localStorage.getItem("vip3-gate"),r=localStorage.getItem("vip3-rt");if(g!=="\"2\""||!r||r==="\"\"")d.className+=" locked"}catch(e){document.documentElement.className+=" locked"}</script>
@@ -83,6 +83,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="bqbar" id="bqbar" hidden role="group" aria-label="Банкеты"></div>
 <div class="seg bqtabs" id="bqtabs" hidden><button data-a="bqtab" data-id="info">📝 О банкете</button><button data-a="bqtab" data-id="prep">🥘 Заготовки<b id="pcq"></b></button></div>
 <div class="card bqh" id="bqh" hidden></div>
+<div class="prebox ttkbox" id="ttkbox" hidden aria-live="polite"></div>
 <section class="card bqinfo" id="bqinfo" hidden aria-label="Данные банкета">
 <div class="lbl"><span>🎉 О банкете</span><small id="bqday"></small></div>
 <label class="fl"><span>📅 Дата банкета</span><button type="button" class="dp" id="bqdt" data-dp data-title="Дата банкета" value="" aria-label="Дата банкета" aria-haspopup="dialog">Выберите дату</button></label>
@@ -128,7 +129,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <section id="vRecv" hidden><div id="rchead"></div><div class="sticky" id="rcsb" hidden><div class="sr"><input id="rcq" type="search" placeholder="Найти товар в заказе…" autocomplete="off" enterkeyhint="search" aria-label="Поиск товара"></div><div class="chips" id="rcchips" style="margin-top:8px"></div></div><div id="rcmain"></div></section>
 <section id="vWriteoff" hidden>
 <div class="card"><div class="lbl">Дата списания</div><button type="button" class="dp" id="woDate" data-dp data-title="Дата списания" value="" aria-haspopup="dialog">Выберите дату</button><div class="small">✓ — оформлено. Записи без ✓ переносятся на следующий день.</div></div>
-<section class="card"><div class="lbl"><span>Списано за выбранный день</span><small id="wocount"></small></div><div class="acts wo-share-actions" style="margin:0 0 10px"><button class="p" id="wocopy" data-a="wocopy" disabled>📋 Копировать списание</button><button id="woshare" data-a="woshare" disabled hidden>↗ Отправить списание</button></div><div id="wolog"></div></section>
+<section class="card"><div class="lbl"><span>Списано за выбранный день</span><small id="wocount"></small></div><div class="acts wo-share-actions" style="margin:0 0 10px"><button class="p" id="wocopy" data-a="wocopy" disabled>📋 Копировать списание</button><button id="woshare" data-a="woshare" disabled hidden>↗ Отправить списание</button></div><div id="wobk"></div><div id="wolog"></div></section>
 <div class="sticky"><div class="sr"><input id="woq" type="search" placeholder="Найти товар для списания…" autocomplete="off"></div><div class="chips" id="wocats" style="margin-top:8px"></div><div class="small" id="wocatalogcount"></div></div>
 <div id="woproducts"></div>
 </section>
@@ -164,12 +165,52 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 
 <dialog id="dn" aria-label="Уведомления"><h2>🔔 Уведомления</h2><div id="nbox"></div><div class="lbl f" style="margin-top:14px">Последние</div><div id="nlist" style="max-height:44dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
-<dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dh"><h2>История заказов</h2><input id="hq" type="search" placeholder="Повар, дата или товар…"><div id="hbk"></div><div id="hl" style="margin-top:10px;max-height:60dvh;overflow:auto"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 
 <dialog id="dt"><h2>Админ-панель</h2>
+<div class="adg"><span aria-hidden="true">👥</span>Люди и доступ</div>
+<details class="adm" id="adT" open><summary><span class="ai" aria-hidden="true">👥</span><b>Команда</b><small id="adsT"></small></summary><div class="adb">
+<div id="tl"></div>
+<div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
+<div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div></div></details>
+<details class="adm" id="adA"><summary><span class="ai" aria-hidden="true">🔔</span><b>Наблюдатели и утверждения</b><small id="adsA"></small></summary><div class="adb">
+<div id="apl"></div>
+<div class="lbl f">Наблюдатели</div><div id="obl"></div>
+<div class="acts"><button class="p" data-a="obnew">＋ Добавить наблюдателя</button></div>
+<p class="small">У каждого наблюдателя свой вход (имя + пароль). Вы сами отмечаете, какие разделы он видит. Любое его действие приходит вам и вступает в силу только после «Утвердить». Чтобы сразу закрыть доступ — выключите или удалите наблюдателя.</p>
+</div></details>
+<details class="adm" id="adS"><summary><span class="ai" aria-hidden="true">🛡</span><b>Сессии и доступ</b><small id="adsS"></small></summary><div class="adb">
+<p class="small">Каждый заходит со своим именем и личным паролем. Сотрудник без пароля не видит ничего. Пароль повару ставится в «Команда» кнопкой 🔑.</p>
+<div class="acts"><button class="d" data-a="geall">🚪 Выйти на всех телефонах</button></div>
+<p class="small">Все телефоны (включая этот) попросят войти заново. Используйте, если телефон потерян или сотрудник уволен.</p></div></details>
+<details class="adm" id="adW"><summary><span class="ai" aria-hidden="true">🔐</span><b>Пароль руководителя</b></summary><div class="adb">
+<input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
+<div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
+<div class="adg"><span aria-hidden="true">🍳</span>Кухня и работа</div>
+<details class="adm" id="adP"><summary><span class="ai" aria-hidden="true">✅</span><b>Заготовки и банкеты</b><small id="adsB"></small></summary><div class="adb">
+<div class="acts" style="margin-top:0"><button data-a="catmgr">🏷️ Категории заготовок</button><button data-a="ttkmgr">📖 ТТК блюд</button></div>
+<div class="lbl f">Банкеты — уведомления и заготовки</div>
+<div class="small" style="margin:0 0 8px">За сколько дней до банкета показывать его в списке заготовок и в уведомлении сверху. Например, «за 2 дня»: в четверг видны банкеты пятницы и субботы.</div>
+<div class="chips wrap" id="bqlc"><button class="chip" data-a="bqlset" data-id="1">за 1 день</button><button class="chip" data-a="bqlset" data-id="2">за 2 дня</button><button class="chip" data-a="bqlset" data-id="3">за 3 дня</button></div></div></details>
+<details class="adm" id="adC"><summary><span class="ai" aria-hidden="true">📦</span><b>Каталог товаров</b><small id="adsC"></small></summary><div class="adb">
+<div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
+<p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p></div></details>
+<details class="adm" id="adD"><summary><span class="ai" aria-hidden="true">🕕</span><b>Кухонный день</b><small id="adsD"></small></summary><div class="adb">
+<div class="lbl">Начало дня</div>
+<div class="small" style="margin:0 0 8px">Когда в приложении начинается новый день: переносятся невыполненные заготовки, меняется «Завтра на смену» и дата поставки.</div>
+<div class="chips wrap" id="dsl"><button class="chip" data-a="dsset" data-id="0">00:00 · полночь</button><button class="chip" data-a="dsset" data-id="3">03:00</button><button class="chip" data-a="dsset" data-id="5">05:00</button><button class="chip" data-a="dsset" data-id="6">06:00</button></div>
+<div class="lbl f">Часы работы кухни</div>
+<div class="small" style="margin:0 0 8px">Показываются в блоке «Завтра». Закрытие ночью (например, 02:00 или 05:00) относится к тому же рабочему дню.</div>
+<div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div></div></details>
+<div class="adg"><span aria-hidden="true">📲</span>Связь и устройства</div>
+<details class="adm" id="adN"><summary><span class="ai" aria-hidden="true">🔔</span><b>Уведомления</b><small id="adsN"></small></summary><div class="adb">
+<div id="ntbox"></div></div></details>
+<details class="adm" id="adG"><summary><span class="ai" aria-hidden="true">📱</span><b>Телефоны и устройства</b><small id="adsG"></small></summary><div class="adb">
+<div id="phbox"></div></div></details>
+<div class="adg"><span aria-hidden="true">💾</span>Данные и безопасность</div>
 <details class="adm" id="adR"><summary><span class="ai" aria-hidden="true">♻️</span><b>Корзина и восстановление</b><small id="adsR"></small></summary><div class="adb">
 <div class="small">Всё, что удаляют в приложении, лежит здесь 60 дней: заказы, заготовки, банкеты, списания. Нажмите «Вернуть», и запись появится на прежнем месте.</div>
-<div id="trl"></div>
+<div id="trbk"></div><div id="trl"></div>
 <div class="acts"><button class="g" data-a="trload">↻ Обновить</button></div>
 <div class="lbl f">Удалили раньше? Вернуть заказ из сообщения</div>
 <div class="small">Вставьте текст заказа из мессенджера («🧾 Заказ на …»). Можно сразу несколько сообщений.</div>
@@ -178,41 +219,6 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="acts"><button class="p" data-a="trparse">Проверить текст</button><button class="g" data-a="trfile">📂 Из файла копии…</button></div>
 <input type="file" id="trfi" accept=".json,application/json" hidden>
 </div></details>
-<details class="adm" id="adA"><summary><span class="ai" aria-hidden="true">🔔</span><b>Наблюдатели и утверждения</b><small id="adsA"></small></summary><div class="adb">
-<div id="apl"></div>
-<div class="lbl f">Наблюдатели</div><div id="obl"></div>
-<div class="acts"><button class="p" data-a="obnew">＋ Добавить наблюдателя</button></div>
-<p class="small">У каждого наблюдателя свой вход (имя + пароль). Вы сами отмечаете, какие разделы он видит. Любое его действие приходит вам и вступает в силу только после «Утвердить». Чтобы сразу закрыть доступ — выключите или удалите наблюдателя.</p>
-<details class="oblg"><summary>Старый наблюдатель (один общий, viewer@vip.local)</summary>
-<div class="lbl f">Пользователь-наблюдатель</div><div id="obcfg"><input id="obn" maxlength="40" placeholder="Имя наблюдателя (видно в правках)" autocomplete="off">
-<select id="obm" aria-label="Режим"><option value="view">Только просмотр</option><option value="edit">Может править — с моим утверждением</option></select>
-<label class="chk"><input type="checkbox" id="obo" checked> Доступ включён</label>
-<div class="acts"><button class="p" data-a="obssave">Сохранить</button></div></div>
-<div class="lbl f">Создать аккаунт (один раз)</div><input id="obp" type="password" placeholder="Пароль наблюдателя (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obscreate">Создать аккаунт viewer@vip.local</button></div>
-<p class="small">Старый общий вход оставлен для совместимости. Лучше создайте нового наблюдателя выше (например «Владелец»), а старый — отключите.</p></details></div></details>
-<details class="adm" id="adT" open><summary><span class="ai" aria-hidden="true">👥</span><b>Команда</b><small id="adsT"></small></summary><div class="adb">
-<div id="tl"></div>
-<div class="row2"><input id="tn" placeholder="Имя" maxlength="40"><input id="tr" placeholder="Должность" maxlength="40"></div>
-<div class="acts"><button class="p" data-a="addcook">Добавить в команду</button></div></div></details>
-<details class="adm" id="adN"><summary><span class="ai" aria-hidden="true">🔔</span><b>Уведомления</b><small id="adsN"></small></summary><div class="adb">
-<div id="ntbox"></div></div></details>
-<details class="adm" id="adG"><summary><span class="ai" aria-hidden="true">📱</span><b>Телефоны и устройства</b><small id="adsG"></small></summary><div class="adb">
-<div id="phbox"></div></div></details>
-<details class="adm" id="adC"><summary><span class="ai" aria-hidden="true">📦</span><b>Каталог товаров</b><small id="adsC"></small></summary><div class="adb">
-<div class="acts" style="margin-top:0"><button id="edb" data-a="toggled">Режим правки товаров: выкл</button><button id="unh" data-a="unhide">Вернуть скрытые (0)</button></div>
-<p class="small">В режиме правки у каждого товара появляются ✎ (название и единица) и ✕ (удалить). Изменения сразу видят все.</p></div></details>
-<details class="adm" id="adP"><summary><span class="ai" aria-hidden="true">✅</span><b>Заготовки и банкеты</b><small id="adsB"></small></summary><div class="adb">
-<div class="acts" style="margin-top:0"><button data-a="catmgr">🏷️ Категории заготовок</button></div>
-<div class="lbl f">Банкеты — уведомления и заготовки</div>
-<div class="small" style="margin:0 0 8px">За сколько дней до банкета показывать его в списке заготовок и в уведомлении сверху. Например, «за 2 дня»: в четверг видны банкеты пятницы и субботы.</div>
-<div class="chips wrap" id="bqlc"><button class="chip" data-a="bqlset" data-id="1">за 1 день</button><button class="chip" data-a="bqlset" data-id="2">за 2 дня</button><button class="chip" data-a="bqlset" data-id="3">за 3 дня</button></div></div></details>
-<details class="adm" id="adD"><summary><span class="ai" aria-hidden="true">🕕</span><b>Кухонный день</b><small id="adsD"></small></summary><div class="adb">
-<div class="lbl">Начало дня</div>
-<div class="small" style="margin:0 0 8px">Когда в приложении начинается новый день: переносятся невыполненные заготовки, меняется «Завтра на смену» и дата поставки.</div>
-<div class="chips wrap" id="dsl"><button class="chip" data-a="dsset" data-id="0">00:00 · полночь</button><button class="chip" data-a="dsset" data-id="3">03:00</button><button class="chip" data-a="dsset" data-id="5">05:00</button><button class="chip" data-a="dsset" data-id="6">06:00</button></div>
-<div class="lbl f">Часы работы кухни</div>
-<div class="small" style="margin:0 0 8px">Показываются в блоке «Завтра». Закрытие ночью (например, 02:00 или 05:00) относится к тому же рабочему дню.</div>
-<div class="hrs"><div class="hr1"><b>Вс–Чт</b><input id="hwo" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, воскресенье–четверг"><span>—</span><input id="hwc" data-tm data-hr="hw" inputmode="numeric" maxlength="5" placeholder="02:00" aria-label="Закрытие, воскресенье–четверг"></div><div class="hr1"><b>Пт, Сб</b><input id="hfo" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="12:00" aria-label="Открытие, пятница и суббота"><span>—</span><input id="hfc" data-tm data-hr="hf" inputmode="numeric" maxlength="5" placeholder="05:00" aria-label="Закрытие, пятница и суббота"></div></div></div></details>
 <details class="adm" id="adK"><summary><span class="ai" aria-hidden="true">💾</span><b>Данные и копия</b><small id="adsK"></small></summary><div class="adb">
 <div class="small bkl" id="bkinfo" style="margin:0 0 8px"></div>
 <div class="acts" style="margin-top:0"><button class="p" data-a="backup">💾 Скачать копию всех данных</button></div>
@@ -220,19 +226,22 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl f">Ошибки устройств</div><div class="small" id="errinfo" style="margin:0 0 8px"></div>
 <div class="acts" style="margin-top:0"><button data-a="errshow">Показать</button><button data-a="errcopy">Копировать</button><button class="d" data-a="errclear">Очистить</button></div>
 <pre class="errbox" id="errbox" hidden></pre></div></details>
-<details class="adm" id="adS"><summary><span class="ai" aria-hidden="true">🛡</span><b>Сессии и доступ</b><small id="adsS"></small></summary><div class="adb">
-<p class="small">Каждый заходит со своим именем и личным паролем. Сотрудник без пароля не видит ничего. Пароль повару ставится в «Команда» кнопкой 🔑.</p>
-<div class="acts"><button class="d" data-a="geall">🚪 Выйти на всех телефонах</button></div>
-<p class="small">Все телефоны (включая этот) попросят войти заново. Используйте, если телефон потерян или сотрудник уволен.</p></div></details>
-<details class="adm" id="adW"><summary><span class="ai" aria-hidden="true">🔐</span><b>Пароль руководителя</b></summary><div class="adb">
-<input id="npw" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password">
-<div class="acts"><button data-a="setpw">Сменить пароль</button></div></div></details>
 <div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
-<dialog id="da"><form id="daf" autocomplete="on"><div id="accs" class="accs" hidden></div><h2 id="dah">Вход для руководителя</h2><div class="seg" id="dar"><button type="button" class="on" data-a="loginrole" data-id="adm">Руководитель</button><button type="button" data-a="loginrole" data-id="obs">Наблюдатель</button></div><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
+<dialog id="da"><form id="daf" autocomplete="on"><div id="accs" class="accs" hidden></div><h2 id="dah">Вход для руководителя</h2><input id="au" type="text" name="username" autocomplete="username" value="admin@vip.local" readonly aria-label="Логин" class="lgn"><input id="ap" type="password" name="password" placeholder="Пароль" autocomplete="current-password" aria-label="Пароль"><div class="acts"><button class="p" type="submit" data-a="login">Войти</button><button class="g" type="button" data-a="close">Отмена</button></div><p class="small">Пароль запоминается на этом устройстве: повторно вводить не придётся.</p></form></dialog>
 <dialog id="dimg" class="dimg"><h2>Заказ — лист A4</h2><div class="imw"><div class="imgbusy" id="imgbusy" hidden><i class="spin"></i><span>Готовлю лист A4…</span></div><img id="imgp" alt="Заказ на листе A4"></div><p class="small">Весь заказ на одной странице. «Поделиться» открывает WhatsApp, VK и другие приложения для отправки.</p><div class="acts"><button class="p" data-a="imgshare">📤 Поделиться</button><button data-a="imgpdf">📄 PDF A4</button></div><div class="acts"><button data-a="imgsave">⬇ Скачать</button><button data-a="imgcopy">📋 Копировать</button><button class="g" data-a="imgclose">Закрыть</button></div></dialog>
 <dialog id="dobe"><h2 id="obeh">Наблюдатель</h2><div class="lbl f">Имя (для входа и в запросах)</div><input id="oben" maxlength="40" autocomplete="off" placeholder="Например: Владелец, Официант Анна"><div class="lbl f">Пароль</div><input id="obep" type="password" autocomplete="new-password" placeholder="Пароль (от 6 символов)"><div class="lbl f">Что может делать</div><select id="obem" aria-label="Режим"><option value="view">Только смотреть</option><option value="edit">Правки — с утверждением</option></select><div class="lbl f">Какие разделы видит</div><div class="obsec" id="obesec"><label class="chk"><input type="checkbox" data-obv="ord"> 🧾 Заказ и история заказов</label><label class="chk"><input type="checkbox" data-obv="prep"> ✅ Заготовки</label><label class="chk"><input type="checkbox" data-obv="bq"> 🎉 Банкеты</label><label class="chk"><input type="checkbox" data-obv="sched"> 📅 График и смены</label><label class="chk"><input type="checkbox" data-obv="wo"> 🗑️ Списание</label><label class="chk"><input type="checkbox" data-obv="recv"> 📦 Приёмка и «Не привезли»</label></div><div class="lbl f">Доступ</div><label class="chk"><input type="checkbox" id="obeon" checked> Доступ включён</label><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="p" data-a="obesave">Сохранить</button></div><div class="acts"><button class="d" id="obedel" data-a="obedel" hidden>Удалить наблюдателя</button></div></dialog>
 <dialog id="dobs"><h2>👁 Наблюдатель</h2><p class="small" id="obst"></p><div id="obsl"></div><div class="lbl f">Сменить пароль</div><input id="onp" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"><div class="acts"><button data-a="obspw">Сменить пароль</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button><button class="d" data-a="logout">Выйти</button></div></dialog>
 <dialog id="dcat"><h2>Категории заготовок</h2><div id="catl"></div><div class="lbl f">Новая категория</div><div class="row2 catnew"><input id="catE" maxlength="4" placeholder="🍕" aria-label="Значок"><input id="catN" maxlength="30" placeholder="Например, Пицца" aria-label="Название" autocomplete="off"></div><div class="emo" id="cemo"></div><div class="acts"><button class="p" data-a="catadd">＋ Добавить</button><button class="g" data-a="close">Закрыть</button></div><p class="small">Новая категория сразу появляется у всех поваров в фильтрах и при выборе категории заготовки. Умная классификация учится: после того как вы отнесёте заготовку сюда, похожие названия будут попадать в эту категорию сами. Базовые категории удалить нельзя.</p></dialog>
+<dialog id="dttk"><h2>📖 ТТК блюд</h2><p class="small" style="margin:0 0 8px">Технологические карты: из чего и сколько грамм или штук на 1 порцию. Когда банкет приходит с сайта предзаказов, приложение само считает заготовки (количество блюд × норма) и кладёт их в «Основные заготовки» по блюдам.</p><div class="acts" style="margin-top:0"><button id="ttkon" data-a="ttkauto" class="ttkon"></button></div><input id="ttkq" type="search" placeholder="Найти блюдо…" autocomplete="off" aria-label="Поиск блюда"><div id="ttkl"></div><div class="acts"><button class="p" data-a="ttknew">＋ Блюдо</button><button data-a="ttkimp">📥 Вставить текст ТТК</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dttd"><h2 id="tdh">Блюдо в ТТК</h2><label class="fl"><span>Название (как на сайте предзаказов)</span><input id="tdn" maxlength="80" autocomplete="off" placeholder="Например, Цезарь с курицей"></label><label class="fl"><span>Категория</span><input id="tdc" maxlength="40" list="tdcl" autocomplete="off" placeholder="Например, САЛАТЫ"></label><datalist id="tdcl"></datalist><div class="lbl f">Когда готовить</div><div class="chips wrap" id="tdld"></div><label class="fl"><span>Заметка</span><input id="tdnt" maxlength="200" autocomplete="off" placeholder="Например, готовится за 1–2 дня, хранится в холодильнике"></label><div class="lbl f">Состав на 1 порцию</div><div id="tdi"></div><div class="acts"><button data-a="ttadd">＋ Компонент</button></div><div class="acts"><button class="p" data-a="ttdsave">Сохранить</button><button class="d" id="tddel" data-a="ttkdel">🗑 Удалить</button><button class="g" data-a="close">Закрыть</button></div></dialog>
+<dialog id="dtti"><h2>📥 Вставить текст ТТК</h2><p class="small" style="margin:0 0 8px">Вставьте ТТК текстом. Заголовок группы — отдельной строкой (САЛАТЫ), название блюда — строкой, состав — строками с «−» и граммами:</p><pre class="ttex">САЛАТЫ
+Цезарь с курицей
+- Куриное бедро 80 г
+- Айсберг 60 г
+- Соус цезарь — 40 г
+Водка сет | за 1 день
+- Сало 30 г</pre><textarea id="ttit" rows="9" placeholder="Вставьте текст ТТК сюда" aria-label="Текст ТТК"></textarea><div class="acts"><button class="p" data-a="ttiparse">Разобрать</button><button class="g" data-a="close">Закрыть</button></div><div id="ttip"></div></dialog>
+<dialog id="dttl"><h2>Привязать к ТТК</h2><p class="small" style="margin:0 0 8px">Блюдо из банкета: <b id="ttln"></b>. Выберите карточку ТТК — дальше оно будет считаться само.</p><input id="ttlq" type="search" placeholder="Найти блюдо…" autocomplete="off" aria-label="Поиск блюда"><div id="ttlk"></div><div class="acts"><button data-a="ttmk">＋ Создать карточку с этим названием</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dq"><h2>Новая группа заготовок</h2><input id="qgn" maxlength="40" placeholder="Например, Банкет 15 ноября"><div class="acts"><button class="p" data-a="qaddg">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dl"><h2 id="lltitle">Добавить заготовку в архив</h2><div class="lbl">Название</div><input id="llt" maxlength="80" placeholder="Например, Соус заготовленный"><div class="row2"><div><div class="lbl">Количество</div><input id="llq" maxlength="20" placeholder="Например, 2 кг"></div><div><div class="lbl">Группа</div><select id="llg"></select></div></div><div class="lbl" style="margin-top:8px">Категория</div><select id="llc"></select><div class="acts"><button class="p" data-a="libsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="du"><h2 id="utitle">Username</h2><div class="lbl">Username (для упоминания в сообщении)</div><input id="uu" maxlength="40" placeholder="например, ali_cook" autocapitalize="off" autocomplete="off"><div class="acts"><button class="p" data-a="usave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
@@ -276,8 +285,9 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="row2"><div><div class="lbl">Группа</div><select id="pc"></select></div><div><div class="lbl">Единица</div><select id="pu"></select></div></div>
 <div class="acts"><button class="p" data-a="addprod">Добавить в каталог</button><button class="g" data-a="close">Отмена</button></div></dialog>
 
-<dialog id="dg"><h2 id="dgh">Новая группа</h2><div class="row2 catnew"><input id="gne" maxlength="4" placeholder="📦" aria-label="Значок" autocomplete="off"><input id="gn" maxlength="40" placeholder="Например, напитки" aria-label="Название" autocomplete="off"></div><div class="lbl f">Выберите значок</div><div class="emo" id="gemo"></div><div class="acts"><button class="p" id="dgok" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
+<dialog id="dg"><h2 id="dgh">Новая группа</h2><div class="row2 catnew"><input id="gne" maxlength="4" placeholder="📦" aria-label="Значок" autocomplete="off"><input id="ggn" maxlength="40" placeholder="Например, напитки" aria-label="Название" autocomplete="off"></div><div class="lbl f">Выберите значок</div><div class="emo" id="gemo"></div><div class="acts"><button class="p" id="dgok" data-a="addgrp">Создать</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <div class="tg" id="tg" role="status"></div>
+<div class="unpill" id="unpill" hidden><button class="unb" data-a="undo" aria-label="Отменить последнее действие"><span class="uni" aria-hidden="true">↩</span><span class="unt"><b>Отменить</b><small id="unm"></small></span></button><button class="unx" data-a="unclose" aria-label="Скрыть">✕</button></div><button class="unfab" id="unfab" data-a="unshow" aria-label="Отменить последнее" hidden><span aria-hidden="true">↩</span><i id="unn"></i></button>
 
 <script src="config.js" defer></script>
 <script src="app.js" defer></script>
