@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.13';
+const VER='9.9.14';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -208,7 +208,8 @@ try{do{while(L.out.length){const o=L.out[0];try{await api(o.m,o.p,o.b)}catch(e){
 if([401,403].includes(e.status)){L.out.shift();ST.lastErr=`HTTP ${e.status} · ${o.m} ${o.p}`;if(/^receipts\//.test(o.p)){ST.err=ST.lastErr;toast('Приёмка не сохранена: опубликуйте новые правила Firebase (файл firebase-rules.json)')}else{L.hold=L.hold||[];L.hold.push(o);if(L.hold.length>60)L.hold.shift();denied++}saveL();setSt();sessCheck();continue}throw e}ST.err='';failures=0;retryAt=0;if(o.p.indexOf('orders/')===0&&o.b&&o.b.copied===true)wkPoke();L.out.shift();saveL()}await bumpMeta()}while(L.out.length);
 if(denied){snd.warn();toast('Часть изменений требует входа руководителя — они сохранены и отправятся после входа')}}catch{failures++;retryAt=Date.now()+Math.min(60000,1000*Math.pow(2,Math.min(failures-1,6)))}fl=0;setSt()}
 function mut(m,p,v){if(isObs())return OBS_DIV.test(p)&&!OBS_FREE.test(p)?propose(m,p,v):0;let u=null;try{u=ujBefore(m,p,v)}catch(e){}try{trashCap(m,p,v)}catch(e){}const r=mut0(m,p,v);try{if(u)ujAfter(u)}catch(e){}return r}
-function mut0(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken&&p.indexOf('trash/')!==0){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}saveL();setSt();flush()}
+var MBATCH=0;// 9.9.14: пачка записей — один saveL/flush на всю пачку
+function mut0(m,p,v){put('/'+p,m==='DELETE'?null:v,m==='PATCH');dirty(p.split('/')[0]);if(DEMO){LS.set('vip3-cache',DATA);return}L.out.push({m,p,b:v,at:Date.now()});if(!metaBroken&&p.indexOf('trash/')!==0){const k=mkey(p);if(L.mt.indexOf(k)<0)L.mt.push(k)}if(MBATCH)return;saveL();setSt();flush()}
 const ES={};
 function listen(key,prefix,q){if(DEMO||!DB||!window.EventSource||!AU.rt)return;const route=prefix+'|'+(q||'');if(ES[key]&&ES[key].__route===route&&ES[key].readyState!==2)return;if(ES[key])ES[key].close();
 const ph={__route:route,readyState:0,close(){this.__x=1;this.readyState=2}};ES[key]=ph;ST.open[key]=false;
@@ -2277,10 +2278,30 @@ if(mk&&!o.force)return;
 W('PUT',`prep/${P}/${tid}`,{t:c.n,q,g:'main',k:'other',ks:'user',c:Date.now()+ci,src:'ttk',tk:r.did,tkn:r.dish.n,tkb:b.id,tkd:D,tks:r.id,tkc:r.n,tkq:q,pn});res.made++;any=1});
 if(!mk||(any&&mk!==P))W('PUT',`prepMeta/${D}/tg/${r.box}`,P)}}
 return res}
-function ttSoon(){clearTimeout(TTT);TTT=setTimeout(()=>{try{ttSeedAuto()}catch(e){console.error('ttSeed',e)}try{autoTtk()}catch(e){console.error('autoTtk',e)}},500)}
+function ttSoon(){clearTimeout(TTT);TTT=setTimeout(()=>{try{ttSeedAuto()}catch(e){console.error('ttSeed',e)}try{ttClean()}catch(e){console.error('ttClean',e)}try{autoTtk()}catch(e){console.error('autoTtk',e)}},500)}
 function autoTtk(){if(isObs()||DEMO||!DB||tab!=='prep'||rangePend()||!bqRangeOk||TT.busy)return;
 if(!String(MV.ttk||'').startsWith('ttk|')||!(DATA.ttk&&DATA.ttk.d))return;if(!ttAuto())return;
 TT.busy=1;try{const r=ttRun({raw:1});if(r.made||r.upd||r.mv){try{rPrep();rBq()}catch(e){}}}finally{TT.busy=0}}
+// ---- 9.9.14: «осиротевшие» заготовки — заказ удалён на сайте предзаказов (или банкет/блюдо удалили вручную) ----
+// Заготовка ТТК осиротела, если блюда-источника (prep/<дата банкета>/<tks>) больше нет. Нетронутые (никто не взял, не отметил, количество не правили) убираются сами
+// вместе с меткой prepMeta/<дата банкета>/tg/<хэш> — если заказ вернётся, заготовки пересоздадутся. Тронутые остаются с предупреждением «блюда уже нет в банкете».
+var OR={sig:'',at:0,tm:0};
+function ttOrph(){const today=dAdd(0),end=dAdd(BQ_SPAN,today),pr=DATA.prep||{},tgs=new Map(),del=[];let kept=0;
+for(const day of Object.keys(pr)){if(!RXD.test(day))continue;const m=pr[day];if(!m||typeof m!=='object')continue;
+for(const id of Object.keys(m)){const t=m[id];if(!t||typeof t!=='object'||!t.tk||!t.tkd||!t.tks||t.tkd<today||t.tkd>end)continue;
+const sm=pr[t.tkd];if(sm&&typeof sm==='object'&&sm[t.tks])continue;
+if(t.done||t.by||t.dq>0||t.q!==t.tkq){kept++;continue}
+del.push(`prep/${day}/${id}`);
+if(t.tkb!==undefined&&t.tkb!==null){const bx=fnv36(t.tkd+'|'+t.tkb+'|'+t.tks),tg=((((DATA.prepMeta||{})[t.tkd])||{}).tg)||{};if(tg[bx]!==undefined)tgs.set(`prepMeta/${t.tkd}/tg/${bx}`,1)}}}
+return{del,tg:[...tgs.keys()],kept}}
+function ttClean(){if(isObs()||DEMO||!DB||tab!=='prep'||!bqRangeOk||rangePend()||TT.busy||MS.k||!String(MV.prepUp||'').startsWith('prep|')||!String(MV.prepMetaUp||'').startsWith('prepMeta|')){OR.sig='';return}
+const o=ttOrph();if(!o.del.length){OR.sig='';return}
+const sig=o.del.length+'|'+o.del[0]+'|'+o.del[o.del.length-1],now=Date.now();
+// страховка от «ложной сироты»: то же самое должно быть видно и через ≥4 с (данные догрузились, запись не в пути)
+if(OR.sig!==sig){OR.sig=sig;OR.at=now;clearTimeout(OR.tm);OR.tm=setTimeout(ttSoon,4600);return}
+if(now-OR.at<4000){clearTimeout(OR.tm);OR.tm=setTimeout(ttSoon,4200-(now-OR.at)+400);return}
+OR.sig='';TT.busy=1;try{MBATCH=1;try{o.del.forEach(p=>mut0('DELETE',p));o.tg.forEach(p=>mut0('DELETE',p))}finally{MBATCH=0}saveL();setSt();flush();
+toast('🧹 Блюд уже нет в банкете — убрано заготовок: '+o.del.length);try{rPrep();rBq()}catch(e){}}finally{TT.busy=0}}
 // ---- «Основные заготовки»: коробки по блюдам ----
 function ttOpen(k,n,fin){return TT.open.has(k)?true:TT.shut.has(k)?false:TT.def!==null?TT.def:fin?false:n<=4}
 function ttIds(k){const kk=String(k);return Object.entries(dm()).filter(([id,t])=>t&&t.tk&&(kk.startsWith('P_')?'P_'+fnv36(ttPk(t.t))===kk:ttBKey(t)===kk)).map(([id])=>id)}
