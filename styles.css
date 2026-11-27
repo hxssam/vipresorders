@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.15"}
+:root{--vip-ver:"9.9.17"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1313,7 +1313,7 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 .ttk-dh{margin-top:16px;color:var(--ok)}
 @media(prefers-reduced-motion:reduce){.unfab.pop{animation:none!important}}
 
-/* ===== 9.9.15: одно блюдо из нескольких банкетов — один блок; одинаковые компоненты — одна строка с общим количеством ===== */
+/* ===== 9.9.17: одно блюдо из нескольких банкетов — один блок; одинаковые компоненты — одна строка с общим количеством ===== */
 .ttk-h small.ttk-bq{flex:1 1 100%;color:var(--tx);font-weight:700;font-size:13px;margin-top:1px}
 .ttk-h small.ttk-bq.w{color:var(--wa)}
 .ttm{margin:0 0 6px}
@@ -1332,7 +1332,7 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 .ttm.fin>summary .ttk-p{color:var(--ok)}
 .ttm .ttm-pt{display:inline-block;white-space:nowrap;margin-right:10px}
 
-/* ===== 9.9.15: шапка — спокойная, под вырез/Dynamic Island: логотип + название (никогда не скрываются) + значки в одном стиле; тема/невидимка/история — в меню «⋯» ===== */
+/* ===== 9.9.17: шапка — спокойная, под вырез/Dynamic Island: логотип + название (никогда не скрываются) + значки в одном стиле; тема/невидимка/история — в меню «⋯» ===== */
 #hdr#hdr{position:relative;display:flex;flex-wrap:nowrap;align-items:center;gap:5px;padding:8px 0 8px;min-height:60px}
 #hdr#hdr>.logo{flex:none;position:relative;z-index:1}
 #hdr#hdr>.logo img{height:44px;width:auto;display:block;filter:drop-shadow(0 2px 8px #0006)}
@@ -1374,3 +1374,31 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 @media print{#hdr .hmenu{display:none!important}}
 .hmenu .hmi{opacity:1!important;filter:none!important;margin:0!important}
 .hmenu .hmi.ghb:not(.on){color:var(--tx)}
+
+/* ===== 9.9.17: «приготовлено N из M порций» — отметка на блюдо, остаток по компонентам ===== */
+.ttk-h small.ttk-pp{flex:1 1 100%;color:var(--ok);font-weight:800;font-size:13px;margin-top:1px}
+#vPrep .ttp{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:2px 12px;width:100%;margin:0 0 10px;padding:12px 14px 13px;min-height:56px;border:1.5px solid color-mix(in srgb,var(--ac) 28%,var(--ln));border-radius:14px;background:color-mix(in srgb,var(--ac) 7%,var(--sf));color:var(--tx);font:inherit;text-align:left;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;box-shadow:none}
+#vPrep .ttp:active{transform:scale(.985)}
+#vPrep div.ttp{cursor:default}
+#vPrep .ttp .ttp-t{font-size:14px;font-weight:700;color:var(--mu);line-height:1.25}
+#vPrep .ttp:not(.on) .ttp-t{font-size:15px;font-weight:800;color:var(--tx)}
+#vPrep .ttp:not(.on) .ttp-v{font-size:19px}
+#vPrep .ttp .ttp-v{font-size:22px;font-weight:900;letter-spacing:.2px;line-height:1.1;color:var(--ac);white-space:nowrap}
+#vPrep .ttp.on .ttp-v{color:var(--ok)}
+#vPrep .ttp .ttp-r{grid-column:1/-1;font-size:13px;font-weight:800;color:var(--wa)}
+#vPrep .ttp .ttp-bar{grid-column:1/-1;display:block;height:6px;border-radius:3px;background:var(--ln);overflow:hidden;margin-top:4px}
+#vPrep .ttp .ttp-bar i{display:block;height:100%;background:var(--ok);border-radius:3px}
+#vPrep .ttp .ttp-a{align-self:center;font-size:22px;font-weight:700;color:var(--mu);line-height:1}
+#dpp .tkrow{display:flex;align-items:center;gap:10px}
+#dpp .st input{width:96px;text-align:center;font-size:26px;font-weight:800;height:52px}
+#dpp .st button{width:52px;height:52px}
+#dpp #ppu{font-size:16px;color:var(--mu)}
+#dpp .chip{min-height:40px;min-width:44px}
+#dpp .ppl{margin-top:10px;max-height:32vh;overflow:auto;-webkit-overflow-scrolling:touch}
+#dpp .ppl:empty{display:none}
+#dpp .ppi{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;padding:8px 2px;border-top:1px solid var(--ln)}
+#dpp .ppi:first-child{border-top:0}
+#dpp .ppi span{font-weight:700;font-size:15px;line-height:1.25}
+#dpp .ppi b{font-size:16px;font-weight:900;color:var(--wa);white-space:nowrap}
+#dpp .ppi small{grid-column:1/-1;color:var(--mu);font-size:12.5px}
+@media(max-width:380px){#dpp .st button{min-width:40px;min-height:40px}}

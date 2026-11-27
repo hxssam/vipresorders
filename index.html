@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="vip-ver" content="9.9.15">
+<meta name="vip-ver" content="9.9.17">
 <meta name="theme-color" content="#4338ca" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0d17" media="(prefers-color-scheme: dark)">
 <script>try{var d=document.documentElement,g=localStorage.getItem("vip3-gate"),r=localStorage.getItem("vip3-rt");if(g!=="\"2\""||!r||r==="\"\"")d.className+=" locked"}catch(e){document.documentElement.className+=" locked"}</script>
@@ -153,7 +153,7 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="lbl f">Примечание</div><input id="dxt" maxlength="120" placeholder="Вес или примечание (необязательно)" autocomplete="off">
 <div class="acts"><button class="p" data-a="xsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div>
 <div class="acts" id="dxd" hidden><button class="d" data-a="xdel">🗑 Удалить позицию</button></div></dialog>
-<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button></div></dialog>
+<dialog id="dwho" class="whog" aria-labelledby="whoh"><picture class="logo"><source srcset="logo.png" media="(prefers-color-scheme: dark)"><img src="logo-ink.png" width="34" height="44" alt="ВИАЙПИ" decoding="async"></picture><h2 id="whoh">Кто вы?</h2><p class="small whos">Выберите своё имя — приложение будет знать, кто сейчас работает: чьи заказы, заготовки и смены.</p><p class="small whoa" id="whoa" hidden></p><div id="whol"></div><div class="acts"><button class="g" data-a="whoskip">Пропустить</button></div></dialog>
 <dialog id="dbt"><h2>🎉 Банкеты вместе</h2><div id="dbtb"></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="drs"><h2>Лист приёмки</h2><div id="drsb"></div><div class="acts rc-share"><button class="p" data-a="rcpdf">📄 PDF</button><button data-a="rccsv">📊 Excel</button><button data-a="rctext">📋 Копировать</button><button id="rcsend" data-a="rcsend" hidden>↗ Отправить текст</button></div><div class="acts"><button class="g" data-a="close">Закрыть</button></div></dialog>
 <dialog id="dth"><h2>Тема оформления</h2><div class="thopts" role="radiogroup" aria-label="Тема оформления">
@@ -265,6 +265,13 @@ var chk=function(){if(!W.__vipBoot)W.__vipHeal('boot')};addEventListener('load',
 <div class="dqbar"><i id="dqfill"></i></div><div class="dqrem" id="dqr"></div>
 <div class="chips wrap" id="dqch" style="margin-top:10px"></div>
 <div class="acts"><button class="p" data-a="dqsave">Сохранить</button><button class="g" data-a="close">Отмена</button><button class="g" data-a="dqedit">✎ Заготовка</button></div></dialog>
+<dialog id="dpp" aria-label="Сколько порций приготовлено"><h2 id="pph">Сколько порций приготовлено?</h2>
+<div class="small" id="ppn"></div>
+<div class="tkrow" style="margin-top:10px"><div class="st"><button data-a="ppdec" aria-label="Меньше">−</button><input id="ppv" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Приготовлено порций"><button data-a="ppinc" aria-label="Больше">+</button></div><b id="ppu">порций</b></div>
+<div class="dqbar"><i id="ppfill"></i></div><div class="dqrem" id="ppr"></div>
+<div class="chips wrap" id="ppch" style="margin-top:10px"></div>
+<div class="ppl" id="ppl"></div>
+<div class="acts"><button class="p" data-a="ppsave">Сохранить</button><button class="g" data-a="close">Отмена</button></div></dialog>
 <dialog id="dpk" aria-label="Выбор даты"><h2 id="dph">Выберите дату</h2>
 <div class="dpk-n"><button type="button" class="g" data-a="dpmon" data-id="-12" aria-label="Год назад">«</button><button type="button" class="g" data-a="dpmon" data-id="-1" aria-label="Предыдущий месяц">‹</button><b id="dpt" aria-live="polite"></b><button type="button" class="g" data-a="dpmon" data-id="1" aria-label="Следующий месяц">›</button><button type="button" class="g" data-a="dpmon" data-id="12" aria-label="Год вперёд">»</button></div>
 <div class="dpk-w" aria-hidden="true"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span class="we">сб</span><span class="we">вс</span></div>
