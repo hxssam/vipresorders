@@ -3,7 +3,7 @@ if(!window.HTMLDialogElement||typeof HTMLDialogElement.prototype.showModal!=='fu
 const CFG=Object.assign({dbUrl:'',projectId:'',apiKey:'',adminEmail:'admin@vip.local'},window.CONFIG||{});
 const DEMO=!(CFG.dbUrl||CFG.projectId)||!CFG.apiKey;let DB=String(CFG.dbUrl||'').replace(/\/+$/,'');
 const $=s=>document.querySelector(s),on=(s,t,...a)=>{const e=document.querySelector(s);if(e)e.addEventListener(t,...a)},dialogOpen=id=>$(id).hasAttribute('open'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),cssEsc=s=>window.CSS&&CSS.escape?CSS.escape(String(s)):String(s).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
-const VER='9.9.14';
+const VER='9.9.15';
 if(!window.__vipHeal)window.__vipHeal=why=>{try{const n=Date.now(),l=+localStorage.getItem('vip3-heal')||0;if(why!=='manual'&&n-l<6e5)return;localStorage.setItem('vip3-heal',String(n))}catch{}
 fetch('manifest.webmanifest?vh='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;const P=[];try{if(navigator.serviceWorker)P.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(x=>x.unregister()))))}catch{}try{if(window.caches)P.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))))}catch{}return Promise.all(P.map(p=>p.catch(()=>{})))}).then(()=>Promise.all(['./','app.js','styles.css','config.js'].map(f=>fetch(f,{cache:'reload'}).catch(()=>{})))).then(()=>location.reload(),()=>{if(why==='manual')location.reload()})};
 try{const mv=document.querySelector('meta[name=vip-ver]'),cv=getComputedStyle(document.documentElement).getPropertyValue('--vip-ver').replace(/["'\s]/g,'');if((!mv||mv.content!==VER||cv!==VER)&&window.__vipHeal)window.__vipHeal('ver')}catch{}
@@ -182,7 +182,7 @@ const TT_FAM=[{k:'sauce',e:'🥫',n:'Соусы, основы, масла',o:6,r
 {k:'bread',e:'🍞',n:'Хлеб, тесто, гарниры',o:5,r:/тесто|хлеб|чиабатт|гренк|картофел|ризотто|спагетти|ньок|(^| )рис( |$)|паст|лапш|тортиль|лаваш|булк|багет/},
 {k:'veg',e:'🥬',n:'Овощи и зелень',o:3,r:/огурц|помидор|черри|перец|(^| )лук|луков|капуст|баклажан|цукини|шампиньон|шпинат|спарж|корнишон|салат|рукол|айсберг|зелень|петрушк|укроп|мята|розмарин|тимьян|чеснок|маслин|каперс|базилик|кинза|редис|морков|свекл|брокколи|кукуруз|горошек|имбир/},
 {k:'other',e:'📦',n:'Прочее',o:7,r:/./}];
-let TT={open:new Set(),shut:new Set(),def:null,ed:null,imp:null,lk:null,lkq:'',q:'',busy:0,sd:0,sr:0,pl:null,sm:null},TTT=0;
+let TT={open:new Set(),shut:new Set(),mo:new Set(),def:null,ed:null,imp:null,lk:null,lkq:'',q:'',busy:0,sd:0,sr:0,pl:null,sm:null},TTT=0;
 const UJ={st:[],cur:null,off:0,tr:{},tm:0,hide:0,busy:0};
 ['pointerdown','keydown','click','change','submit','touchend'].forEach(ev=>addEventListener(ev,e=>{if(e.isTrusted)gestT=Date.now()},true));
 const credStore=(id,pw)=>{try{if(window.PasswordCredential&&navigator.credentials&&navigator.credentials.store)navigator.credentials.store(new PasswordCredential({id,password:pw,name:id})).catch(()=>{})}catch(e){}};
@@ -2233,9 +2233,14 @@ else{UJ.off=1;
  const tids=UJ.tr[s.gt]||[];if(ok&&tids.length){tids.forEach(t=>mut0('DELETE','trash/'+t));try{TR.list=TR.list.filter(x=>!tids.includes(x.id))}catch(e){}delete UJ.tr[s.gt]}}}
 finally{UJ.off=0;UJ.busy=0}
 UJ.st.pop();UJ.cur=null;
-if(ok){snd.ok();vib(15);toast('↩ Отменено: '+lab.slice(0,60)+(skip?' · пропущено: '+skip+' (уже изменено другими)':''))}else{snd.warn();toast('Не отменено: данные уже изменены другим человеком')}
+if(ok){snd.ok();vib(15);if(skip)toast('↩ Отменено частично · пропущено: '+skip+' (уже изменено другими)')}else{snd.warn();toast('Не отменено: данные уже изменены другим человеком')}
 try{rAll()}catch(e){}ujPill(UJ.st.length?'quiet':'');{const p=$('#unpill');if(p)p.hidden=true}}
 function ujClear(){UJ.st.length=0;UJ.cur=null;UJ.tr={};try{ujPill('')}catch(e){}}
+// 9.9.15: меню «⋯» в шапке — тема, невидимка, история (шапка стала спокойной: логотип, название и 3–5 значков)
+function hmClose(){const m=$('#hmenu'),b=$('#hmbtn');if(m&&!m.hidden){m.hidden=true;if(b)b.setAttribute('aria-expanded','false')}}
+Object.assign(ACT,{hmore(){const m=$('#hmenu'),b=$('#hmbtn');if(!m)return;const o=m.hidden;m.hidden=!o;if(b)b.setAttribute('aria-expanded',String(o));snd.tap()}});
+document.addEventListener('click',e=>{const m=$('#hmenu');if(!m||m.hidden)return;const t=e.target;if(t&&t.closest&&t.closest('#hmbtn'))return;hmClose()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hmClose()});
 Object.assign(ACT,{undo(){return ujUndo()},unshow(){snd.tap();ujPill('ask')},unclose(){const p=$('#unpill');if(p)p.hidden=true;snd.tap()}});
 ['whopick','me','logout'].forEach(n=>{const f=ACT[n];if(typeof f!=='function')return;ACT[n]=function(...r){try{ujClear()}catch(e){}return f.apply(ACT,r)}});
 ['add','urg','inc','dec','rm'].forEach(n=>{const f=ACT[n];if(typeof f!=='function')return;ACT[n]=function(id,...r){if(isObs()||!L||!L.draft||!L.draft.items)return f.call(ACT,id,...r);const b=JSON.stringify(L.draft.items);const x=f.call(ACT,id,...r);try{ujDraft(n,id,b)}catch(e){}return x}});
@@ -2252,7 +2257,8 @@ function ttUnit(u){u=String(u||'').toLowerCase().replace(/\.$/,'');return u?(TT_
 function ttCount(t){const m=/^\s*(\d+(?:[.,]\d+)?)/.exec(String(t&&t.q||''));const n=m?Number(m[1].replace(',','.')):0;return n>0&&n<=100000?Math.round(n*100)/100:0}
 function ttFmt(v,u){if(!(v>0))return'';let x=v,un=u||'шт';if(un==='г'&&x>=1000){x/=1000;un='кг'}else if(un==='мл'&&x>=1000){x/=1000;un='л'}const f=(un==='г'||un==='мл')?10:100,r=Math.round(x*f)/f;return fmtQ(r)+' '+un}
 function ttPlace(D,ld){const L=Math.max(TT_LEAD,Number(ld)||0),p=dAdd(-L,D),t=dAdd(0);return p<t?t:p}
-function ttBKey(t){return fnv36(String(t.tks||t.tk||'')+'|'+String(t.tkd||'')+'|'+String(t.tkb||''))}
+// 9.9.15: один блок на блюдо и дату банкета — одинаковое блюдо из разных банкетов (на одну дату) собирается вместе
+function ttBKey(t){return fnv36(String(t.tk||'')+'|'+String(t.tkd||''))}
 function ttList(){const d=DATA.ttk&&typeof DATA.ttk==='object'&&DATA.ttk.d&&typeof DATA.ttk.d==='object'?DATA.ttk.d:{};
 return Object.entries(d).filter(([id,v])=>v&&typeof v==='object'&&v.n).map(([id,v])=>({id,n:String(v.n),c:String(v.c||''),ld:Math.max(0,Math.min(14,Math.round(Number(v.ld)||0))),nt:String(v.nt||''),o:Number(v.o)||0,
 i:Object.entries(v.i&&typeof v.i==='object'?v.i:{}).filter(([k,x])=>x&&typeof x==='object'&&x.n&&Number(x.q)>0).map(([k,x])=>({id:k,n:String(x.n),q:Number(x.q),u:String(x.u||'шт'),o:Number(x.o)||0})).sort((a,b)=>a.o-b.o||(a.id<b.id?-1:1))})).sort((a,b)=>a.o-b.o||COL.compare(a.n,b.n))}
@@ -2303,8 +2309,10 @@ if(now-OR.at<4000){clearTimeout(OR.tm);OR.tm=setTimeout(ttSoon,4200-(now-OR.at)+
 OR.sig='';TT.busy=1;try{MBATCH=1;try{o.del.forEach(p=>mut0('DELETE',p));o.tg.forEach(p=>mut0('DELETE',p))}finally{MBATCH=0}saveL();setSt();flush();
 toast('🧹 Блюд уже нет в банкете — убрано заготовок: '+o.del.length);try{rPrep();rBq()}catch(e){}}finally{TT.busy=0}}
 // ---- «Основные заготовки»: коробки по блюдам ----
+function ttFio(s){const w=String(s||'').trim().split(/\s+/);return w.length===3&&w.every(q=>/^[А-ЯЁ][а-яё-]+$/.test(q))?w[0]+' '+w[1][0]+'. '+w[2][0]+'.':String(s||'').trim()}
+function ttBqL(z){const b=z&&z.tkd&&z.tkb!=null&&z.tkb!==''?bqFind(z.tkd,String(z.tkb)):null;return b?ttFio(bqName(b,bqList(z.tkd))):''}
 function ttOpen(k,n,fin){return TT.open.has(k)?true:TT.shut.has(k)?false:TT.def!==null?TT.def:fin?false:n<=4}
-function ttIds(k){const kk=String(k);return Object.entries(dm()).filter(([id,t])=>t&&t.tk&&(kk.startsWith('P_')?'P_'+fnv36(ttPk(t.t))===kk:ttBKey(t)===kk)).map(([id])=>id)}
+function ttIds(k){const kk=String(k),i=kk.indexOf('~'),bk=i<0?kk:kk.slice(0,i),ch=i<0?'':kk.slice(i+1);return Object.entries(dm()).filter(([id,t])=>t&&t.tk&&(bk.startsWith('P_')?'P_'+fnv36(ttPk(t.t))===bk:ttBKey(t)===bk)&&(!ch||fnv36(nt(t.t))===ch)).map(([id])=>id)}
 function ttCk(k,fin,ic){return `<button class="ttk-ck${fin?' on':''}" data-a="ttdone" data-id="${k}" aria-pressed="${fin}" aria-label="${fin?'Снять отметку «готово»':'Отметить: всё приготовлено'}">${fin?'✓':''}</button>`}
 function ttSelRow(t,pmx){const on=MS.sel.has(t.id);return `<div class="pr ms${on?' sel':''}" data-a="mssel" data-id="${esc(t.id)}" role="checkbox" aria-checked="${on}"><span class="msc" aria-hidden="true">${on?'✓':''}</span><div class="pn"><b>${esc(t.t)}</b><div class="pm">${pmx(t)}</div></div></div>`}
 function ttBoxes(list,r,pmx){if(!list.length)return'';const vw=ttView(),g=new Map();
@@ -2313,12 +2321,25 @@ const bs=[...g.values()].sort((a,b)=>(a.t.tkd||'')<(b.t.tkd||'')?-1:(a.t.tkd||''
 const bqs=new Set(bs.map(x=>(x.t.tkd||'')+'|'+(x.t.tkb||''))),multi=bqs.size>1,sel=MS.k==='tk',today=dAdd(0);
 const nby=new Map(ttList().map(d=>[d.id,d.nt])),ob=isObs();const tools=`<div class="ttk-tools">${msBar('tk')}${sel?'':ttVt(vw)}<button class="g" data-a="ttall" data-id="open">▾ Раскрыть все</button><button class="g" data-a="ttall" data-id="shut">▸ Свернуть все</button></div>`;if(vw==='p')return ttBoxesP(list,r,pmx,tools,sel);
 const fz=x=>x.rows.length>0&&x.rows.every(z=>z.done),bsA=bs.filter(x=>!fz(x)),bsF=bs.filter(fz);
-const boxH=x=>{const rows=x.rows.sort((a,b)=>(a.c||0)-(b.c||0)),dn=rows.filter(z=>z.done).length,t=x.t,gone=bqRangeOk&&t.tkd&&t.tkd>=today&&!(((DATA.prep||{})[t.tkd]||{})[t.tks]);
-let tag='';if(t.tkd&&t.tkd!==pd)tag+='к банкету '+day(t.tkd);if(multi||t.tkd!==pd){const b=t.tkd&&t.tkb?bqFind(t.tkd,t.tkb):null;if(b)tag+=(tag?' · ':'')+bqName(b,bqList(t.tkd))}
-const n=t.tkc>0?`<em class="ttk-n">× ${esc(fmtQ(t.tkc))}</em>`:'',allSel=rows.every(z=>MS.sel.has(z.id));
-return `<details class="ttkb${dn===rows.length?' fin':''}" data-k="${x.k}"${ttOpen(x.k,bs.length,dn===rows.length)?' open':''}><summary>${sel?`<button class="msc${allSel?' on':''}" data-a="msbox" data-id="${x.k}" aria-label="Выбрать всё блюдо">${allSel?'✓':''}</button>`:ob?'<span class="ttk-i" aria-hidden="true">🍽</span>':ttCk(x.k,dn===rows.length)}<span class="ttk-h"><b>${esc(t.tkn||t.t)}</b>${n}${tag?`<small>${esc(tag)}</small>`:''}${gone?'<small class="ttk-w">⚠ блюда уже нет в банкете</small>':''}</span><i class="ttk-p">${dn}/${rows.length}</i><span class="ttk-bar" aria-hidden="true"><i style="width:${Math.round(dn/rows.length*100)}%"></i></span></summary><div class="plc">${nby.get(t.tk)?`<div class="ttk-nt">ℹ ${esc(nby.get(t.tk))}</div>`:''}${rows.map(z=>sel?ttSelRow(z,pmx):r(z)).join('')}</div></details>`};
+const goneOf=z=>bqRangeOk&&z.tkd&&z.tkd>=today&&!(((DATA.prep||{})[z.tkd]||{})[z.tks]);
+const bmsOf=rows=>{const m=new Map();rows.forEach(z=>{const b=String(z.tkb==null?'':z.tkb);let y=m.get(b);if(!y){y={b,z,n:0,s:new Set(),gone:0};m.set(b,y)}const sk=String(z.tks||z.id);if(!y.s.has(sk)){y.s.add(sk);y.n+=Number(z.tkc)||0}if(goneOf(z))y.gone=1});return[...m.values()]};
+const lbl=z=>`<div class="ttk-for">👤 ${esc(ttBqL(z)||'банкет')}${z.tkc>0?' · × '+esc(fmtQ(z.tkc)):''}</div>`;
+const boxH=x=>{const rows=x.rows.sort((a,b)=>(a.c||0)-(b.c||0)||String(a.tkb).localeCompare(String(b.tkb))||String(a.tks).localeCompare(String(b.tks))),dn=rows.filter(z=>z.done).length,t=x.t,bl=bmsOf(rows),mb=bl.length>1;
+// строки-компоненты, которые есть в нескольких банкетах (разные исходные блюда), собираются в одну строку с общим количеством
+const us=[];if(sel)rows.forEach(z=>us.push({rows:[z]}));else{const m=new Map();rows.forEach(z=>{const k=nt(z.t);let u=m.get(k);if(!u){u={k,rows:[]};m.set(k,u);us.push(u)}u.rows.push(z)});for(let q=us.length-1;q>=0;q--){const u=us[q];if(u.rows.length>1&&new Set(u.rows.map(z=>String(z.tks||z.id))).size<2)us.splice(q,1,...u.rows.map(z=>({rows:[z]})))}}
+const unH=u=>{if(u.rows.length===1){const z=u.rows[0];return (mb?lbl(z):'')+(sel?ttSelRow(z,pmx):r(z))}
+const mk=x.k+'~'+fnv36(u.k),on=u.rows.every(z=>z.done),dd=u.rows.filter(z=>z.done).length,tot={};let all=1;u.rows.forEach(z=>{const v=ttQv(z.q);if(v)ttBAdd(tot,v.u,v.v);else all=0});
+const ts=all?ttBStr(tot):'',parts=u.rows.map(z=>{const v=ttQv(z.q);return `<span class="ttm-pt">${esc(ttBqL(z)||'банкет')} ${esc(v?ttFmt(v.v,v.u):(z.q||''))}</span>`}).join('');
+return `<details class="ttm${on?' fin':''}" data-mk="${mk}"${TT.mo.has(mk)?' open':''}><summary class="pr${on?' ok':''}">${ob?'':`<button class="ck${on?' on':''}" data-a="ttdone" data-id="${mk}" aria-pressed="${on}" aria-label="${on?'Снять отметку «готово»':'Отметить: приготовлено для всех банкетов'}">${on?'✓':''}</button>`}<div class="pn"><b>${esc(u.rows[0].t)}</b><div class="pm">${ts?`<i class="qpill">${esc(ts)}</i>`:''}<span class="ttm-s">${parts}</span></div></div><i class="ttk-p">${dd}/${u.rows.length}</i><span class="ttm-a" aria-hidden="true">›</span></summary><div class="ttm-b">${u.rows.map(z=>lbl(z)+r(z)).join('')}</div></details>`};
+const dnU=us.filter(u=>u.rows.every(z=>z.done)).length,tc=bl.reduce((a,y)=>a+y.n,0);
+let tagH='';
+if(!mb){let tag='';if(t.tkd&&t.tkd!==pd)tag+='к банкету '+day(t.tkd);if(multi||t.tkd!==pd){const b=t.tkd&&t.tkb?bqFind(t.tkd,t.tkb):null;if(b)tag+=(tag?' · ':'')+bqName(b,bqList(t.tkd))}
+tagH=(tag?`<small>${esc(tag)}</small>`:'')+(bl.some(y=>y.gone)?'<small class="ttk-w">⚠ блюда уже нет в банкете</small>':'')}
+else tagH=(t.tkd&&t.tkd!==pd?`<small>к банкету ${esc(day(t.tkd))}</small>`:'')+bl.map(y=>{const b=t.tkd&&y.b!==''?bqFind(t.tkd,y.b):null;return `<small class="ttk-bq${y.gone?' w':''}">${esc(b?bqName(b,bqList(t.tkd)):'банкет удалён')} · × ${esc(fmtQ(y.n))}${y.gone?' · ⚠ блюда уже нет в банкете':''}</small>`}).join('');
+const n=(mb?tc:Number(t.tkc))>0?`<em class="ttk-n">× ${esc(fmtQ(mb?tc:t.tkc))}</em>`:'',allSel=rows.every(z=>MS.sel.has(z.id));
+return `<details class="ttkb${dn===rows.length?' fin':''}" data-k="${x.k}"${ttOpen(x.k,bs.length,dn===rows.length)?' open':''}><summary>${sel?`<button class="msc${allSel?' on':''}" data-a="msbox" data-id="${x.k}" aria-label="Выбрать всё блюдо">${allSel?'✓':''}</button>`:ob?'<span class="ttk-i" aria-hidden="true">🍽</span>':ttCk(x.k,dn===rows.length)}<span class="ttk-h"><b>${esc(t.tkn||t.t)}</b>${n}${tagH}</span><i class="ttk-p">${dnU}/${us.length}</i><span class="ttk-bar" aria-hidden="true"><i style="width:${Math.round(dnU/us.length*100)}%"></i></span></summary><div class="plc">${nby.get(t.tk)?`<div class="ttk-nt">ℹ ${esc(nby.get(t.tk))}</div>`:''}${us.map(unH).join('')}</div></details>`};
 return `<div class="gh">🍽 Заготовки по ТТК · ${bs.length} ${rupl(bs.length,['блюдо','блюда','блюд'])}</div>${tools}`+bsA.map(boxH).join('')+(bsF.length?`<div class="gh ttk-dh">✓ Готово · ${bsF.length}</div>`+bsF.map(boxH).join(''):'')}
-document.addEventListener('toggle',e=>{const d=e.target;if(!d||!d.matches||!d.matches('details.ttkb'))return;const k=d.dataset.k;if(!k)return;if(d.open){TT.open.add(k);TT.shut.delete(k)}else{TT.shut.add(k);TT.open.delete(k)}},true);
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.ttm')){const k=d.dataset.mk;if(k){if(d.open)TT.mo.add(k);else TT.mo.delete(k)}return}if(!d||!d.matches||!d.matches('details.ttkb'))return;const k=d.dataset.k;if(!k)return;if(d.open){TT.open.add(k);TT.shut.delete(k)}else{TT.shut.add(k);TT.open.delete(k)}},true);
 // ---- карточка банкета: что посчитано, чего нет в ТТК, кнопка «добавить» ----
 function ttBqHtml(b){if(isObs()||!b)return'';const ds=Object.values(dm()).filter(t=>t&&t.t&&t.g==='banq'&&!t.tk&&bqOf(t)===b.id);if(!ds.length)return'';
 const list=ttList();
@@ -2421,14 +2442,14 @@ TT.sm={sc,one,q:'',open:new Set(),c:null,label:''};const q=$('#tsq');if(q)q.valu
 document.addEventListener('toggle',e=>{const d=e.target;if(!d||!d.matches||!d.matches('details.tsr')||!TT.sm)return;const k=d.dataset.k;if(!k)return;if(d.open)TT.sm.open.add(k);else TT.sm.open.delete(k)},true);
 function ttView(){return LS.get('vip3-ttv','d')==='p'?'p':'d'}
 // ---- 9.9.12: «Основные заготовки» по продуктам: одинаковые продукты разных блюд и банкетов собраны вместе ----
-function ttBoxesP(list,r,pmx,tools,sel){const g=new Map();
+function ttBoxesP(list,r,pmx,tools,sel){const g=new Map(),mbq=new Set(list.map(t=>(t.tkd||'')+'|'+(t.tkb||''))).size>1;
 list.forEach(t=>{const pk=ttPk(t.t);let x=g.get(pk);if(!x){x={k:'P_'+fnv36(pk),pk,fam:ttFam(pk),names:new Map(),nk:new Set(),rows:[],tot:{}};g.set(pk,x)}x.rows.push(t);const b=ttBase(t.t),nk=(t.tk||'')+'|'+t.t;if(!x.nk.has(nk)){x.nk.add(nk);x.names.set(b,(x.names.get(b)||0)+1)}const v=ttQv(t.q);if(v)ttBAdd(x.tot,v.u,v.v)});
 const bs=[...g.values()].map(x=>{x.name=ttTop(x.names);x.rows.sort((a,b)=>(a.tkd||'')<(b.tkd||'')?-1:(a.tkd||'')>(b.tkd||'')?1:(a.c||0)-(b.c||0));return x}).sort((a,b)=>a.fam.o-b.fam.o||COL.compare(a.name,b.name));
 let cf='';
 const ob=isObs(),fz=x=>x.rows.length>0&&x.rows.every(z=>z.done),bsA=bs.filter(x=>!fz(x)),bsF=bs.filter(fz);
 const boxH=(x,fm)=>{const dn=x.rows.filter(z=>z.done).length,allSel=x.rows.every(z=>MS.sel.has(z.id)),tl=ttBStr(x.tot);
 const fh=fm&&x.fam.k!==cf?(cf=x.fam.k,`<div class="ttk-fam">${x.fam.e} ${esc(x.fam.n)}</div>`):'';
-return fh+`<details class="ttkb${dn===x.rows.length?' fin':''}" data-k="${x.k}"${ttOpen(x.k,bs.length,dn===x.rows.length)?' open':''}><summary>${sel?`<button class="msc${allSel?' on':''}" data-a="msbox" data-id="${x.k}" aria-label="Выбрать весь продукт">${allSel?'✓':''}</button>`:ob?'<span class="ttk-i" aria-hidden="true">🧺</span>':ttCk(x.k,dn===x.rows.length)}<span class="ttk-h"><b>${esc(x.name)}</b>${tl?`<em class="ttk-n">${esc(tl)}</em>`:''}<small>${x.rows.length} ${rupl(x.rows.length,['заготовка','заготовки','заготовок'])} · блюд: ${new Set(x.rows.map(z=>z.tk)).size}</small></span><i class="ttk-p">${dn}/${x.rows.length}</i><span class="ttk-bar" aria-hidden="true"><i style="width:${Math.round(dn/x.rows.length*100)}%"></i></span></summary><div class="plc">${x.rows.map(z=>{const tag=z.tkd&&z.tkd!==pd?' · к банкету '+day(z.tkd):'';return `<div class="ttk-for">🍽 ${esc(z.tkn||'')}${z.tkc>0?' × '+esc(fmtQ(z.tkc)):''}${esc(tag)}</div>`+(sel?ttSelRow(z,pmx):r(z))}).join('')}</div></details>`};
+return fh+`<details class="ttkb${dn===x.rows.length?' fin':''}" data-k="${x.k}"${ttOpen(x.k,bs.length,dn===x.rows.length)?' open':''}><summary>${sel?`<button class="msc${allSel?' on':''}" data-a="msbox" data-id="${x.k}" aria-label="Выбрать весь продукт">${allSel?'✓':''}</button>`:ob?'<span class="ttk-i" aria-hidden="true">🧺</span>':ttCk(x.k,dn===x.rows.length)}<span class="ttk-h"><b>${esc(x.name)}</b>${tl?`<em class="ttk-n">${esc(tl)}</em>`:''}<small>${x.rows.length} ${rupl(x.rows.length,['заготовка','заготовки','заготовок'])} · блюд: ${new Set(x.rows.map(z=>z.tk)).size}</small></span><i class="ttk-p">${dn}/${x.rows.length}</i><span class="ttk-bar" aria-hidden="true"><i style="width:${Math.round(dn/x.rows.length*100)}%"></i></span></summary><div class="plc">${x.rows.map(z=>{const tag=(z.tkd&&z.tkd!==pd?' · к банкету '+day(z.tkd):'')+(mbq&&ttBqL(z)?' · '+ttBqL(z):'');return `<div class="ttk-for">🍽 ${esc(z.tkn||'')}${z.tkc>0?' × '+esc(fmtQ(z.tkc)):''}${esc(tag)}</div>`+(sel?ttSelRow(z,pmx):r(z))}).join('')}</div></details>`};
 return `<div class="gh">🧺 Продукты по ТТК · ${bs.length} ${rupl(bs.length,['продукт','продукта','продуктов'])}</div>${tools}`+bsA.map(x=>boxH(x,1)).join('')+(bsF.length?`<div class="gh ttk-dh">✓ Готово · ${bsF.length}</div>`+bsF.map(x=>boxH(x,0)).join(''):'')}
 // ---- разбор вставленного текста ТТК ----
 function ttMk(n,q,u){n=String(n||'').replace(/^[\s:;,\-–—=•·*]+/,'').replace(/[\s:;,\-–—=]+$/,'').trim();const v=Number(String(q).replace(',','.'));if(!n||!(v>0)||v>1e6)return null;const un=ttUnit(u);if(u&&!un)return null;return{n:n.slice(0,80),q:Math.round(v*1000)/1000,u:un||'шт'}}
@@ -2532,10 +2553,10 @@ const r=ttRun({force:1,d:pd,bid:b.id});snd.ok();toast(r.made||r.upd||r.mv?`✓ �
 ttshow(dt){if(!RXD.test(String(dt||'')))return;['#dttp','#dtts'].forEach(i=>{try{$(i).close()}catch(e){}});pd=dt;savePd();psec='main';LS.set('vip3-psec','main');lf='all';streams();snd.tap();rPrep();rPlan();rLibrary();window.scrollTo({top:0,behavior:'smooth'})},
 ttall(m){TT.open=new Set();TT.shut=new Set();TT.def=m==='open';snd.tap();rPrep()},
 ttdone(k){if(isObs())return;if(MS.k==='tk')return;const m=dm(),ids=ttIds(k).filter(i=>m[i]&&m[i].t);if(!ids.length)return;const all=ids.every(i=>m[i].done),kk=String(k);
-if(all){ids.forEach(i=>mut('PATCH',`prep/${pd}/${i}`,{done:null,at:null}));TT.shut.delete(kk);snd.tap();return}
+if(all){ids.forEach(i=>mut('PATCH',`prep/${pd}/${i}`,{done:null,at:null}));if(kk.indexOf('~')<0)TT.shut.delete(kk);snd.tap();return}
 const me=L.me;if(ids.some(i=>!m[i].done&&!m[i].by&&!me)){snd.warn();vib(80);toast('Выберите повара справа или вверху «Я работаю»');return}
 const now=Date.now();ids.forEach((i,n)=>{const t=m[i];if(t.done)return;const w=t.by||me;justDone.add(i);if(t.tm>0)tmDrop(pd,i);mut('PATCH',`prep/${pd}/${i}`,{done:true,by:{id:w.id,n:w.n},at:now+n,...(t.dq?{dq:null,dqa:null,dqb:null}:{})})});
-TT.open.delete(kk);TT.shut.add(kk);snd.ok();vib(30)},
+if(kk.indexOf('~')<0){TT.open.delete(kk);TT.shut.add(kk)}else TT.mo.delete(kk);snd.ok();vib(30)},
 msbox(key){if(MS.k!=='tk')return;const kk=String(key),ids=Object.entries(dm()).filter(([id,t])=>t&&t.tk&&(kk.startsWith('P_')?'P_'+fnv36(ttPk(t.t))===kk:ttBKey(t)===kk)).map(([id])=>id);if(!ids.length)return;const all=ids.every(i=>MS.sel.has(i));ids.forEach(i=>all?MS.sel.delete(i):MS.sel.add(i));snd.tap();rPrep()}});
 on('#ttkq','input',e=>{TT.q=e.target.value;ttRender()});
 on('#ttlq','input',e=>{TT.lkq=e.target.value;ttLkRender()});

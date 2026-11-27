@@ -1,4 +1,4 @@
-:root{--vip-ver:"9.9.14"}
+:root{--vip-ver:"9.9.15"}
 :root{--bg:#f1f2f9;--sf:#fff;--tx:#141726;--mu:#5b6080;--ac:#4338ca;--ac3:#7c3aed;--ac2:#eceafd;--ln:#dfe1ef;--wa:#b45309;--rd:#c81e1e;--ok:#047857;--okbg:#e2f5ed;--grad:linear-gradient(135deg,#4338ca,#7c3aed);--sh:0 6px 20px #2a2e6b1f;--r:16px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0b0d17;--sf:#141829;--tx:#eceefb;--mu:#9a9fc4;--ac:#8b8dfa;--ac3:#c084fc;--ac2:#202550;--ln:#272c49;--wa:#fbbf24;--rd:#f87171;--ok:#34d399;--okbg:#10332a;--grad:linear-gradient(135deg,#5457e8,#7e3fe0);--sh:0 6px 22px #0008}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1312,3 +1312,65 @@ button,.chip,.tab{transition:transform .12s cubic-bezier(.3,1.4,.5,1),background
 .ttkb>summary .ttk-ck.on{background:var(--ok);border-color:var(--ok)}
 .ttk-dh{margin-top:16px;color:var(--ok)}
 @media(prefers-reduced-motion:reduce){.unfab.pop{animation:none!important}}
+
+/* ===== 9.9.15: одно блюдо из нескольких банкетов — один блок; одинаковые компоненты — одна строка с общим количеством ===== */
+.ttk-h small.ttk-bq{flex:1 1 100%;color:var(--tx);font-weight:700;font-size:13px;margin-top:1px}
+.ttk-h small.ttk-bq.w{color:var(--wa)}
+.ttm{margin:0 0 6px}
+.ttm>summary.pr{list-style:none;cursor:pointer;margin:0;-webkit-tap-highlight-color:transparent}
+.ttm>summary::-webkit-details-marker{display:none}
+.ttm>summary .pn{flex:1;min-width:0}
+.ttm>summary .pn b{overflow-wrap:anywhere}
+.ttm>summary .pm{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px}
+.ttm>summary .pm .qpill{margin:3px 0 0}
+.ttm .ttm-s{font-size:12.5px;font-weight:600;color:var(--mu);overflow-wrap:anywhere}
+.ttm>summary .ttk-p{flex:none}
+.ttm>summary .ttm-a{flex:none;color:var(--mu);font-size:20px;line-height:1;width:16px;text-align:center;transition:transform .2s}
+.ttm[open]>summary .ttm-a{transform:rotate(90deg)}
+.ttm>.ttm-b{margin:2px 0 4px 12px;padding:2px 0 0 8px;border-left:2px solid var(--ln)}
+.ttm>.ttm-b .ttk-for{margin:6px 2px 4px}
+.ttm.fin>summary .ttk-p{color:var(--ok)}
+.ttm .ttm-pt{display:inline-block;white-space:nowrap;margin-right:10px}
+
+/* ===== 9.9.15: шапка — спокойная, под вырез/Dynamic Island: логотип + название (никогда не скрываются) + значки в одном стиле; тема/невидимка/история — в меню «⋯» ===== */
+#hdr#hdr{position:relative;display:flex;flex-wrap:nowrap;align-items:center;gap:5px;padding:8px 0 8px;min-height:60px}
+#hdr#hdr>.logo{flex:none;position:relative;z-index:1}
+#hdr#hdr>.logo img{height:44px;width:auto;display:block;filter:drop-shadow(0 2px 8px #0006)}
+#hdr#hdr h1{flex:1 1 auto;min-width:0;margin:0 0 0 4px;display:flex;flex-direction:column;justify-content:center;gap:2px;line-height:1;overflow:visible;white-space:normal;letter-spacing:0}
+#hdr#hdr h1 .h1a{font-size:10px;font-weight:800;letter-spacing:.26em;color:var(--mu);text-transform:uppercase;line-height:1}
+#hdr#hdr h1 b{display:block;font-size:15px;line-height:1.1;font-weight:800;letter-spacing:.15px;overflow-wrap:normal}
+#hdr#hdr .ib{flex:none;width:36px;height:36px;min-height:36px;padding:0;margin:0;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;line-height:1;color:var(--tx);background:color-mix(in srgb,var(--sf) 78%,transparent);border:1px solid color-mix(in srgb,var(--ln) 85%,transparent);box-shadow:none;position:relative;transition:transform .12s,background-color .2s,border-color .2s}
+#hdr#hdr .ib:active{transform:scale(.9)}
+#hdr#hdr .ib .hi{display:block;width:20px;height:20px;flex:none}
+#hdr#hdr .ib .nbi,#hdr#hdr .ib .rfi{display:inline-flex;align-items:center;justify-content:center;font-size:0;line-height:0}
+#hdr#hdr .unfab{background:var(--ac2);border-color:color-mix(in srgb,var(--ac) 40%,transparent);color:var(--ac)}
+#hdr#hdr .unfab span{display:inline-flex;font-weight:400}
+#hdr#hdr .nbb[hidden]{display:inline-flex!important;visibility:hidden}
+#hdr#hdr .nbb.gone{display:none!important}
+#hdr#hdr .unfab[hidden]{display:none!important}
+/* точка связи — на углу логотипа (зелёная — онлайн), нажатие открывает диагностику */
+#hdr#hdr #saved{position:absolute;left:23px;top:41px;width:13px;height:13px;min-height:13px;padding:0;border-radius:50%;border:2px solid var(--bg);background:var(--mu);font-size:0;color:transparent;text-shadow:none;animation:none;z-index:2;box-shadow:0 0 0 0 transparent}
+#hdr#hdr #saved::after{content:"";position:absolute;inset:-12px}
+#hdr#hdr #saved.on{background:var(--ok);animation:hdrbeat 2.8s ease-in-out infinite}
+#hdr#hdr #saved.err{background:#dc2626}
+#hdr#hdr #saved.pend{background:var(--ac)}
+@keyframes hdrbeat{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%,transparent)}60%{box-shadow:0 0 0 5px transparent}}
+/* меню «⋯» */
+#hdr#hdr .hmb[aria-expanded=true]{background:var(--ac2);border-color:color-mix(in srgb,var(--ac) 45%,transparent);color:var(--ac)}
+#hdr:has(#ghbtn.on) .hmb::after{content:"";position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--ac);border:1.5px solid var(--bg)}
+.hmenu{position:absolute;right:0;top:calc(100% - 2px);z-index:70;min-width:232px;padding:6px;border-radius:18px;background:var(--sf);border:1px solid var(--ln);box-shadow:0 16px 44px #000a,0 2px 8px #0005;display:flex;flex-direction:column;gap:2px;animation:hmin .16s ease-out;transform-origin:100% 0}
+.hmenu[hidden]{display:none}
+@keyframes hmin{from{opacity:0;transform:scale(.94) translateY(-4px)}to{opacity:1;transform:none}}
+.hmenu .hmi{display:flex;align-items:center;gap:14px;width:100%;min-height:48px;padding:0 14px;border:0;border-radius:12px;background:none;box-shadow:none;color:var(--tx);font-size:20px;line-height:1;text-align:left;justify-content:flex-start}
+.hmenu .hmi[hidden]{display:none!important}
+.hmenu .hmi::after{content:attr(data-lb);font:600 15.5px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.hmenu .hmi:active,.hmenu .hmi:hover{background:var(--ac2)}
+.hmenu .hmi.on{background:var(--ac2);color:var(--ac)}
+.hmenu .hmi.on::after{content:attr(data-lb) " · вкл"}
+@media(max-width:400px){#hdr#hdr{gap:4px}#hdr#hdr h1 b{font-size:14px}#hdr#hdr h1 .h1a{font-size:9.5px}}
+/* когда есть и ↩ и 🔔 — название чуть меньше, но остаётся целиком */
+@media(max-width:430px){#hdr#hdr:has(#unfab:not([hidden])) h1 b{font-size:12.5px}#hdr#hdr:has(#unfab:not([hidden])) h1 .h1a{font-size:9px;letter-spacing:.2em}}
+@media(max-width:360px){#hdr#hdr .ib{width:33px;height:33px;min-height:33px;border-radius:11px}#hdr#hdr>.logo img{height:38px}#hdr#hdr #saved{left:19px;top:38px}#hdr#hdr h1 b{font-size:13px}}
+@media print{#hdr .hmenu{display:none!important}}
+.hmenu .hmi{opacity:1!important;filter:none!important;margin:0!important}
+.hmenu .hmi.ghb:not(.on){color:var(--tx)}
